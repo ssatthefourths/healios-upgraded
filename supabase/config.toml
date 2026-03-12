@@ -1,0 +1,54 @@
+project_id = "yvctrcoftphjvcvgwbql"
+
+[functions]
+  [functions.admin-user-management]
+    verify_jwt = true
+  [functions.afr3d-report]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.create-checkout-session]
+    verify_jwt = false
+  [functions.delete-account]
+    verify_jwt = true
+  [functions.generate-invoice]
+    verify_jwt = false
+  [functions.manage-subscription]
+    verify_jwt = true
+  [functions.notify-product-change]
+    verify_jwt = false
+  [functions.notify-slack-order]
+    verify_jwt = false
+  [functions.order-status-webhook]
+    verify_jwt = false
+  [functions.process-scheduled-newsletters]
+    verify_jwt = false
+  [functions.product-performance-alerts]
+    schedule = "0 9 * * 1"
+    verify_jwt = false
+  [functions.send-newsletter]
+    verify_jwt = false
+  [functions.send-order-email]
+    verify_jwt = false
+  [functions.send-restock-notifications]
+    verify_jwt = false
+  [functions.send-review-request]
+    schedule = "0 10 * * *"
+    verify_jwt = false
+  [functions.send-subscription-reminder]
+    schedule = "0 9 * * *"
+    verify_jwt = false
+  [functions.send-test-emails]
+    verify_jwt = false
+  [functions.sitemap]
+    verify_jwt = false
+  [functions.stripe-webhook]
+    verify_jwt = false
+  [functions.track-email-open]
+    verify_jwt = false
+  [functions.track-unsubscribe]
+    verify_jwt = false
+  [functions.validate-discount]
+    verify_jwt = false
+  [functions.wellness-chat]
+    verify_jwt = false

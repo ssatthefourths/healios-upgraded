@@ -1,0 +1,135 @@
+import Header from "../components/header/Header";
+import Footer from "../components/footer/Footer";
+import SEOHead from "../components/seo/SEOHead";
+import PageContainer from "@/components/layout/PageContainer";
+import PageHeader from "@/components/layout/PageHeader";
+import SectionContainer from "@/components/layout/SectionContainer";
+
+const PrivacyPolicy = () => {
+  return (
+    <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Privacy Policy | Healios"
+        description="Read the Healios privacy policy. Learn how we collect, use, and protect your personal data."
+        canonicalUrl="https://www.thehealios.com/privacy-policy"
+        noIndex={false}
+      />
+      
+      <Header />
+      
+      <main>
+        <PageContainer maxWidth="content">
+          <PageHeader 
+            title="Privacy Policy"
+            subtitle="Last updated: January 15, 2024"
+            centered
+          />
+
+          <div className="space-y-8">
+            <SectionContainer title="Introduction">
+              <p className="text-muted-foreground leading-relaxed">
+                At The Healios Health Co. ("we," "our," or "us"), we respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website, make a purchase, or interact with our services.
+              </p>
+            </SectionContainer>
+
+            <SectionContainer title="Information We Collect">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-light text-foreground mb-2">Personal Information</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    We may collect personal information that you provide directly to us, including:
+                  </p>
+                  <ul className="list-disc list-inside text-muted-foreground mt-2 space-y-1">
+                    <li>Name, email address, and contact information</li>
+                    <li>Billing and shipping addresses</li>
+                    <li>Payment information (processed securely through third-party providers)</li>
+                    <li>Account preferences and communication settings</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-light text-foreground mb-2">Usage Information</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    We automatically collect certain information about your device and usage patterns, including IP address, browser type, pages visited, and interaction data to improve our services and user experience.
+                  </p>
+                </div>
+              </div>
+            </SectionContainer>
+
+            <SectionContainer title="How We Use Your Information">
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                We use the information we collect for various purposes, including:
+              </p>
+              <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                <li>Processing and fulfilling your orders</li>
+                <li>Providing customer support and responding to inquiries</li>
+                <li>Sending promotional communications (with your consent)</li>
+                <li>Improving our website functionality and user experience</li>
+                <li>Preventing fraud and ensuring security</li>
+                <li>Complying with legal obligations</li>
+              </ul>
+            </SectionContainer>
+
+            <SectionContainer title="Information Sharing and Disclosure">
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                We do not sell, trade, or rent your personal information to third parties. We may share your information only in the following circumstances:
+              </p>
+              <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                <li>With service providers who assist us in operating our business</li>
+                <li>When required by law or to protect our rights</li>
+                <li>In connection with a business transaction (merger, acquisition, etc.)</li>
+                <li>With your explicit consent</li>
+              </ul>
+            </SectionContainer>
+
+            <SectionContainer title="Data Security">
+              <p className="text-muted-foreground leading-relaxed">
+                We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the internet or electronic storage is 100% secure.
+              </p>
+            </SectionContainer>
+
+            <SectionContainer title="Your Rights and Choices">
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                Depending on your location, you may have certain rights regarding your personal information:
+              </p>
+              <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                <li>Access to your personal information</li>
+                <li>Correction of inaccurate or incomplete information</li>
+                <li>Deletion of your personal information</li>
+                <li>Objection to or restriction of processing</li>
+                <li>Data portability</li>
+                <li>Withdrawal of consent (where applicable)</li>
+              </ul>
+            </SectionContainer>
+
+            <SectionContainer title="Cookies and Tracking">
+              <p className="text-muted-foreground leading-relaxed">
+                We use cookies and similar tracking technologies to enhance your browsing experience, analyze website traffic, and personalize content. You can control cookie settings through your browser preferences, though this may affect website functionality.
+              </p>
+            </SectionContainer>
+
+            <SectionContainer title="Changes to This Policy">
+              <p className="text-muted-foreground leading-relaxed">
+                We may update this Privacy Policy from time to time. We will notify you of any significant changes by posting the new policy on our website and updating the "Last updated" date above.
+              </p>
+            </SectionContainer>
+
+            <SectionContainer title="Contact Us">
+              <p className="text-muted-foreground leading-relaxed">
+                If you have any questions about this Privacy Policy or our privacy practices, please contact us at:
+              </p>
+              <div className="mt-4 text-muted-foreground">
+                <p>Email: support@thehealios.com</p>
+                <p>Website: www.thehealios.com</p>
+              </div>
+            </SectionContainer>
+          </div>
+        </PageContainer>
+      </main>
+      
+      <Footer />
+    </div>
+  );
+};
+
+export default PrivacyPolicy;

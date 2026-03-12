@@ -1,0 +1,1 @@
+UPDATE products SET is_published = false WHERE is_bundle = true;

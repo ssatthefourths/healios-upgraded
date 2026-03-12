@@ -1,0 +1,146 @@
+import { useMemo } from "react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import { Card, CardContent } from "@/components/ui/card";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import StarRating from "@/components/product/StarRating";
+import { useProductRatings } from "@/hooks/useProductRatings";
+import OptimizedImage from "@/components/ui/optimized-image";
+import { useCurrency } from "@/contexts/CurrencyContext";
+
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  price: number;
+  image: string;
+  stock_quantity: number;
+  is_coming_soon: boolean;
+}
+
+const ProductCarousel = () => {
+  const { data: products, isLoading } = useQuery({
+    queryKey: ['bestseller-products'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, category, description, price, image, stock_quantity, is_coming_soon')
+        .eq('is_published', true)
+        .order('sort_order', { ascending: true })
+        .limit(6);
+      
+      if (error) throw error;
+      return data as Product[];
+    },
+  });
+
+  const productIds = useMemo(() => products?.map(p => p.id) || [], [products]);
+  const { ratings } = useProductRatings(productIds);
+  const { formatPrice } = useCurrency();
+
+  if (isLoading) {
+    return (
+      <section className="w-full mb-16 px-6">
+        <div className="mb-6">
+          <Skeleton className="h-6 w-32 mb-2" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="flex gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex-shrink-0 w-1/2 md:w-1/3 lg:w-1/4 space-y-3">
+              <Skeleton className="aspect-square w-full" />
+              <Skeleton className="h-3 w-1/3" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (!products || products.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="w-full mb-16 px-6">
+      <div className="mb-6">
+        <h2 className="text-lg font-normal text-foreground">Bestsellers</h2>
+        <p className="text-sm font-light text-foreground/70">Our most-loved supplements</p>
+      </div>
+      <Carousel
+        opts={{
+          align: "start",
+          loop: false,
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="">
+          {products.map((product) => {
+            const isComingSoon = product.is_coming_soon;
+            const isOutOfStock = !isComingSoon && product.stock_quantity === 0;
+            return (
+            <CarouselItem
+              key={product.id}
+              className="basis-1/2 md:basis-1/3 lg:basis-1/4 pr-2 md:pr-4"
+            >
+              <Link to={`/product/${product.id}`}>
+                <Card className="border-none shadow-none bg-transparent group">
+                  <CardContent className="p-0">
+                    <div className="aspect-square mb-3 overflow-hidden bg-muted/10 relative">
+                      <OptimizedImage
+                        src={product.image}
+                        alt={product.name}
+                        aspectRatio="square"
+                        className={`transition-all duration-300 group-hover:scale-105 ${isOutOfStock || isComingSoon ? 'opacity-50' : ''}`}
+                      />
+                      <div className="absolute inset-0 bg-black/[0.03] pointer-events-none"></div>
+                      {isComingSoon ? (
+                        <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded">
+                          Coming Soon
+                        </div>
+                      ) : isOutOfStock && (
+                        <div className="absolute top-2 left-2 bg-foreground text-background text-xs font-medium px-2 py-0.5 rounded">
+                          Sold Out
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs font-light text-foreground/60">
+                        {product.category}
+                      </p>
+                      <h3 className="text-sm font-medium text-foreground">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-foreground">
+                          {formatPrice(product.price)}
+                        </p>
+                        {ratings[product.id] && (
+                          <StarRating 
+                            rating={ratings[product.id].averageRating} 
+                            reviewCount={ratings[product.id].reviewCount}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </CarouselItem>
+          )})}
+        </CarouselContent>
+      </Carousel>
+    </section>
+  );
+};
+
+export default ProductCarousel;
