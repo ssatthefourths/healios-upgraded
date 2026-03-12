@@ -71,10 +71,10 @@ const ProductCarousel = () => {
   }
 
   return (
-    <section className="w-full mb-16 px-6">
-      <div className="mb-6">
-        <h2 className="text-lg font-normal text-foreground">Bestsellers</h2>
-        <p className="text-sm font-light text-foreground/70">Our most-loved supplements</p>
+    <section className="w-full mb-xl px-md">
+      <div className="mb-md">
+        <h2 className="text-lg font-medium text-foreground uppercase tracking-widest">Bestsellers</h2>
+        <p className="text-sm font-light text-muted-foreground">Our most-loved supplements</p>
       </div>
       <Carousel
         opts={{
@@ -92,32 +92,32 @@ const ProductCarousel = () => {
               key={product.id}
               className="basis-1/2 md:basis-1/3 lg:basis-1/4 pr-2 md:pr-4"
             >
-              <Link to={`/product/${product.id}`}>
-                <Card className="border-none shadow-none bg-transparent group">
+              <Link to={`/product/${product.id}`} className="group block">
+                <Card className="border-none shadow-none bg-transparent">
                   <CardContent className="p-0">
-                    <div className="aspect-square mb-3 overflow-hidden bg-muted/10 relative">
+                    <div className="aspect-square mb-sm overflow-hidden bg-muted rounded-card relative">
                       <OptimizedImage
                         src={product.image}
                         alt={product.name}
                         aspectRatio="square"
-                        className={`transition-all duration-300 group-hover:scale-105 ${isOutOfStock || isComingSoon ? 'opacity-50' : ''}`}
+                        className={`transition-all duration-500 ease-smooth group-hover:scale-[1.03] ${isOutOfStock || isComingSoon ? 'opacity-50' : ''}`}
                       />
                       <div className="absolute inset-0 bg-black/[0.03] pointer-events-none"></div>
                       {isComingSoon ? (
-                        <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded">
+                        <div className="absolute top-sm left-sm bg-primary text-primary-foreground text-xs font-medium px-sm py-xs rounded-lg">
                           Coming Soon
                         </div>
                       ) : isOutOfStock && (
-                        <div className="absolute top-2 left-2 bg-foreground text-background text-xs font-medium px-2 py-0.5 rounded">
+                        <div className="absolute top-sm left-sm bg-foreground text-background text-xs font-medium px-sm py-xs rounded-lg">
                           Sold Out
                         </div>
                       )}
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-xs font-light text-foreground/60">
+                    <div className="space-y-xs">
+                      <p className="text-xs font-light text-muted-foreground uppercase tracking-wider">
                         {product.category}
                       </p>
-                      <h3 className="text-sm font-medium text-foreground">
+                      <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors duration-300">
                         {product.name}
                       </h3>
                       <div className="flex items-center justify-between">

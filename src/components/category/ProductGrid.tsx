@@ -71,45 +71,45 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
   };
 
   return (
-    <section className="w-full px-6 mb-16">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+    <section className="w-full px-md mb-xl">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-md md:gap-lg">
         {products.map((product) => {
           const isComingSoon = product.is_coming_soon;
           const isOutOfStock = !isComingSoon && product.stock_quantity === 0;
           return (
-          <Link key={product.id} to={`/product/${product.id}`}>
+          <Link key={product.id} to={`/product/${product.id}`} className="group block">
             <Card 
-              className="border-none shadow-none bg-transparent group cursor-pointer"
+              className="border-none shadow-none bg-transparent cursor-pointer"
             >
               <CardContent className="p-0">
-                <div className="aspect-square mb-3 overflow-hidden bg-muted/10 relative">
+                <div className="aspect-square mb-sm overflow-hidden bg-muted rounded-card relative">
                   <OptimizedImage
                     src={product.image}
                     alt={product.name}
                     aspectRatio="square"
-                    className={`transition-all duration-300 group-hover:scale-105 ${isOutOfStock || isComingSoon ? 'opacity-50' : ''}`}
+                    className={`transition-all duration-500 ease-smooth group-hover:scale-[1.03] ${isOutOfStock || isComingSoon ? 'opacity-50' : ''}`}
                   />
                   <div className="absolute inset-0 bg-black/[0.03] pointer-events-none"></div>
                   {isComingSoon && (
-                    <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded">
+                    <div className="absolute top-sm left-sm bg-primary text-primary-foreground text-xs font-medium px-sm py-xs rounded-lg">
                       Coming Soon
                     </div>
                   )}
                   {isOutOfStock && (
-                    <div className="absolute top-2 left-2 bg-foreground text-background text-xs font-medium px-2 py-0.5 rounded">
+                    <div className="absolute top-sm left-sm bg-foreground text-background text-xs font-medium px-sm py-xs rounded-lg">
                       Sold Out
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 flex flex-col gap-1 items-center">
+                  <div className="absolute top-sm right-sm flex flex-col gap-xs items-center">
                     <WishlistButton
                       isInWishlist={isInWishlist(product.id)}
                       onClick={(e) => toggleWishlist(product.id, e)}
-                      className="opacity-0 group-hover:opacity-100"
+                      className="opacity-0 group-hover:opacity-100 transition-all duration-300"
                       size="sm"
                     />
                     {isComingSoon && (
                       <div 
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="opacity-0 group-hover:opacity-100 transition-all duration-300"
                         onClick={(e) => e.preventDefault()}
                       >
                         <NotifyMeButton
@@ -121,15 +121,15 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
                     )}
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-light text-foreground/60">
+                <div className="space-y-xs">
+                  <p className="text-xs font-light text-muted-foreground uppercase tracking-wider">
                     {formatCategory(product.category)}
                   </p>
-                  <h3 className="text-sm font-medium text-foreground">
+                  <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors duration-300">
                     {product.name}
                   </h3>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-light text-foreground">
+                    <p className="text-sm font-medium text-foreground">
                       {formatPriceLocal(product.price)}
                     </p>
                     {ratings[product.id] && (
@@ -140,7 +140,7 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
                     )}
                   </div>
                   {isOutOfStock && !isComingSoon && (
-                    <div className="pt-2" onClick={(e) => e.preventDefault()}>
+                    <div className="pt-xs" onClick={(e) => e.preventDefault()}>
                       <NotifyMeButton 
                         productId={product.id} 
                         productName={product.name}

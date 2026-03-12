@@ -57,35 +57,35 @@ const FeaturedProductCard = ({ product, pairedProducts, reversed = false }: Feat
   const isOutOfStock = !isComingSoon && product.stock_quantity === 0;
 
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center ${reversed ? 'md:direction-rtl' : ''}`}>
+    <div className={`grid grid-cols-1 md:grid-cols-2 gap-md md:gap-xl items-center ${reversed ? 'md:direction-rtl' : ''}`}>
       {/* Product Image */}
       <Link 
         to={`/product/${product.slug || product.id}`}
-        className={`relative aspect-square bg-muted/30 rounded-lg overflow-hidden group ${reversed ? 'md:order-2' : ''}`}
+        className={`relative aspect-square bg-muted rounded-card overflow-hidden group ${reversed ? 'md:order-2' : ''}`}
       >
         <OptimizedImage 
           src={product.image} 
           alt={product.name}
-          className={`w-full h-full object-contain p-8 transition-transform duration-500 group-hover:scale-105 ${isOutOfStock || isComingSoon ? 'opacity-50' : ''}`}
+          className={`w-full h-full object-contain p-lg transition-transform duration-500 ease-smooth group-hover:scale-[1.03] ${isOutOfStock || isComingSoon ? 'opacity-50' : ''}`}
           aspectRatio="square"
         />
         {isComingSoon ? (
-          <div className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded">
+          <div className="absolute top-md left-md bg-primary text-primary-foreground text-xs font-medium px-md py-sm rounded-lg">
             Coming Soon
           </div>
         ) : isOutOfStock && (
-          <div className="absolute top-4 left-4 bg-foreground text-background text-xs font-medium px-3 py-1 rounded">
+          <div className="absolute top-md left-md bg-foreground text-background text-xs font-medium px-md py-sm rounded-lg">
             Sold Out
           </div>
         )}
       </Link>
 
       {/* Product Info */}
-      <div className={`space-y-6 ${reversed ? 'md:order-1 md:text-right' : ''}`}>
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground uppercase tracking-wider">{product.category}</p>
+      <div className={`space-y-md ${reversed ? 'md:order-1 md:text-right' : ''}`}>
+        <div className="space-y-xs">
+          <p className="text-xs text-muted-foreground uppercase tracking-widest">{product.category}</p>
           <Link to={`/product/${product.slug || product.id}`}>
-            <h3 className="text-2xl md:text-3xl font-light tracking-tight hover:text-muted-foreground transition-colors">
+            <h3 className="text-2xl md:text-3xl font-light tracking-tight hover:text-primary transition-colors duration-300">
               {product.name}
             </h3>
           </Link>
@@ -93,7 +93,7 @@ const FeaturedProductCard = ({ product, pairedProducts, reversed = false }: Feat
         </div>
 
         {truncatedDescription && (
-          <p className="text-muted-foreground leading-relaxed">{truncatedDescription}</p>
+          <p className="text-muted-foreground leading-relaxed font-light">{truncatedDescription}</p>
         )}
 
         {isComingSoon ? (
