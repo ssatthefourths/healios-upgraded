@@ -246,12 +246,12 @@ const BlogPostPage = () => {
             )}
 
             {/* Title */}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-foreground mb-6 leading-tight">
+            <h1 className="cinematic-title mb-md leading-tight">
               {post.title}
             </h1>
 
             {/* Meta Info */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-8">
+            <div className="flex flex-wrap items-center gap-md text-sm text-muted-foreground mb-lg font-light uppercase tracking-widest">
               <span className="flex items-center gap-1.5">
                 <Calendar size={14} />
                 {publishDate}
@@ -267,24 +267,24 @@ const BlogPostPage = () => {
 
             {/* Excerpt */}
             {post.excerpt && (
-              <p className="text-lg text-muted-foreground mb-8 font-light leading-relaxed">
+              <p className="text-lg text-muted-foreground mb-lg font-light leading-relaxed italic border-l-2 border-primary/20 pl-md">
                 {post.excerpt}
               </p>
             )}
 
-            <Separator className="mb-8" />
+            <Separator className="mb-lg" />
 
             {/* Content */}
-            <div className="prose prose-lg max-w-none prose-headings:font-light prose-headings:text-foreground prose-p:text-foreground/80 prose-p:leading-relaxed prose-a:text-primary prose-strong:text-foreground">
+            <div className="prose prose-lg max-w-none prose-headings:font-medium prose-headings:uppercase prose-headings:tracking-widest prose-headings:text-foreground prose-p:text-foreground/80 prose-p:leading-relaxed prose-a:text-primary prose-strong:text-foreground font-light">
               {/* Render content - supports basic markdown-like formatting */}
               <div className="whitespace-pre-wrap text-foreground/80 leading-relaxed">
                 {post.content.split('\n\n').map((paragraph, index) => {
                   // Handle headings
                   if (paragraph.startsWith('## ')) {
-                    return <h2 key={index} className="text-2xl font-light text-foreground mt-8 mb-4">{paragraph.slice(3)}</h2>;
+                    return <h2 key={index} className="text-xl font-medium text-foreground mt-lg mb-md uppercase tracking-widest">{paragraph.slice(3)}</h2>;
                   }
                   if (paragraph.startsWith('### ')) {
-                    return <h3 key={index} className="text-xl font-light text-foreground mt-6 mb-3">{paragraph.slice(4)}</h3>;
+                    return <h3 key={index} className="text-lg font-medium text-foreground mt-md mb-sm uppercase tracking-wider">{paragraph.slice(4)}</h3>;
                   }
                   // Handle lists
                   if (paragraph.startsWith('- ') || paragraph.startsWith('* ')) {

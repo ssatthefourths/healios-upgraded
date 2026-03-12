@@ -135,12 +135,12 @@ const Blog = () => {
 
           {/* Category Filter */}
           {categories.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2 mb-10">
+            <div className="flex flex-wrap justify-center gap-xs mb-lg">
               <Button
                 variant={selectedCategory === "" ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleCategoryChange("")}
-                className="rounded-full"
+                className="rounded-full px-md"
               >
                 All Posts
               </Button>
@@ -150,7 +150,7 @@ const Blog = () => {
                   variant={selectedCategory === category.slug ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleCategoryChange(category.slug)}
-                  className="rounded-full"
+                  className="rounded-full px-md"
                 >
                   {category.name}
                 </Button>
@@ -160,13 +160,13 @@ const Blog = () => {
 
           {/* Loading State */}
           {loading ? (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-xl">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : posts.length === 0 ? (
             /* Empty State */
-            <div className="text-center py-20">
-              <p className="text-muted-foreground text-lg">
+            <div className="text-center py-xl">
+              <p className="text-muted-foreground text-lg font-light">
                 {selectedCategory 
                   ? "No posts found in this category yet."
                   : "No blog posts published yet. Check back soon!"}
@@ -175,7 +175,7 @@ const Blog = () => {
           ) : (
             <>
               {/* Posts Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md md:gap-lg mb-xl">
                 {posts.map((post) => (
                   <BlogPostCard
                     key={post.id}

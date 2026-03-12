@@ -103,8 +103,8 @@ const FAQ = () => {
       
       <Header />
       
-      <main className="max-w-6xl mx-auto px-6 py-12">
-        <div className="flex gap-12">
+      <main className="max-w-6xl mx-auto px-md py-lg">
+        <div className="flex flex-col md:flex-row gap-lg md:gap-xl">
           <FAQSidebar
             categories={FAQ_CATEGORIES.map(c => c.name)}
             activeCategory={activeSection}
@@ -114,27 +114,27 @@ const FAQ = () => {
           
           <div className="flex-1 max-w-3xl">
             {/* Header */}
-            <div className="mb-12">
-              <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">
+            <div className="mb-lg">
+              <p className="text-xs tracking-widest uppercase text-muted-foreground mb-sm">
                 Support
               </p>
-              <h1 className="text-3xl font-light text-foreground mb-2">
+              <h1 className="cinematic-title mb-xs">
                 Frequently Asked Questions
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground font-light">
                 Everything you need to know about our supplements and services
               </p>
             </div>
 
             {/* Search */}
-            <div className="relative mb-10">
+            <div className="relative mb-lg">
               <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Search questions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 py-5 text-base bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-foreground transition-colors placeholder:text-muted-foreground/60"
+                className="pl-md py-lg text-base bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-foreground transition-all duration-300 placeholder:text-muted-foreground/60"
               />
               {searchQuery && (
                 <button
