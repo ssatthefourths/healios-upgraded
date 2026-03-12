@@ -59,11 +59,11 @@ const PersonalizedRecommendations = ({
   }
 
   return (
-    <section className="w-full px-6 mb-16">
+    <section className="w-full px-md mb-xl">
       <div className="container mx-auto max-w-7xl">
-        <h2 className="text-lg font-normal text-foreground mb-8">{title}</h2>
+        <h2 className="text-lg font-medium text-foreground mb-md uppercase tracking-widest">{title}</h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-sm md:gap-md">
           {products.map((product) => {
             const rating = ratings[product.id];
             const productUrl = product.slug
@@ -74,21 +74,21 @@ const PersonalizedRecommendations = ({
               <Link
                 key={product.id}
                 to={productUrl}
-                className="group block space-y-3"
+                className="group block space-y-sm"
               >
                 {/* Product Image */}
-                <div className="relative aspect-square bg-secondary/30 overflow-hidden">
+                <div className="relative aspect-square bg-muted rounded-card overflow-hidden">
                   <OptimizedImage
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-500 ease-smooth group-hover:scale-[1.03]"
                   />
 
                   {/* Recommendation reason badge */}
-                  <div className="absolute bottom-2 left-2 right-2">
+                  <div className="absolute bottom-sm left-sm right-sm">
                     <Badge
                       variant="secondary"
-                      className="text-[10px] bg-background/90 backdrop-blur-sm text-muted-foreground font-normal truncate max-w-full"
+                      className="text-[10px] bg-background/90 backdrop-blur-sm text-muted-foreground font-normal truncate max-w-full rounded-md"
                     >
                       {product.recommendation_reason}
                     </Badge>
@@ -96,14 +96,14 @@ const PersonalizedRecommendations = ({
                 </div>
 
                 {/* Product Info */}
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">
+                <div className="space-y-xs">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">
                     {formatCategory(product.category)}
                   </p>
-                  <h3 className="text-sm font-normal text-foreground line-clamp-2 group-hover:text-muted-foreground transition-colors">
+                  <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-300">
                     {product.name}
                   </h3>
-                  <p className="text-sm font-normal text-foreground">
+                  <p className="text-sm font-medium text-foreground">
                     {formatPrice(product.price)}
                   </p>
 

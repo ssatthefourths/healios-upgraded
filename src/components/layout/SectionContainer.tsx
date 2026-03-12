@@ -12,9 +12,9 @@ const SectionContainer = ({
   className = '' 
 }: SectionContainerProps) => {
   return (
-    <section className={`mb-12 ${className}`}>
+    <section className={`mb-xl ${className}`}>
       {title && (
-        <h2 className="text-xl font-light text-foreground mb-6">
+        <h2 className="text-xl font-medium text-foreground mb-md uppercase tracking-widest">
           {title}
         </h2>
       )}

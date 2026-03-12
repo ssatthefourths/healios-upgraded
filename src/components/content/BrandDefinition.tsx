@@ -8,12 +8,12 @@ import { ArrowRight } from "lucide-react";
 
 const BrandDefinition = () => {
   return (
-    <section className="w-full bg-background px-6 mb-16">
+    <section className="w-full bg-background px-md mb-xl">
       <div className="container mx-auto max-w-6xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-md md:gap-xl items-center">
           {/* Left - Visual element */}
-          <div className="space-y-6">
-            <h2 className="text-lg font-normal text-foreground">
+          <div className="space-y-sm">
+            <h2 className="text-lg font-medium text-foreground uppercase tracking-widest">
               What is Healios?
             </h2>
             <p className="text-sm font-light text-muted-foreground leading-relaxed max-w-md">
@@ -22,11 +22,11 @@ const BrandDefinition = () => {
             </p>
             
             {/* Minimal brand values */}
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap gap-x-md gap-y-xs text-xs text-muted-foreground font-light uppercase tracking-widest">
               <span>UK Made</span>
-              <span>·</span>
+              <span className="opacity-40">/</span>
               <span>Vegan Friendly</span>
-              <span>·</span>
+              <span className="opacity-40">/</span>
               <span>Science-Backed</span>
             </div>
           </div>

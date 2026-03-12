@@ -18,7 +18,7 @@ const PageContainer = ({
   className = '' 
 }: PageContainerProps) => {
   return (
-    <div className={`${maxWidthClasses[maxWidth]} mx-auto px-6 py-12 ${className}`}>
+    <div className={`${maxWidthClasses[maxWidth]} mx-auto px-md py-lg ${className}`}>
       {children}
     </div>
   );
