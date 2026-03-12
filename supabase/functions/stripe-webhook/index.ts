@@ -68,7 +68,27 @@ serve(async (req) => {
       return new Response(`Webhook signature verification failed: ${err.message}`, { status: 400 });
     }
 
-    console.log("Received Stripe webhook event:", event.type);
+    console.log("Received Stripe webhook event:", event.id, event.type);
+
+    // Idempotency check: verify if event has already been processed
+    const { data: existingEvent, error: checkError } = await supabase
+      .from("processed_webhook_events")
+      .select("id")
+      .eq("stripe_event_id", event.id)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error checking for existing event:", checkError);
+      return new Response("Database error during idempotency check", { status: 500 });
+    }
+
+    if (existingEvent) {
+      console.log(`Event ${event.id} already processed, skipping.`);
+      return new Response(JSON.stringify({ received: true, already_processed: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     switch (event.type) {
       case "checkout.session.completed": {
@@ -121,6 +141,19 @@ serve(async (req) => {
 
       default:
         console.log("Unhandled event type:", event.type);
+    }
+
+    // Mark event as processed successfully
+    const { error: markError } = await supabase
+      .from("processed_webhook_events")
+      .insert({
+        stripe_event_id: event.id,
+        event_type: event.type,
+      });
+
+    if (markError) {
+      console.error(`Error marking event ${event.id} as processed:`, markError);
+      // We don't fail the response here as the actual processing succeeded
     }
 
     return new Response(JSON.stringify({ received: true }), {
