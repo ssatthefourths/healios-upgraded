@@ -5,8 +5,8 @@ import OptimizedImage from "@/components/ui/optimized-image";
 
 const LargeHero = () => {
   return (
-    <section className="w-full mb-16 px-6">
-      <div className="w-full aspect-[16/9] mb-6 overflow-hidden relative">
+    <section className="w-full mb-xl px-md">
+      <div className="w-full aspect-[16/9] mb-md overflow-hidden relative rounded-section">
         <OptimizedImage 
           src={heroImage} 
           alt="Premium wellness supplements by Healios" 
@@ -14,16 +14,16 @@ const LargeHero = () => {
           aspectRatio="video"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-        <div className="absolute bottom-8 left-8 right-8 text-white">
-          <h1 className="text-3xl md:text-5xl font-light mb-3">
+        <div className="absolute bottom-md left-md right-md text-white">
+          <h1 className="cinematic-title mb-sm">
             Feel Better. Live Better.
           </h1>
-          <p className="text-lg md:text-xl font-light opacity-90 max-w-2xl mb-4">
+          <p className="text-base md:text-lg font-light opacity-90 max-w-2xl mb-md">
             Science-backed supplements designed to help you sleep deeper, think clearer, and thrive every day.
           </p>
           <Link 
             to="/wellness-quiz" 
-            className="inline-flex items-center gap-2 bg-white text-foreground px-5 py-2.5 text-sm font-medium hover:bg-white/90 transition-colors duration-200 rounded-sm"
+            className="inline-flex items-center gap-2 bg-white text-foreground px-md py-sm text-sm font-medium hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 rounded-lg"
           >
             <span>Find Your Perfect Supplement</span>
             <ArrowRight size={14} />
@@ -32,16 +32,16 @@ const LargeHero = () => {
       </div>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-normal text-foreground mb-1">
+          <h2 className="text-sm font-normal text-foreground mb-xs uppercase tracking-widest">
             Premium Wellness
           </h2>
-          <p className="text-sm font-light text-foreground">
+          <p className="text-sm font-light text-muted-foreground">
             Clean ingredients, proven research, real results
           </p>
         </div>
         <Link 
           to="/category/all" 
-          className="inline-flex items-center gap-1 text-sm font-light text-foreground hover:text-foreground/80 transition-colors duration-200"
+          className="inline-flex items-center gap-1 text-sm font-light text-foreground hover:translate-x-1 transition-transform duration-300"
         >
           <span>Shop All Products</span>
           <ArrowRight size={12} />
