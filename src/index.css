@@ -6,69 +6,79 @@
 
 @layer base {
   :root {
-    /* Core neutral palette */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
+    /* Atelier Preset: Warm Neutrals & Refined Palette */
+    --background: 30 20% 98%; /* Warm Paper/Ivory */
+    --foreground: 240 5% 15%; /* Soft Charcoal */
     
     /* Status bar */
     --status-bar: 0 0% 0%;
     --status-bar-foreground: 0 0% 100%;
     
     /* Navigation */
-    --nav-background: 0 0% 100%;
-    --nav-foreground: 0 0% 20%;
-    --nav-hover: 0 0% 5%;
+    --nav-background: 30 20% 98%;
+    --nav-foreground: 240 5% 25%;
+    --nav-hover: 240 5% 5%;
     
     /* Interactive elements */
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --primary-hover: 0 0% 15%;
+    --primary: 240 5% 15%;
+    --primary-foreground: 30 20% 98%;
+    --primary-hover: 240 5% 25%;
     
     /* Subtle elements */
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 20%;
+    --secondary: 30 10% 94%;
+    --secondary-foreground: 240 5% 25%;
     
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 30 10% 94%;
+    --muted-foreground: 240 5% 45%;
     
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
+    --accent: 30 15% 92%;
+    --accent-foreground: 240 5% 15%;
     
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 0% 9%;
+    --border: 30 10% 88%;
+    --input: 30 10% 88%;
+    --ring: 240 5% 15%;
     
     /* Cards and surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
+    --card-foreground: 240 5% 15%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover-foreground: 240 5% 15%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     
-    --radius: 0.375rem;
+    /* Fluid Typography (clamp) */
+    --fs-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+    --fs-sm: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
+    --fs-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    --fs-lg: clamp(1.125rem, 1.05rem + 0.375vw, 1.25rem);
+    --fs-xl: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+    --fs-xxl: clamp(2.5rem, 5vw, 4.5rem); /* Cinematic titles */
     
-    /* Transitions */
-    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Fluid Spacing (clamp) */
+    --space-xs: clamp(0.25rem, 0.2rem + 0.25vw, 0.5rem);
+    --space-sm: clamp(0.5rem, 0.4rem + 0.5vw, 1rem);
+    --space-md: clamp(1rem, 0.8rem + 1vw, 2rem);
+    --space-lg: clamp(2rem, 1.6rem + 2vw, 4rem);
+    --space-xl: clamp(4rem, 3.2rem + 4vw, 8rem);
+
+    --radius: 1rem; /* Consistent 1rem for small UI */
+    --radius-card: 1.5rem;
+    --radius-section: 2rem;
+    
+    /* Transitions (GSAP standards) */
+    --transition-smooth: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --sidebar-background: 0 0% 98%;
-
+    --sidebar-background: 30 10% 96%;
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-border: 30 10% 90%;
+    --sidebar-ring: 240 5% 15%;
   }
 
   .dark {
@@ -127,5 +137,27 @@
 
   body {
     @apply bg-background text-foreground font-light;
+  }
+
+  /* Global Noise Overlay for Texture (0.03 opacity) */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    opacity: 0.03;
+    z-index: 9999;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3%3Ffilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  /* Cinematic Typography */
+  .cinematic-title {
+    font-size: var(--fs-xxl);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-weight: 200;
   }
 }

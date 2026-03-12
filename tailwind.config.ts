@@ -76,6 +76,23 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        card: "var(--radius-card)",
+        section: "var(--radius-section)",
+      },
+      fontSize: {
+        xs: "var(--fs-xs)",
+        sm: "var(--fs-sm)",
+        base: "var(--fs-base)",
+        lg: "var(--fs-lg)",
+        xl: "var(--fs-xl)",
+        xxl: "var(--fs-xxl)",
+      },
+      spacing: {
+        xs: "var(--space-xs)",
+        sm: "var(--space-sm)",
+        md: "var(--space-md)",
+        lg: "var(--space-lg)",
+        xl: "var(--space-xl)",
       },
       keyframes: {
         "accordion-down": {
