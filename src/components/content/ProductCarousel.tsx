@@ -13,6 +13,7 @@ import StarRating from "@/components/product/StarRating";
 import { useProductRatings } from "@/hooks/useProductRatings";
 import OptimizedImage from "@/components/ui/optimized-image";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useGsapReveal } from "@/hooks/useGsapReveal";
 
 interface Product {
   id: string;
@@ -70,9 +71,11 @@ const ProductCarousel = () => {
     return null;
   }
 
+  const staggerReveal = useGsapReveal({ direction: "up", distance: 30, stagger: 0.1, duration: 0.8 });
+
   return (
-    <section className="w-full mb-xl px-md">
-      <div className="mb-md">
+    <section className="w-full mb-[var(--space-xl)] px-md">
+      <div className="mb-[var(--space-md)]">
         <h2 className="text-lg font-medium text-foreground uppercase tracking-widest">Bestsellers</h2>
         <p className="text-sm font-light text-muted-foreground">Our most-loved supplements</p>
       </div>
@@ -92,10 +95,10 @@ const ProductCarousel = () => {
               key={product.id}
               className="basis-1/2 md:basis-1/3 lg:basis-1/4 pr-2 md:pr-4"
             >
-              <Link to={`/product/${product.id}`} className="group block">
-                <Card className="border-none shadow-none bg-transparent">
-                  <CardContent className="p-0">
-                    <div className="aspect-square mb-sm overflow-hidden bg-muted rounded-card relative">
+              <Link to={`/product/${product.id}`} className="group block h-full">
+                <Card className="border-none shadow-none bg-transparent h-full">
+                  <CardContent className="p-0 h-full flex flex-col">
+                    <div className="aspect-square mb-[var(--space-sm)] overflow-hidden bg-muted rounded-[var(--radius-card)] shadow-[var(--shadow-ambient)] group-hover:shadow-[var(--shadow-ambient-hover)] relative transition-all duration-500">
                       <OptimizedImage
                         src={product.image}
                         alt={product.name}

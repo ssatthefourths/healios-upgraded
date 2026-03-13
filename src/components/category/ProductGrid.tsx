@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo } from "react";
 import OptimizedImage from "@/components/ui/optimized-image";
 import { Bell } from "lucide-react";
+import { useGsapReveal } from "@/hooks/useGsapReveal";
 
 interface Product {
   id: string;
@@ -70,19 +71,21 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
     return category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
+  const staggerReveal = useGsapReveal({ direction: "up", distance: 30, stagger: 0.1, duration: 0.8 });
+
   return (
-    <section className="w-full px-md mb-xl">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-md md:gap-lg">
+    <section className="w-full px-md mb-[var(--space-xl)]">
+      <div ref={staggerReveal} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[var(--space-md)] lg:gap-[var(--space-lg)]">
         {products.map((product) => {
           const isComingSoon = product.is_coming_soon;
           const isOutOfStock = !isComingSoon && product.stock_quantity === 0;
           return (
-          <Link key={product.id} to={`/product/${product.id}`} className="group block">
+          <Link key={product.id} to={`/product/${product.id}`} className="group block h-full">
             <Card 
-              className="border-none shadow-none bg-transparent cursor-pointer"
+              className="border-none shadow-none bg-transparent cursor-pointer h-full"
             >
-              <CardContent className="p-0">
-                <div className="aspect-square mb-sm overflow-hidden bg-muted rounded-card relative">
+              <CardContent className="p-0 h-full flex flex-col">
+                <div className="aspect-square mb-[var(--space-sm)] overflow-hidden bg-muted rounded-[var(--radius-card)] shadow-[var(--shadow-ambient)] group-hover:shadow-[var(--shadow-ambient-hover)] relative transition-all duration-500">
                   <OptimizedImage
                     src={product.image}
                     alt={product.name}
