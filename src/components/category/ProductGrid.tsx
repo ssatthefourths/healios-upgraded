@@ -33,6 +33,7 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
   const productIds = useMemo(() => products.map(p => p.id), [products]);
   const { ratings } = useProductRatings(productIds);
   const { formatPrice } = useCurrency();
+  const staggerReveal = useGsapReveal({ direction: "up", distance: 30, stagger: 0.1, duration: 0.8 });
 
   if (isLoading) {
     return (
@@ -70,8 +71,6 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
   const formatCategory = (category: string) => {
     return category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
-
-  const staggerReveal = useGsapReveal({ direction: "up", distance: 30, stagger: 0.1, duration: 0.8 });
 
   return (
     <section className="w-full px-md mb-[var(--space-xl)]">

@@ -45,6 +45,7 @@ const ProductCarousel = () => {
   const productIds = useMemo(() => products?.map(p => p.id) || [], [products]);
   const { ratings } = useProductRatings(productIds);
   const { formatPrice } = useCurrency();
+  const staggerReveal = useGsapReveal({ direction: "up", distance: 30, stagger: 0.1, duration: 0.8 });
 
   if (isLoading) {
     return (
@@ -70,8 +71,6 @@ const ProductCarousel = () => {
   if (!products || products.length === 0) {
     return null;
   }
-
-  const staggerReveal = useGsapReveal({ direction: "up", distance: 30, stagger: 0.1, duration: 0.8 });
 
   return (
     <section className="w-full mb-[var(--space-xl)] px-md">
