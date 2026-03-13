@@ -5,10 +5,10 @@ import OptimizedImage from "@/components/ui/optimized-image";
 
 const FiftyFiftySection = () => {
   return (
-    <section className="w-full mb-xl px-md">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+    <section className="w-full mb-[var(--space-xl)] px-md">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-md)]">
         <Link to="/wellness-drive" className="block group">
-          <div className="w-full aspect-square mb-sm overflow-hidden bg-muted rounded-card">
+          <div className="w-full aspect-square mb-[var(--space-sm)] overflow-hidden bg-muted rounded-[var(--radius-card)] shadow-[var(--shadow-ambient)] group-hover:shadow-[var(--shadow-ambient-hover)] transition-shadow duration-500">
             <OptimizedImage 
               src={wellnessHeroImage} 
               alt="Women's Wellness Drive - diverse women celebrating wellness"
@@ -18,7 +18,7 @@ const FiftyFiftySection = () => {
             />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-xs uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-foreground mb-[var(--space-xs)] uppercase tracking-wider">
               Women's Wellness Drive
             </h3>
             <p className="text-sm font-light text-muted-foreground">
@@ -29,7 +29,7 @@ const FiftyFiftySection = () => {
 
         <div>
           <Link to="/category/beauty" className="block group">
-            <div className="w-full aspect-square mb-sm overflow-hidden rounded-card">
+            <div className="w-full aspect-square mb-[var(--space-sm)] overflow-hidden rounded-[var(--radius-card)] shadow-[var(--shadow-ambient)] group-hover:shadow-[var(--shadow-ambient-hover)] transition-shadow duration-500">
               <OptimizedImage 
                 src={haloGlowCollagen} 
                 alt="Halo Glow Collagen Powder" 
@@ -40,7 +40,7 @@ const FiftyFiftySection = () => {
             </div>
           </Link>
           <div className="">
-            <h3 className="text-sm font-medium text-foreground mb-xs uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-foreground mb-[var(--space-xs)] uppercase tracking-wider">
               Halo Glow Collagen Powder
             </h3>
             <p className="text-sm font-light text-muted-foreground">

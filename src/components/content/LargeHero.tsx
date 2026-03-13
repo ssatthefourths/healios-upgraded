@@ -5,8 +5,8 @@ import OptimizedImage from "@/components/ui/optimized-image";
 
 const LargeHero = () => {
   return (
-    <section className="w-full mb-xl px-md">
-      <div className="w-full aspect-[16/9] mb-md overflow-hidden relative rounded-section">
+    <section className="w-full mb-[var(--space-xl)] px-md">
+      <div className="w-full aspect-[16/9] mb-[var(--space-md)] overflow-hidden relative rounded-[var(--radius-section)] shadow-[var(--shadow-ambient)]">
         <OptimizedImage 
           src={heroImage} 
           alt="Premium wellness supplements by Healios" 
@@ -14,8 +14,8 @@ const LargeHero = () => {
           aspectRatio="video"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-        <div className="absolute bottom-md left-md right-md text-white">
-          <h1 className="cinematic-title mb-sm">
+        <div className="absolute bottom-[var(--space-lg)] left-[var(--space-lg)] right-[var(--space-lg)] text-white">
+          <h1 className="cinematic-title font-serif mb-[var(--space-sm)]">
             Feel Better. Live Better.
           </h1>
           <p className="text-base md:text-lg font-light opacity-90 max-w-2xl mb-md">
@@ -23,7 +23,7 @@ const LargeHero = () => {
           </p>
           <Link 
             to="/wellness-quiz" 
-            className="inline-flex items-center gap-2 bg-white text-foreground px-md py-sm text-sm font-medium hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 rounded-lg"
+            className="inline-flex items-center gap-2 bg-white text-foreground px-md py-sm text-sm font-medium premium-btn rounded-[var(--radius)]"
           >
             <span>Find Your Perfect Supplement</span>
             <ArrowRight size={14} />
