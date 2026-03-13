@@ -67,6 +67,10 @@
     --radius-card: 1.5rem;
     --radius-section: 2rem;
     
+    /* Ambient Shadows (Atelier Preset) */
+    --shadow-ambient: 0 10px 40px -10px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
+    --shadow-ambient-hover: 0 20px 50px -15px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+    
     /* Transitions (GSAP standards) */
     --transition-smooth: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -159,5 +163,21 @@
     line-height: 1.1;
     letter-spacing: -0.02em;
     font-weight: 200;
+  }
+
+  /* Micro-interactions: Premium Buttons */
+  .premium-btn {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                background-color 0.2s ease-out;
+  }
+  
+  .premium-btn:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-ambient-hover);
+  }
+  
+  .premium-btn:active {
+    transform: scale(0.98);
   }
 }
