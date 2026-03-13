@@ -28,7 +28,7 @@ const Index = () => {
       
       <Header />
       
-      <main id="main-content" className="pt-[var(--space-xl)] pb-[var(--space-2xl)] flex flex-col gap-[var(--space-xl)]">
+      <main id="main-content" className="pb-[var(--space-2xl)] flex flex-col gap-[var(--space-xl)]">
         <FiftyFiftySection />
         <ProductCarousel />
         <PersonalizedRecommendations title="Recommended for You" />

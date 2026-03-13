@@ -183,7 +183,11 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
             <div
               key={item.name}
               className="relative"
-              onMouseEnter={() => setActiveDropdown(item.name)}
+              onMouseEnter={() => {
+                if (item.submenuItems.length > 0 || item.images.length > 0) {
+                  setActiveDropdown(item.name);
+                }
+              }}
               onMouseLeave={() => setActiveDropdown(null)}
             >
               <Link

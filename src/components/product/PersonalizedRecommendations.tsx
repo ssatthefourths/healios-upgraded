@@ -6,6 +6,7 @@ import OptimizedImage from "@/components/ui/optimized-image";
 import StarRating from "@/components/product/StarRating";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { useGsapReveal } from "@/hooks/useGsapReveal";
 
 interface PersonalizedRecommendationsProps {
   currentProductId?: string;
@@ -34,6 +35,8 @@ const PersonalizedRecommendations = ({
       .join(" ");
   };
 
+  const staggerReveal = useGsapReveal({ direction: "up", distance: 30, stagger: 0.1, duration: 0.8 });
+
   if (isLoading) {
     return (
       <section className="w-full px-6 mb-16">
@@ -59,11 +62,11 @@ const PersonalizedRecommendations = ({
   }
 
   return (
-    <section className="w-full px-md mb-xl">
+    <section className="w-full px-md mb-[var(--space-xl)]">
       <div className="container mx-auto max-w-7xl">
-        <h2 className="text-lg font-medium text-foreground mb-md uppercase tracking-widest">{title}</h2>
+        <h2 className="text-lg font-medium text-foreground mb-[var(--space-md)] uppercase tracking-widest">{title}</h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-sm md:gap-md">
+        <div ref={staggerReveal} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-[var(--space-sm)] md:gap-[var(--space-md)]">
           {products.map((product) => {
             const rating = ratings[product.id];
             const productUrl = product.slug
@@ -74,10 +77,10 @@ const PersonalizedRecommendations = ({
               <Link
                 key={product.id}
                 to={productUrl}
-                className="group block space-y-sm"
+                className="group block space-y-[var(--space-xs)]"
               >
                 {/* Product Image */}
-                <div className="relative aspect-square bg-muted rounded-card overflow-hidden">
+                <div className="relative aspect-square bg-muted rounded-[var(--radius-card)] shadow-[var(--shadow-ambient)] group-hover:shadow-[var(--shadow-ambient-hover)] overflow-hidden transition-all duration-500">
                   <OptimizedImage
                     src={product.image}
                     alt={product.name}
@@ -85,7 +88,7 @@ const PersonalizedRecommendations = ({
                   />
 
                   {/* Recommendation reason badge */}
-                  <div className="absolute bottom-sm left-sm right-sm">
+                  <div className="absolute bottom-[var(--space-sm)] left-[var(--space-sm)] right-[var(--space-sm)]">
                     <Badge
                       variant="secondary"
                       className="text-[10px] bg-background/90 backdrop-blur-sm text-muted-foreground font-normal truncate max-w-full rounded-md"
@@ -96,8 +99,8 @@ const PersonalizedRecommendations = ({
                 </div>
 
                 {/* Product Info */}
-                <div className="space-y-xs">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                <div className="space-y-[var(--space-xs)]">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
                     {formatCategory(product.category)}
                   </p>
                   <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-300">
