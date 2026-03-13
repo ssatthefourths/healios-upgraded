@@ -33,7 +33,13 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
   const productIds = useMemo(() => products.map(p => p.id), [products]);
   const { ratings } = useProductRatings(productIds);
   const { formatPrice } = useCurrency();
-  const staggerReveal = useGsapReveal({ direction: "up", distance: 30, stagger: 0.1, duration: 0.8 });
+  const staggerReveal = useGsapReveal({ 
+    direction: "up", 
+    distance: 30, 
+    stagger: 0.1, 
+    duration: 0.8,
+    triggerDeps: [products.length]
+  });
 
   if (isLoading) {
     return (

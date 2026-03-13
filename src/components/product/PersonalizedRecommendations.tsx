@@ -35,7 +35,13 @@ const PersonalizedRecommendations = ({
       .join(" ");
   };
 
-  const staggerReveal = useGsapReveal({ direction: "up", distance: 30, stagger: 0.1, duration: 0.8 });
+  const staggerReveal = useGsapReveal({ 
+    direction: "up", 
+    distance: 30, 
+    stagger: 0.1, 
+    duration: 0.8,
+    triggerDeps: [products?.length || 0]
+  });
 
   if (isLoading) {
     return (

@@ -9,6 +9,7 @@ type RevealOptions = {
   threshold?: number;
   stagger?: number;
   ease?: string;
+  triggerDeps?: any[];
 };
 
 export const useGsapReveal = (options: RevealOptions = {}) => {
@@ -22,6 +23,7 @@ export const useGsapReveal = (options: RevealOptions = {}) => {
     threshold = 0.1,
     stagger = 0,
     ease = "power3.out",
+    triggerDeps = [],
   } = options;
 
   useEffect(() => {
@@ -95,7 +97,7 @@ export const useGsapReveal = (options: RevealOptions = {}) => {
     }, element);
 
     return () => ctx.revert();
-  }, [direction, distance, duration, delay, threshold, stagger, ease]);
+  }, [direction, distance, duration, delay, threshold, stagger, ease, ...triggerDeps]);
 
   return ref;
 };

@@ -26,6 +26,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
   const navigate = useNavigate();
   const { query, setQuery, results, isLoading, clearSearch } = useProductSearch();
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [hoveredSubItem, setHoveredSubItem] = useState<{name: string, href: string, image?: string, description?: string} | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [offCanvasType, setOffCanvasType] = useState<'favorites' | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -36,6 +37,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
   // Close dropdowns on scroll
   const closeAllDropdowns = useCallback(() => {
     setActiveDropdown(null);
+    setHoveredSubItem(null);
     setIsSearchOpen(false);
   }, []);
 
@@ -104,13 +106,13 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
       name: "Shop", 
       href: "/category/all",
       submenuItems: [
-        { name: "All Products", href: "/category/all" },
-        { name: "Vitamins & Minerals", href: "/category/vitamins-minerals" },
-        { name: "Adaptogens", href: "/category/adaptogens" },
-        { name: "Digestive Health", href: "/category/digestive-health" },
-        { name: "Sleep & Relaxation", href: "/category/sleep-relaxation" },
-        { name: "Subscribe & Save", href: "/subscribe" },
-        { name: "Take the Wellness Quiz", href: "/wellness-quiz" }
+        { name: "All Products", href: "/category/all", image: magnesiumImage, description: "Discover our full range of scientifically-backed supplements." },
+        { name: "Vitamins & Minerals", href: "/category/vitamins-minerals", image: magnesiumImage, description: "Essential micronutrients to support your daily metabolic functions." },
+        { name: "Adaptogens", href: "/category/adaptogens", image: ashwagandhaImage, description: "Powerful herbs to help your body manage stress and maintain balance." },
+        { name: "Digestive Health", href: "/category/digestive-health", image: probioticsImage, description: "Support your gut microbiome for better immunity and mood." },
+        { name: "Sleep & Relaxation", href: "/category/sleep-relaxation", image: "/products/sleep-support.png", description: "Natural solutions for deep, restorative sleep and daily calm." },
+        { name: "Subscribe & Save", href: "/subscribe", image: "/products/bundles.png", description: "Join our community and save up to 25% on your monthly essentials." },
+        { name: "Take the Wellness Quiz", href: "/wellness-quiz", image: "/wellness-quiz-bg.jpg", description: "Get a personalized supplement plan tailored to your unique goals." }
       ],
       images: [
         { src: magnesiumImage, alt: "Vitamins & Minerals Collection", label: "Vitamins", href: "/category/vitamins-minerals" },
@@ -121,9 +123,9 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
       name: "New In", 
       href: "/category/new-in",
       submenuItems: [
-        { name: "Latest Arrivals", href: "/category/new-in" },
-        { name: "Best Sellers", href: "/category/best-sellers" },
-        { name: "Bundles & Stacks", href: "/category/bundles" }
+        { name: "Latest Arrivals", href: "/category/new-in", image: "/products/new-supplement.png", description: "Explore our newest innovations in nutritional science." },
+        { name: "Best Sellers", href: "/category/best-sellers", image: magnesiumImage, description: "Our community's most-loved and trusted wellness essentials." },
+        { name: "Bundles & Stacks", href: "/category/bundles", image: "/products/bundles.png", description: "Curated combinations for targeted health and wellness goals." }
       ],
       images: [
         { src: probioticsImage, alt: "New Arrivals", label: "Shop New", href: "/category/new-in" }
@@ -132,18 +134,22 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
     { 
       name: "Wellness Drive", 
       href: "/wellness-drive",
-      submenuItems: [],
+      submenuItems: [
+        { name: "Community Stories", href: "/wellness-drive", image: "/wellness-drive-stories.jpg", description: "Real wellness journeys shared by women in our community." },
+        { name: "Submit Your Story", href: "/wellness-drive#submit", image: "/wellness-drive-submit.jpg", description: "Share your daily routine and inspire others on their path." },
+        { name: "Wellness Journal", href: "/blog", image: "/wellness-journal.jpg", description: "Expert advice and insights for your holistic health journey." }
+      ],
       images: []
     },
     { 
       name: "About", 
       href: "/about/our-story",
       submenuItems: [
-        { name: "Our Story", href: "/about/our-story" },
-        { name: "Quality & Sourcing", href: "/about/quality-sourcing" },
-        { name: "Product Guide", href: "/about/product-guide" },
-        { name: "Customer Care", href: "/about/customer-care" },
-        { name: "Wholesale Partners", href: "/about/wholesale" }
+        { name: "Our Story", href: "/about/our-story", image: "/founders.png", description: "The vision and values behind The Healios Health Co." },
+        { name: "Quality & Sourcing", href: "/about/quality-sourcing", image: "/quality-sourcing.jpg", description: "Our commitment to the highest purity and ethical standards." },
+        { name: "Product Guide", href: "/about/product-guide", image: "/product-guide.jpg", description: "Everything you need to know about our range and benefits." },
+        { name: "Customer Care", href: "/about/customer-care", image: "/customer-care.jpg", description: "We're here to support you at every stage of your journey." },
+        { name: "Wholesale Partners", href: "/about/wholesale", image: "/wholesale.jpg", description: "Bring premium wellness to your studio, clinic, or storefront." }
       ],
       images: [
         { src: "/founders.png", alt: "Our Story", label: "Read our story", href: "/about/our-story" }
@@ -186,6 +192,10 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
               onMouseEnter={() => {
                 if (item.submenuItems.length > 0 || item.images.length > 0) {
                   setActiveDropdown(item.name);
+                  // Set initial hovered subitem if available
+                  if (item.submenuItems.length > 0) {
+                    setHoveredSubItem(item.submenuItems[0]);
+                  }
                 }
               }}
               onMouseLeave={() => setActiveDropdown(null)}
@@ -357,26 +367,35 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
         </div>
       </div>
 
-      {/* Full width dropdown - exclude admin since it has its own dropdown */}
       {activeDropdown && activeDropdown !== 'admin' && (
         <div 
-          className="absolute top-full left-0 right-0 bg-nav border-b border-border z-[60]"
+          key={activeDropdown}
+          className="absolute top-full left-0 right-0 bg-nav border-b border-border z-[60] shadow-xl overflow-hidden"
           onMouseEnter={() => setActiveDropdown(activeDropdown)}
           onMouseLeave={() => setActiveDropdown(null)}
         >
-          <div className="px-6 py-8">
-            <div className="flex justify-between w-full">
+          <div className="mx-auto max-w-7xl px-8 h-[450px]">
+            <div className="flex justify-between w-full h-full py-12 gap-16">
               {/* Left side - Menu items */}
-              <div className="flex-1">
-                <ul className="space-y-2">
+              <div className="w-1/4 flex flex-col justify-start">
+                <h3 className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-6 font-medium">Browse</h3>
+                <ul className="space-y-1">
                    {navItems
                      .find(item => item.name === activeDropdown)
                      ?.submenuItems.map((subItem, index) => (
                       <li key={index}>
                         <Link 
                           to={subItem.href}
-                          className="text-nav-foreground hover:text-nav-hover transition-colors duration-200 text-sm font-light block py-2"
+                          className={`text-lg transition-all duration-300 block py-2 relative group flex items-center gap-2 ${
+                            hoveredSubItem?.name === subItem.name 
+                              ? "text-nav-hover translate-x-1 font-normal" 
+                              : "text-nav-foreground/60 font-light hover:text-nav-hover hover:translate-x-1"
+                          }`}
+                          onMouseEnter={() => setHoveredSubItem(subItem)}
                         >
+                          <span className={`w-1.5 h-1.5 rounded-full bg-primary transition-opacity duration-300 ${
+                            hoveredSubItem?.name === subItem.name ? "opacity-100" : "opacity-0"
+                          }`}></span>
                           {subItem.name}
                         </Link>
                       </li>
@@ -384,23 +403,60 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
                 </ul>
               </div>
 
-              {/* Right side - Images */}
-              <div className="flex space-x-6">
-                {navItems
-                  .find(item => item.name === activeDropdown)
-                  ?.images.map((image, index) => (
-                    <Link key={index} to={image.href} className="w-[400px] h-[280px] cursor-pointer group relative overflow-hidden block">
+              {/* Middle - Featured dynamic content */}
+              <div className="flex-1 flex gap-8">
+                <div className="flex-1 relative rounded-xl overflow-hidden group/img h-full border border-border/50 shadow-ambient transition-all duration-500">
+                  {/* Dynamic Image Overlay */}
+                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover/img:opacity-100 transition-opacity duration-500 z-10 pointer-events-none"></div>
+                  
+                  {hoveredSubItem ? (
+                    <div className="relative w-full h-full overflow-hidden animate-in fade-in zoom-in-95 duration-500">
                       <OptimizedImage 
-                        src={image.src}
-                        alt={image.alt}
-                        className="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                        src={hoveredSubItem.image}
+                        alt={hoveredSubItem.name}
+                        className="w-full h-full object-cover transition-transform duration-[1.5s] scale-100 group-hover/img:scale-105"
+                        key={hoveredSubItem.name} // Key forces transition on change
                       />
-                      <div className="absolute bottom-2 left-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-black text-xs font-light flex items-center gap-1">
-                        <span>{image.label}</span>
-                        <ArrowRight size={12} />
+                      <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white">
+                        <p className="text-[10px] uppercase tracking-widest mb-2 opacity-80">Featured</p>
+                        <h4 className="text-2xl font-serif mb-2">{hoveredSubItem.name}</h4>
+                        <p className="text-xs font-light opacity-90 max-w-sm mb-4 leading-relaxed">{hoveredSubItem.description}</p>
+                        <Link to={hoveredSubItem.href} className="inline-flex items-center gap-2 text-xs font-medium hover:underline">
+                          Explore Now <ArrowRight size={14} />
+                        </Link>
                       </div>
+                    </div>
+                  ) : (
+                    <div className="w-full h-full bg-secondary flex items-center justify-center p-12 text-center animate-in fade-in duration-500">
+                      <div className="max-w-xs">
+                        <h4 className="text-xl font-serif mb-4 text-foreground/80">Experience the Healios Difference</h4>
+                        <p className="text-sm text-muted-foreground font-light leading-relaxed">
+                          Discover our curated collection of premium wellness essentials designed to elevate your daily routine.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Rightmost - Static or secondary featured */}
+                <div className="w-[300px] flex flex-col gap-6 h-full">
+                  <div className="flex-1 bg-muted/30 rounded-xl p-8 flex flex-col justify-end group cursor-pointer hover:bg-muted/50 transition-colors duration-300">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-4">Latest Arrivals</p>
+                    <h4 className="text-xl font-serif mb-2">New Season Essentials</h4>
+                    <Link to="/category/new-in" className="text-xs font-medium flex items-center gap-2">
+                       Shop the Collection <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </Link>
-                  ))}
+                  </div>
+                  <div className="h-1/3 bg-background border border-border rounded-xl p-6 flex items-center justify-between group cursor-pointer hover:border-primary/30 transition-colors duration-300">
+                    <div>
+                      <h4 className="text-sm font-medium mb-1">Wellness Quiz</h4>
+                      <p className="text-[10px] text-muted-foreground">Find your perfect match</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                      <ArrowRight size={16} className="text-primary" />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
