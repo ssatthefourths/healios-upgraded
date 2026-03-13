@@ -2,8 +2,11 @@ import heroImage from "@/assets/hero-image.png";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import OptimizedImage from "@/components/ui/optimized-image";
+import { useGsapReveal } from "@/hooks/useGsapReveal";
 
 const LargeHero = () => {
+  const contentReveal = useGsapReveal({ direction: "up", distance: 30, duration: 1, ease: "power3.out" });
+
   return (
     <section className="w-full mb-[var(--space-xl)] px-md">
       <div className="w-full aspect-[16/9] mb-[var(--space-md)] overflow-hidden relative rounded-[var(--radius-section)] shadow-[var(--shadow-ambient)]">
@@ -14,7 +17,7 @@ const LargeHero = () => {
           aspectRatio="video"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-        <div className="absolute bottom-[var(--space-lg)] left-[var(--space-lg)] right-[var(--space-lg)] text-white">
+        <div ref={contentReveal} className="absolute bottom-[var(--space-lg)] left-[var(--space-lg)] right-[var(--space-lg)] text-white">
           <h1 className="cinematic-title font-serif mb-[var(--space-sm)]">
             Feel Better. Live Better.
           </h1>

@@ -2,11 +2,14 @@ import haloGlowCollagen from "@/assets/halo-glow-collagen.png";
 import wellnessHeroImage from "@/assets/womens-wellness-hero.jpg";
 import { Link } from "react-router-dom";
 import OptimizedImage from "@/components/ui/optimized-image";
+import { useGsapReveal } from "@/hooks/useGsapReveal";
 
 const FiftyFiftySection = () => {
+  const staggerReveal = useGsapReveal({ direction: "up", distance: 40, stagger: 0.2, duration: 0.8 });
+
   return (
     <section className="w-full mb-[var(--space-xl)] px-md">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-md)]">
+      <div ref={staggerReveal} className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-md)]">
         <Link to="/wellness-drive" className="block group">
           <div className="w-full aspect-square mb-[var(--space-sm)] overflow-hidden bg-muted rounded-[var(--radius-card)] shadow-[var(--shadow-ambient)] group-hover:shadow-[var(--shadow-ambient-hover)] transition-shadow duration-500">
             <OptimizedImage 
