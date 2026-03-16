@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Block admin and internal areas
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /api/private
+Disallow: /internal
+
+# Allow bots to crawl all public content
+# FAQ, products, shop, and structured data are explicitly allowed
+
+Sitemap: https://www.thehealios.com/sitemap.xml

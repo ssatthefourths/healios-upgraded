@@ -1,0 +1,1 @@
+import{j as e}from"./index-DJlfIAqU.js";const n=({title:t,subtitle:r,centered:s=!1,className:a=""})=>e.jsxs("header",{className:`mb-8 ${s?"text-center":""} ${a}`,children:[e.jsx("h1",{className:"text-3xl font-light text-foreground mb-2",children:t}),r&&e.jsx("p",{className:"text-muted-foreground",children:r})]});export{n as P};

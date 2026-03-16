@@ -1,0 +1,1 @@
+import{j as s}from"./index-DJlfIAqU.js";const o=({title:e,children:t,className:r=""})=>s.jsxs("section",{className:`mb-xl ${r}`,children:[e&&s.jsx("h2",{className:"text-xl font-medium text-foreground mb-md uppercase tracking-widest",children:e}),t]});export{o as S};
