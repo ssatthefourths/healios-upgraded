@@ -121,7 +121,7 @@ export const cloudflare = {
         localStorage.setItem('cf_session', data.session);
         return { data, error: null };
       }
-      return { data: null, error: data };
+      return { data: null, error: { message: data.error || 'Invalid email or password' } };
     },
 
     async signUp({ email, password, options }: any) {
@@ -140,7 +140,7 @@ export const cloudflare = {
         localStorage.setItem('cf_session', data.session);
         return { data, error: null };
       }
-      return { data: null, error: data };
+      return { data: null, error: { message: data.error || 'Signup failed' } };
     },
 
     async signOut() {
