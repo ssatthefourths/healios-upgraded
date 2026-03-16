@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js'; // Keep types for now to avoid breaking everywhere
+import { cloudflare as supabase } from '@/integrations/cloudflare/client';
 import { setAnalyticsUserId, clearAnalyticsUserId, trackLogin, trackSignUp } from '@/lib/analytics';
 import { trackClarityEvent, tagClaritySession } from '@/lib/clarity';
 
