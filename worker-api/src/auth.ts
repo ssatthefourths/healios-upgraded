@@ -87,6 +87,27 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
     }), { headers: corsHeaders });
   }
 
+  // GET /auth/verify
+  if (path === '/auth/verify' && method === 'GET') {
+    const token = request.headers.get('Authorization')?.split(' ').pop();
+    if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+
+    const userId = await env.SESSIONS.get(token);
+    if (!userId) return new Response(JSON.stringify({ error: 'Invalid session' }), { status: 401, headers: corsHeaders });
+
+    const user = await env.DB.prepare(
+      'SELECT id, email FROM users WHERE id = ?'
+    ).bind(userId).first<any>();
+
+    const profile = await env.DB.prepare(
+      'SELECT first_name, last_name FROM profiles WHERE id = ?'
+    ).bind(userId).first<any>();
+
+    return new Response(JSON.stringify({ 
+      user: { id: user.id, email: user.email, ...profile } 
+    }), { headers: corsHeaders });
+  }
+
   return new Response('Auth endpoint not found', { status: 404, headers: corsHeaders });
 }
 

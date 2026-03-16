@@ -94,8 +94,20 @@ export const cloudflare = {
     async getSession() {
       const token = localStorage.getItem('cf_session');
       if (!token) return { data: { session: null }, error: null };
-      // In a real app, verify the token via a Worker call
-      return { data: { session: { access_token: token } }, error: null };
+      
+      try {
+        const response = await fetch(`${API_URL}/auth/verify`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (response.ok) {
+          return { data: { session: { user: data.user, access_token: token } }, error: null };
+        }
+        localStorage.removeItem('cf_session');
+        return { data: { session: null }, error: null };
+      } catch (err) {
+        return { data: { session: null }, error: err };
+      }
     },
 
     async signInWithPassword({ email, password }: any) {
