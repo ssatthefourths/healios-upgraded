@@ -9,15 +9,19 @@ binding = "DB"
 database_name = "healios-db"
 database_id = "c5dbb000-df94-4742-8844-fe7c1f195f71" # User will need to fill this or I'll guide them
 
-# KV Namespace for Sessions
-[[kv_namespaces]]
-binding = "SESSIONS"
-id = "00000000-0000-0000-0000-000000000000" # User can create this
+# KV Namespace for Sessions (REQUIRED for Login)
+# 1. Run: npx wrangler kv:namespace create SESSIONS
+# 2. Paste the generated ID below and uncomment lines 15-17
+# [[kv_namespaces]]
+# binding = "SESSIONS"
+# id = "PASTE_KV_ID_HERE"
 
 # R2 Bucket for Assets
-[[r2_buckets]]
-binding = "BUCKET"
-bucket_name = "healios-assets"
+# 1. Run: npx wrangler r2 bucket create healios-assets
+# 2. Uncomment lines 22-24
+# [[r2_buckets]]
+# binding = "BUCKET"
+# bucket_name = "healios-assets"
 
 [vars]
 ENVIRONMENT = "production"

@@ -10,6 +10,14 @@ export async function handleProducts(request: Request, env: Env): Promise<Respon
     'Content-Type': 'application/json',
   };
 
+  // GET /categories
+  if ((path === '/categories' || path === '/categories/') && method === 'GET') {
+    const categories = await env.DB.prepare(
+      'SELECT DISTINCT category FROM products WHERE is_published = 1'
+    ).all();
+    return new Response(JSON.stringify(categories.results.map((r: any) => r.category)), { headers: corsHeaders });
+  }
+
   // GET /products
   if (path === '/products' && method === 'GET') {
     const category = url.searchParams.get('category');

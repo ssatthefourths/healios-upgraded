@@ -38,6 +38,10 @@ export default {
         return await handleProducts(request, env);
       }
 
+      if (path === '/categories' || path === '/categories/') {
+        return await handleProducts(request, env);
+      }
+
       if (path.startsWith('/orders')) {
         return await handleOrders(request, env);
       }
