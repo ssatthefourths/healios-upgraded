@@ -20,19 +20,44 @@ export async function handleProducts(request: Request, env: Env): Promise<Respon
 
   // GET /products
   if (path === '/products' && method === 'GET') {
-    const category = url.searchParams.get('category');
-    const limit = url.searchParams.get('limit') || '50';
+    // Strip Supabase-style operator prefix (e.g. "eq.Beauty" -> "Beauty")
+    const stripOp = (v: string | null) => v ? v.replace(/^(eq|neq|gt|gte|lt|lte|like|ilike)\./i, '') : null;
+
+    const category = stripOp(url.searchParams.get('category'));
+    const isPublished = stripOp(url.searchParams.get('is_published'));
+    const rawLimit = url.searchParams.get('limit') || '50';
+    const limit = Math.min(parseInt(rawLimit), 200);
+    const orderParam = url.searchParams.get('order'); // e.g. "sort_order.asc"
     
-    let query = 'SELECT * FROM products WHERE is_published = 1';
+    let query = 'SELECT * FROM products WHERE 1=1';
     const params: any[] = [];
+
+    // Only show published products unless explicitly requested otherwise
+    if (isPublished === '0' || isPublished === 'false') {
+      query += ' AND is_published = 0';
+    } else {
+      query += ' AND is_published = 1';
+    }
 
     if (category) {
       query += ' AND category = ?';
       params.push(category);
     }
 
-    query += ' ORDER BY sort_order LIMIT ?';
-    params.push(parseInt(limit));
+    // Parse sort order from param
+    let orderClause = 'sort_order ASC';
+    if (orderParam) {
+      const parts = orderParam.split('.');
+      const col = parts[0];
+      const dir = parts[1]?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+      const allowedCols = ['sort_order', 'price', 'name', 'created_at'];
+      if (allowedCols.includes(col)) {
+        orderClause = `${col} ${dir}`;
+      }
+    }
+
+    query += ` ORDER BY ${orderClause} LIMIT ?`;
+    params.push(limit);
 
     const products = await env.DB.prepare(query).bind(...params).all();
     return new Response(JSON.stringify(products.results), { headers: corsHeaders });

@@ -8,7 +8,7 @@ DELETE FROM users WHERE email = 'admin@thehealios.com';
 -- Insert All 18 Wellness Products
 INSERT INTO products (id, name, slug, price, image, category, description, sort_order, is_published) VALUES
 -- Beauty
-('collagen-powder', 'Healios Collagen Powder', 'collagen-powder', 34.99, '/products/collagen-powder.png', 'Beauty', 'A daily collagen peptide blend designed to support skin appearance, hair strength, nail health, and overall wellness.', 1, 1),
+('collagen-powder', 'Healios Collagen Powder', 'collagen-powder', 34.99, '/products/halo-glow-collagen.png', 'Beauty', 'A daily collagen peptide blend designed to support skin appearance, hair strength, nail health, and overall wellness.', 1, 1),
 ('halo-glow-collagen', 'Healios Halo Glow', 'halo-glow', 29.99, '/products/halo-glow-collagen.png', 'Beauty', 'A skin-focused supplement blend formulated to support radiance, hydration, and elasticity from within.', 2, 1),
 ('hair-skin-nails-gummies', 'Hair, Skin & Nails Gummies', 'hair-skin-nails', 18.99, '/products/hair-skin-nails-gummies.png', 'Beauty', 'Essential nutrients to support your natural beauty from the inside out.', 3, 1),
 
