@@ -7,6 +7,9 @@ import StarRating from "@/components/product/StarRating";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useGsapReveal } from "@/hooks/useGsapReveal";
+import { useCart } from "@/contexts/CartContext";
+import { ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
 
 interface PersonalizedRecommendationsProps {
   currentProductId?: string;
@@ -24,6 +27,7 @@ const PersonalizedRecommendations = ({
     limit
   );
   const { formatPrice } = useCurrency();
+  const { addToCart } = useCart();
 
   const productIds = products?.map((p) => p.id) || [];
   const ratings = useProductRatings(productIds);
@@ -92,6 +96,26 @@ const PersonalizedRecommendations = ({
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-500 ease-smooth group-hover:scale-[1.03]"
                   />
+
+                  {/* Quick Add Button */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      addToCart({
+                        id: product.id,
+                        name: product.name,
+                        price: product.price,
+                        image: product.image,
+                        category: product.category,
+                      });
+                      toast.success(`${product.name} added to bag`);
+                    }}
+                    className="absolute top-[var(--space-sm)] right-[var(--space-sm)] w-8 h-8 md:w-10 md:h-10 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 opacity-0 group-hover:opacity-100 shadow-sm z-20"
+                    aria-label="Add to bag"
+                  >
+                    <ShoppingBag size={14} className="md:w-4 md:h-4" />
+                  </button>
 
                   {/* Recommendation reason badge */}
                   <div className="absolute bottom-[var(--space-sm)] left-[var(--space-sm)] right-[var(--space-sm)]">

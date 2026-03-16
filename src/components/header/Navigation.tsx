@@ -110,9 +110,9 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
         { name: "Vitamins & Minerals", href: "/category/vitamins-minerals", image: magnesiumImage, description: "Essential micronutrients to support your daily metabolic functions." },
         { name: "Adaptogens", href: "/category/adaptogens", image: ashwagandhaImage, description: "Powerful herbs to help your body manage stress and maintain balance." },
         { name: "Digestive Health", href: "/category/digestive-health", image: probioticsImage, description: "Support your gut microbiome for better immunity and mood." },
-        { name: "Sleep & Relaxation", href: "/category/sleep-relaxation", image: "/products/sleep-support.png", description: "Natural solutions for deep, restorative sleep and daily calm." },
-        { name: "Subscribe & Save", href: "/subscribe", image: "/products/bundles.png", description: "Join our community and save up to 25% on your monthly essentials." },
-        { name: "Take the Wellness Quiz", href: "/wellness-quiz", image: "/wellness-quiz-bg.jpg", description: "Get a personalized supplement plan tailored to your unique goals." }
+        { name: "Sleep & Relaxation", href: "/category/sleep-relaxation", image: "/products/sleep-support-gummies.png", description: "Natural solutions for deep, restorative sleep and daily calm." },
+        { name: "Subscribe & Save", href: "/subscribe", image: "/products/morning-energy-stack.png", description: "Join our community and save up to 25% on your monthly essentials." },
+        { name: "Take the Wellness Quiz", href: "/wellness-quiz", image: "/images/navigation/wellness-quiz.png", description: "Get a personalized supplement plan tailored to your unique goals." }
       ],
       images: [
         { src: magnesiumImage, alt: "Vitamins & Minerals Collection", label: "Vitamins", href: "/category/vitamins-minerals" },
@@ -123,21 +123,21 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
       name: "New In", 
       href: "/category/new-in",
       submenuItems: [
-        { name: "Latest Arrivals", href: "/category/new-in", image: "/products/new-supplement.png", description: "Explore our newest innovations in nutritional science." },
+        { name: "Latest Arrivals", href: "/category/new-in", image: "/images/navigation/new-supplement.png", description: "Explore our newest innovations in nutritional science." },
         { name: "Best Sellers", href: "/category/best-sellers", image: magnesiumImage, description: "Our community's most-loved and trusted wellness essentials." },
-        { name: "Bundles & Stacks", href: "/category/bundles", image: "/products/bundles.png", description: "Curated combinations for targeted health and wellness goals." }
+        { name: "Bundles & Stacks", href: "/category/bundles", image: "/products/morning-energy-stack.png", description: "Curated combinations for targeted health and wellness goals." }
       ],
       images: [
-        { src: probioticsImage, alt: "New Arrivals", label: "Shop New", href: "/category/new-in" }
+        { src: "/images/navigation/new-supplement.png", alt: "New Arrivals", label: "Shop New", href: "/category/new-in" }
       ]
     },
     { 
       name: "Wellness Drive", 
       href: "/wellness-drive",
       submenuItems: [
-        { name: "Community Stories", href: "/wellness-drive", image: "/wellness-drive-stories.jpg", description: "Real wellness journeys shared by women in our community." },
-        { name: "Submit Your Story", href: "/wellness-drive#submit", image: "/wellness-drive-submit.jpg", description: "Share your daily routine and inspire others on their path." },
-        { name: "Wellness Journal", href: "/blog", image: "/wellness-journal.jpg", description: "Expert advice and insights for your holistic health journey." }
+        { name: "Community Stories", href: "/wellness-drive", image: "/images/navigation/wellness-drive-stories.png", description: "Real wellness journeys shared by women in our community." },
+        { name: "Submit Your Story", href: "/wellness-drive#submit", image: "/images/navigation/wellness-drive-submit.png", description: "Share your daily routine and inspire others on their path." },
+        { name: "Wellness Journal", href: "/blog", image: "/images/navigation/wellness-journal.png", description: "Expert advice and insights for your holistic health journey." }
       ],
       images: []
     },
@@ -146,10 +146,10 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
       href: "/about/our-story",
       submenuItems: [
         { name: "Our Story", href: "/about/our-story", image: "/founders.png", description: "The vision and values behind The Healios Health Co." },
-        { name: "Quality & Sourcing", href: "/about/quality-sourcing", image: "/quality-sourcing.jpg", description: "Our commitment to the highest purity and ethical standards." },
-        { name: "Product Guide", href: "/about/product-guide", image: "/product-guide.jpg", description: "Everything you need to know about our range and benefits." },
-        { name: "Customer Care", href: "/about/customer-care", image: "/customer-care.jpg", description: "We're here to support you at every stage of your journey." },
-        { name: "Wholesale Partners", href: "/about/wholesale", image: "/wholesale.jpg", description: "Bring premium wellness to your studio, clinic, or storefront." }
+        { name: "Quality & Sourcing", href: "/about/quality-sourcing", image: "/images/navigation/quality-sourcing.png", description: "Our commitment to the highest purity and ethical standards." },
+        { name: "Product Guide", href: "/about/product-guide", image: "/images/navigation/new-supplement.png", description: "Everything you need to know about our range and benefits." },
+        { name: "Customer Care", href: "/about/customer-care", image: "/founders.png", description: "We're here to support you at every stage of your journey." },
+        { name: "Wholesale Partners", href: "/about/wholesale", image: "/images/navigation/quality-sourcing.png", description: "Bring premium wellness to your studio, clinic, or storefront." }
       ],
       images: [
         { src: "/founders.png", alt: "Our Story", label: "Read our story", href: "/about/our-story" }

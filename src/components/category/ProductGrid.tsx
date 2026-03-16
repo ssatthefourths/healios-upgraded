@@ -9,8 +9,10 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo } from "react";
 import OptimizedImage from "@/components/ui/optimized-image";
-import { Bell } from "lucide-react";
+import { Bell, ShoppingBag } from "lucide-react";
 import { useGsapReveal } from "@/hooks/useGsapReveal";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
 
 interface Product {
   id: string;
@@ -30,6 +32,7 @@ interface ProductGridProps {
 
 const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { addToCart } = useCart();
   const productIds = useMemo(() => products.map(p => p.id), [products]);
   const { ratings } = useProductRatings(productIds);
   const { formatPrice } = useCurrency();
@@ -115,6 +118,26 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
                       className="opacity-0 group-hover:opacity-100 transition-all duration-300"
                       size="sm"
                     />
+                    {!isOutOfStock && !isComingSoon && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          addToCart({
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            image: product.image,
+                            category: product.category,
+                          });
+                          toast.success(`${product.name} added to bag`);
+                        }}
+                        className="w-10 h-10 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 opacity-0 group-hover:opacity-100 shadow-sm"
+                        aria-label="Add to bag"
+                      >
+                        <ShoppingBag size={16} />
+                      </button>
+                    )}
                     {isComingSoon && (
                       <div 
                         className="opacity-0 group-hover:opacity-100 transition-all duration-300"

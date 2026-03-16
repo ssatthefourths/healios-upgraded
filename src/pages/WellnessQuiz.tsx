@@ -281,7 +281,7 @@ const WellnessQuiz = () => {
     toast.success("All recommended products added to cart!");
   };
 
-  const totalPrice = recommendations.reduce((sum, p) => sum + p.price, 0);
+  const totalPrice = recommendations?.reduce((sum, p) => sum + (p?.price || 0), 0) || 0;
 
   return (
     <>
