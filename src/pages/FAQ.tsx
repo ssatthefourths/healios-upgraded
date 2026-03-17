@@ -103,7 +103,7 @@ const FAQ = () => {
       
       <Header />
       
-      <main className="max-w-6xl mx-auto px-md py-lg">
+      <main className="px-page py-[var(--space-xl)] max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row gap-lg md:gap-xl">
           <FAQSidebar
             categories={FAQ_CATEGORIES.map(c => c.name)}

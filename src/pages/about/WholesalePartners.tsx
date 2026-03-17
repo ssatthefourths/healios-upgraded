@@ -24,7 +24,7 @@ const WholesalePartners = () => {
           <AboutSidebar />
         </div>
         
-        <main className="w-full lg:w-[70vw] lg:ml-auto px-6">
+        <main className="w-full lg:w-[70vw] lg:ml-auto px-page py-[var(--space-xl)]">
           <PageHeader 
             title="Wholesale Partners" 
             subtitle="Partner with Healios to offer premium supplements to your customers"

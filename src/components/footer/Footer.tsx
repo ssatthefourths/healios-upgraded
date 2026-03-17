@@ -50,9 +50,9 @@ const Footer = () => {
   };
 
   return (
-    <footer className="w-full bg-background text-foreground pt-8 pb-2 px-6 border-t border-border mt-48">
-      <div className="">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-8">
+    <footer className="w-full bg-background text-foreground border-t border-border px-page pt-[var(--space-xl)] pb-[var(--space-md)]">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-[var(--space-lg)]">
           {/* Brand - Left side */}
           <div>
             <h2 className="text-xl font-medium mb-4">{BRAND.name}</h2>
@@ -146,9 +146,9 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Bottom section - edge to edge separator */}
-      <div className="border-t border-border -mx-6 px-6 pt-2">
-        <div className="flex flex-col md:flex-row justify-between items-center">
+      {/* Bottom section */}
+      <div className="max-w-7xl mx-auto border-t border-border pt-[var(--space-sm)]">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-2">
           <p className="text-sm font-light text-foreground mb-1 md:mb-0">
             © {new Date().getFullYear()} {BRAND.name} · Built by The Fourths Digital Agency
           </p>

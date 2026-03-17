@@ -23,7 +23,7 @@ const NotFound = () => {
       />
       {/* Header */}
       <header className="border-b border-border py-4">
-        <div className="container mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-page">
           <Link to="/" className="flex items-center gap-2">
             <OptimizedImage 
               src={BRAND.assets.logo} 
