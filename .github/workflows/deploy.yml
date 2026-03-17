@@ -5,9 +5,37 @@ on:
     branches: [main]
 
 jobs:
+  # ── Detect which parts of the repo changed ───────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      worker: ${{ steps.filter.outputs.worker }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'src/**'
+              - 'public/**'
+              - 'index.html'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'vite.config.*'
+              - 'tsconfig*'
+              - 'tailwind.config*'
+              - 'postcss.config*'
+            worker:
+              - 'worker-api/**'
+
   # ── Frontend → Cloudflare Pages ──────────────────────────────────
   deploy-pages:
     name: Deploy Frontend (Pages)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -40,6 +68,8 @@ jobs:
   # ── Worker API → Cloudflare Workers ──────────────────────────────
   deploy-worker:
     name: Deploy Worker API
+    needs: changes
+    if: needs.changes.outputs.worker == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
