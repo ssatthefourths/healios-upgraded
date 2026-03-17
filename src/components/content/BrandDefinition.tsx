@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 const values = [
-  { label: "SA Made", desc: "Crafted to pharmaceutical-grade standards in South Africa" },
+  { label: "Premium Quality", desc: "Manufactured to the highest pharmaceutical-grade standards" },
   { label: "100% Vegan", desc: "No animal-derived ingredients, ever" },
   { label: "Science-Backed", desc: "Every formula peer-reviewed" },
   { label: "Clean Label", desc: "No artificial colours or sweeteners" },

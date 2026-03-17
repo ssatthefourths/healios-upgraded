@@ -26,7 +26,7 @@ const Index = () => {
 
       <Header />
 
-      <main id="main-content" className="flex flex-col gap-[var(--space-xl)] py-[var(--space-xl)]">
+      <main id="main-content" className="flex flex-col gap-[var(--space-xl)] pb-[var(--space-xl)]">
         {/* 1 — Hero: primary CTA above the fold */}
         <LargeHero />
 

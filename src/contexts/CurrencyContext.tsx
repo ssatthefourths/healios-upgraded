@@ -23,6 +23,7 @@ interface CurrencyContextType {
   setCurrency: (currency: Currency) => void;
   formatPrice: (priceInGBP: number) => string;
   convertPrice: (priceInGBP: number) => number;
+  detectedCurrency: string; // Currency code geo-detected from worker, '' until resolved
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -51,6 +52,7 @@ const saveCurrencyToStorage = (currency: Currency) => {
 
 export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
   const [currency, setCurrencyState] = useState<Currency>(() => loadCurrencyFromStorage());
+  const [detectedCurrency, setDetectedCurrency] = useState<string>('');
 
   const setCurrency = useCallback((newCurrency: Currency) => {
     setCurrencyState(newCurrency);
@@ -72,6 +74,7 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
       })
       .then((data: { currency?: string; rate?: number }) => {
         if (!data?.currency) return;
+        setDetectedCurrency(data.currency);
         const stored = localStorage.getItem(CURRENCY_STORAGE_KEY);
         // Only auto-set the currency if the user hasn't chosen one yet
         const targetCode = stored
@@ -105,6 +108,7 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
       setCurrency,
       formatPrice,
       convertPrice,
+      detectedCurrency,
     }}>
       {children}
     </CurrencyContext.Provider>
