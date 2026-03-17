@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { cloudflare as supabase } from '@/integrations/cloudflare/client';
+
+// Local auth types (no Supabase dependency)
+interface User { id: string; email?: string; first_name?: string; last_name?: string; role?: string; [key: string]: any; }
+interface Session { user: User; access_token: string; }
 import { setAnalyticsUserId, clearAnalyticsUserId, trackLogin, trackSignUp } from '@/lib/analytics';
 import { trackClarityEvent, tagClaritySession } from '@/lib/clarity';
 
@@ -26,7 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event: string, session: any) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);

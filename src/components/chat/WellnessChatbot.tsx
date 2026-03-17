@@ -11,7 +11,7 @@ interface Message {
   content: string;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wellness-chat`;
+const CHAT_URL = `${import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev'}/wellness-chat`;
 
 const WellnessChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
