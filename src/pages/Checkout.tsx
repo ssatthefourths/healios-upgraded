@@ -24,14 +24,44 @@ import { trackBeginCheckout } from "@/lib/analytics";
 import { trackMetaInitiateCheckout } from "@/lib/metaPixel";
 import { useThrottledClick } from "@/lib/useRateLimitedAction";
 import { logger } from "@/lib/logger";
-import { 
-  isValidUKPostcode, 
-  formatUKPostcode, 
-  getPostcodeError,
+import {
+  getPostalCodeConfig,
+  isValidPostalCode,
+  getPostalCodeError,
   sanitizeInput,
   isValidEmail,
   isValidUKPhone
 } from "@/lib/validation";
+
+const ALL_COUNTRIES = [
+  'United Kingdom', 'South Africa', 'United States', 'Canada', 'Australia', 'Cyprus',
+  '---',
+  'Afghanistan','Albania','Algeria','Andorra','Angola','Antigua and Barbuda','Argentina',
+  'Armenia','Austria','Azerbaijan','Bahamas','Bahrain','Bangladesh','Barbados','Belarus',
+  'Belgium','Belize','Benin','Bhutan','Bolivia','Bosnia and Herzegovina','Botswana','Brazil',
+  'Brunei','Bulgaria','Burkina Faso','Burundi','Cabo Verde','Cambodia','Cameroon',
+  'Central African Republic','Chad','Chile','China','Colombia','Comoros','Congo',
+  'Costa Rica','Croatia','Cuba','Czech Republic','Denmark','Djibouti','Dominica',
+  'Dominican Republic','Ecuador','Egypt','El Salvador','Equatorial Guinea','Eritrea',
+  'Estonia','Eswatini','Ethiopia','Fiji','Finland','France','Gabon','Gambia','Georgia',
+  'Germany','Ghana','Greece','Grenada','Guatemala','Guinea','Guinea-Bissau','Guyana',
+  'Haiti','Honduras','Hungary','Iceland','India','Indonesia','Iran','Iraq','Ireland',
+  'Israel','Italy','Jamaica','Japan','Jordan','Kazakhstan','Kenya','Kiribati','Kuwait',
+  'Kyrgyzstan','Laos','Latvia','Lebanon','Lesotho','Liberia','Libya','Liechtenstein',
+  'Lithuania','Luxembourg','Madagascar','Malawi','Malaysia','Maldives','Mali','Malta',
+  'Marshall Islands','Mauritania','Mauritius','Mexico','Micronesia','Moldova','Monaco',
+  'Mongolia','Montenegro','Morocco','Mozambique','Myanmar','Namibia','Nauru','Nepal',
+  'Netherlands','New Zealand','Nicaragua','Niger','Nigeria','North Korea','North Macedonia',
+  'Norway','Oman','Pakistan','Palau','Panama','Papua New Guinea','Paraguay','Peru',
+  'Philippines','Poland','Portugal','Qatar','Romania','Russia','Rwanda','Saint Kitts and Nevis',
+  'Saint Lucia','Saint Vincent and the Grenadines','Samoa','San Marino','Saudi Arabia',
+  'Senegal','Serbia','Seychelles','Sierra Leone','Singapore','Slovakia','Slovenia',
+  'Solomon Islands','Somalia','South Korea','South Sudan','Spain','Sri Lanka','Sudan',
+  'Suriname','Sweden','Switzerland','Syria','Taiwan','Tajikistan','Tanzania','Thailand',
+  'Timor-Leste','Togo','Tonga','Trinidad and Tobago','Tunisia','Turkey','Turkmenistan',
+  'Tuvalu','Uganda','Ukraine','United Arab Emirates','Uruguay','Uzbekistan','Vanuatu',
+  'Venezuela','Vietnam','Yemen','Zambia','Zimbabwe',
+];
 
 interface SavedAddress {
   id: string;
@@ -410,7 +440,7 @@ const Checkout = () => {
       setPostcodeError(null);
       return true;
     }
-    const error = getPostcodeError(postcode);
+    const error = getPostalCodeError(postcode, shippingAddress.country);
     if (error) {
       setPostcodeError(error);
       return false;
@@ -425,20 +455,17 @@ const Checkout = () => {
   };
 
   const handleShippingAddressChange = (field: string, value: string) => {
-    let sanitized = sanitizeInput(value);
-    // Auto-format postcode as user types
-    if (field === 'postalCode') {
-      sanitized = formatUKPostcode(sanitized);
-    }
-    setShippingAddress(prev => ({ ...prev, [field]: sanitized }));
+    const sanitized = sanitizeInput(value);
+    setShippingAddress(prev => {
+      const updated = { ...prev, [field]: sanitized };
+      // Clear postcode error when country changes so user isn't stuck
+      if (field === 'country') setPostcodeError(null);
+      return updated;
+    });
   };
 
   const handleBillingDetailsChange = (field: string, value: string) => {
-    let sanitized = sanitizeInput(value);
-    // Auto-format postcode as user types
-    if (field === 'postalCode') {
-      sanitized = formatUKPostcode(sanitized);
-    }
+    const sanitized = sanitizeInput(value);
     setBillingDetails(prev => ({ ...prev, [field]: sanitized }));
   };
 
@@ -468,8 +495,8 @@ const Checkout = () => {
       return false;
     }
 
-    // Validate UK postcode format
-    const postcodeError = getPostcodeError(shippingAddress.postalCode);
+    // Validate postal code for selected country
+    const postcodeError = getPostalCodeError(shippingAddress.postalCode, shippingAddress.country);
     if (postcodeError) {
       toast.error(postcodeError);
       return false;
@@ -481,8 +508,8 @@ const Checkout = () => {
         toast.error("Please fill in all billing address fields");
         return false;
       }
-      
-      const billingPostcodeError = getPostcodeError(billingDetails.postalCode);
+
+      const billingPostcodeError = getPostalCodeError(billingDetails.postalCode, billingDetails.country);
       if (billingPostcodeError) {
         toast.error("Billing: " + billingPostcodeError);
         return false;
@@ -966,7 +993,7 @@ const Checkout = () => {
                         </div>
                         <div>
                           <Label htmlFor="shippingPostalCode" className="text-sm font-light text-foreground">
-                            Postal Code *
+                            {getPostalCodeConfig(shippingAddress.country).label} *
                           </Label>
                           <Input
                             id="shippingPostalCode"
@@ -976,7 +1003,7 @@ const Checkout = () => {
                             onChange={(e) => handleShippingAddressChange("postalCode", e.target.value)}
                             onBlur={() => validatePostcode(shippingAddress.postalCode)}
                             className={`mt-2 rounded-none ${postcodeError ? 'border-destructive' : ''}`}
-                            placeholder="Postal code"
+                            placeholder={getPostalCodeConfig(shippingAddress.country).placeholder}
                           />
                           {postcodeError && (
                             <p className="text-destructive text-sm mt-1 flex items-center gap-1">
@@ -990,15 +1017,21 @@ const Checkout = () => {
                         <Label htmlFor="shippingCountry" className="text-sm font-light text-foreground">
                           Country *
                         </Label>
-                        <Input
-                          id="shippingCountry"
-                          name="shippingCountry"
-                          type="text"
+                        <Select
                           value={shippingAddress.country}
-                          onChange={(e) => handleShippingAddressChange("country", e.target.value)}
-                          className="mt-2 rounded-none"
-                          placeholder="Country"
-                        />
+                          onValueChange={(val) => handleShippingAddressChange("country", val)}
+                        >
+                          <SelectTrigger id="shippingCountry" className="mt-2 rounded-none">
+                            <SelectValue placeholder="Select country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ALL_COUNTRIES.map((c) =>
+                              c === '---'
+                                ? <SelectItem key="sep" value="---" disabled>──────────</SelectItem>
+                                : <SelectItem key={c} value={c}>{c}</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       {/* Save Address Checkbox */}
@@ -1175,7 +1208,7 @@ const Checkout = () => {
                         </div>
                         <div>
                           <Label htmlFor="billingPostalCode" className="text-sm font-light text-foreground">
-                            Postal Code *
+                            {getPostalCodeConfig(billingDetails.country).label} *
                           </Label>
                           <Input
                             id="billingPostalCode"
@@ -1184,7 +1217,7 @@ const Checkout = () => {
                             value={billingDetails.postalCode}
                             onChange={(e) => handleBillingDetailsChange("postalCode", e.target.value)}
                             className="mt-2 rounded-none"
-                            placeholder="Postal code"
+                            placeholder={getPostalCodeConfig(billingDetails.country).placeholder}
                           />
                         </div>
                       </div>
@@ -1193,15 +1226,21 @@ const Checkout = () => {
                         <Label htmlFor="billingCountry" className="text-sm font-light text-foreground">
                           Country *
                         </Label>
-                        <Input
-                          id="billingCountry"
-                          name="billingCountry"
-                          type="text"
+                        <Select
                           value={billingDetails.country}
-                          onChange={(e) => handleBillingDetailsChange("country", e.target.value)}
-                          className="mt-2 rounded-none"
-                          placeholder="Country"
-                        />
+                          onValueChange={(val) => handleBillingDetailsChange("country", val)}
+                        >
+                          <SelectTrigger id="billingCountry" className="mt-2 rounded-none">
+                            <SelectValue placeholder="Select country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ALL_COUNTRIES.map((c) =>
+                              c === '---'
+                                ? <SelectItem key="sep-billing" value="---" disabled>──────────</SelectItem>
+                                : <SelectItem key={c} value={c}>{c}</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   )}

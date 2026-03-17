@@ -1,71 +1,106 @@
 /**
  * Validation utilities for checkout and form handling
- * Includes UK postcode validation, input sanitization, and security checks
+ * Includes country-aware postal code validation, input sanitization, and security checks
  */
 
 import { z } from 'zod';
 
 // ==================================
-// UK POSTCODE VALIDATION
+// COUNTRY-AWARE POSTAL CODE VALIDATION
 // ==================================
 
-/**
- * Validates a UK postcode format
- * Valid formats: SW1A 1AA, SW1A1AA, M1 1AA, B33 8TH, EC1A 1BB
- * 
- * UK postcode rules:
- * - 1-2 letters (area)
- * - 1-2 digits (district)
- * - Optional digit/letter (sub-district)
- * - Space (optional)
- * - 1 digit (sector)
- * - 2 letters (unit)
- */
-const UK_POSTCODE_REGEX = /^([A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}|GIR ?0A{2})$/i;
+interface PostalCodeConfig {
+  label: string;
+  placeholder: string;
+  regex: RegExp | null; // null = accept any non-empty value
+  example: string;
+}
 
-/**
- * Validates if a string is a valid UK postcode
- * @param postcode - The postcode to validate
- * @returns true if valid UK postcode format
- */
-export const isValidUKPostcode = (postcode: string): boolean => {
-  if (!postcode) return false;
-  
-  // Remove extra spaces and trim
-  const cleaned = postcode.trim().toUpperCase();
-  
-  return UK_POSTCODE_REGEX.test(cleaned);
+const POSTAL_CODE_CONFIGS: Record<string, PostalCodeConfig> = {
+  'United Kingdom': {
+    label: 'Postcode',
+    placeholder: 'SW1A 1AA',
+    regex: /^([A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}|GIR ?0A{2})$/i,
+    example: 'SW1A 1AA',
+  },
+  'South Africa': {
+    label: 'Postal Code',
+    placeholder: '2000',
+    regex: /^\d{4}$/,
+    example: '2000',
+  },
+  'United States': {
+    label: 'ZIP Code',
+    placeholder: '10001',
+    regex: /^\d{5}(-\d{4})?$/,
+    example: '10001',
+  },
+  'Canada': {
+    label: 'Postal Code',
+    placeholder: 'K1A 0B1',
+    regex: /^[A-Z]\d[A-Z] ?\d[A-Z]\d$/i,
+    example: 'K1A 0B1',
+  },
+  'Australia': {
+    label: 'Postcode',
+    placeholder: '2000',
+    regex: /^\d{4}$/,
+    example: '2000',
+  },
+  'Cyprus': {
+    label: 'Postal Code',
+    placeholder: '1000',
+    regex: /^\d{4}$/,
+    example: '1000',
+  },
 };
 
-/**
- * Formats a UK postcode with proper spacing
- * @param postcode - The postcode to format
- * @returns Properly formatted postcode (e.g., "SW1A 1AA")
- */
+const DEFAULT_POSTAL_CONFIG: PostalCodeConfig = {
+  label: 'Postal Code',
+  placeholder: '',
+  regex: null,
+  example: '',
+};
+
+export const getPostalCodeConfig = (country: string): PostalCodeConfig =>
+  POSTAL_CODE_CONFIGS[country] ?? DEFAULT_POSTAL_CONFIG;
+
+export const isValidPostalCode = (code: string, country: string): boolean => {
+  if (!code || !code.trim()) return false;
+  const config = getPostalCodeConfig(country);
+  if (!config.regex) return true; // any non-empty value accepted
+  return config.regex.test(code.trim());
+};
+
+export const getPostalCodeError = (code: string, country: string): string | null => {
+  if (!code || !code.trim()) return `${getPostalCodeConfig(country).label} is required`;
+  if (!isValidPostalCode(code, country)) {
+    const config = getPostalCodeConfig(country);
+    return config.example
+      ? `Please enter a valid ${config.label.toLowerCase()} (e.g., ${config.example})`
+      : `Please enter a valid ${config.label.toLowerCase()}`;
+  }
+  return null;
+};
+
+// Legacy UK-only exports — kept for backward compatibility
+const UK_POSTCODE_REGEX = /^([A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}|GIR ?0A{2})$/i;
+
+export const isValidUKPostcode = (postcode: string): boolean => {
+  if (!postcode) return false;
+  return UK_POSTCODE_REGEX.test(postcode.trim().toUpperCase());
+};
+
 export const formatUKPostcode = (postcode: string): string => {
   if (!postcode) return '';
-  
-  // Remove all spaces and uppercase
   const cleaned = postcode.replace(/\s+/g, '').toUpperCase();
-  
-  // Insert space before last 3 characters (standard UK format)
-  if (cleaned.length > 3) {
-    return `${cleaned.slice(0, -3)} ${cleaned.slice(-3)}`;
-  }
-  
+  if (cleaned.length > 3) return `${cleaned.slice(0, -3)} ${cleaned.slice(-3)}`;
   return cleaned;
 };
 
-/**
- * Get human-readable error for postcode validation
- * @param postcode - The postcode that failed validation
- * @returns Error message string
- */
 export const getPostcodeError = (postcode: string): string | null => {
   if (!postcode) return "Postcode is required";
-  if (!isValidUKPostcode(postcode)) {
-    return "Please enter a valid UK postcode (e.g., SW1A 1AA)";
-  }
+  if (!isValidUKPostcode(postcode)) return "Please enter a valid UK postcode (e.g., SW1A 1AA)";
   return null;
 };
 
@@ -257,9 +292,8 @@ export const addressSchema = z.object({
     .regex(/^[a-zA-Z\s'-]+$/, "City contains invalid characters"),
   postalCode: z.string()
     .trim()
-    .min(1, "Postcode is required")
-    .max(10, "Postcode is too long")
-    .refine(isValidUKPostcode, "Invalid UK postcode"),
+    .min(1, "Postal code is required")
+    .max(10, "Postal code is too long"),
   country: z.string()
     .trim()
     .min(1, "Country is required")
