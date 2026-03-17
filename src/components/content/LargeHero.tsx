@@ -31,29 +31,29 @@ const LargeHero = () => {
           {/* Thin rule accent */}
           <div className="w-8 h-px bg-white/50 mb-4" />
 
-          <span className="editorial-overline text-white/60 mb-3">Feel Better. Live Better.</span>
+          <span className="editorial-overline text-white/60 mb-3">South Africa's Premium Wellness Brand</span>
 
           <h1 className="cinematic-title mb-[var(--space-sm)]">
             Wellness,<br />Elevated.
           </h1>
 
           <p className="text-sm md:text-base font-light opacity-80 max-w-sm mb-[var(--space-md)] leading-relaxed">
-            Science-backed gummy supplements designed to help you sleep deeper, think clearer, and thrive every day.
+            Science-backed gummy supplements that help you sleep deeper, think clearer, and feel your best — every single day.
           </p>
 
           <div className="flex items-center gap-3 flex-wrap">
             <Link
-              to="/wellness-quiz"
+              to="/category/all"
               className="inline-flex items-center gap-2 bg-white text-foreground px-5 py-2.5 text-xs font-medium premium-btn rounded-[var(--radius)] tracking-wide uppercase"
             >
-              <span>Find Your Supplement</span>
+              <span>Shop Bestsellers</span>
               <ArrowRight size={12} />
             </Link>
             <Link
-              to="/category/all"
+              to="/wellness-quiz"
               className="inline-flex items-center gap-2 text-white/80 hover:text-white text-xs font-light transition-colors duration-300 tracking-wide"
             >
-              <span>Browse all products</span>
+              <span>Take the wellness quiz</span>
               <ArrowRight size={11} />
             </Link>
           </div>
@@ -61,7 +61,7 @@ const LargeHero = () => {
 
         {/* Product count badge — top right */}
         <div className="absolute top-[var(--space-md)] right-[var(--space-md)] bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1.5">
-          <span className="text-white text-[0.6rem] font-light tracking-[0.18em] uppercase">18 Products</span>
+          <span className="text-white text-[0.6rem] font-light tracking-[0.18em] uppercase">18 Premium Products</span>
         </div>
       </div>
 
@@ -71,7 +71,8 @@ const LargeHero = () => {
           {[
             { label: "Free Delivery", sub: "Orders over R600" },
             { label: "100% Vegan", sub: "Every product" },
-            { label: "SA Made", sub: "Premium quality" },
+            { label: "SA Made", sub: "Pharma-grade quality" },
+            { label: "30-Day Guarantee", sub: "Love it or refund" },
           ].map(({ label, sub }) => (
             <div key={label} className="hidden sm:block">
               <p className="text-xs font-medium text-foreground tracking-wide">{label}</p>

@@ -27,23 +27,23 @@ const Index = () => {
       <Header />
 
       <main id="main-content" className="flex flex-col gap-[var(--space-xl)] py-[var(--space-xl)]">
-        {/* Hero editorial grid — first impression */}
-        <FiftyFiftySection />
-
-        {/* Product discovery */}
-        <ProductCarousel />
-
-        {/* Brand manifesto */}
-        <BrandDefinition />
-
-        {/* Personalised picks */}
-        <PersonalizedRecommendations title="Recommended for You" />
-
-        {/* Full-width cinematic feature */}
+        {/* 1 — Hero: primary CTA above the fold */}
         <LargeHero />
 
-        {/* Category editorial grid */}
+        {/* 2 — Products: show what we sell immediately after the hook */}
+        <ProductCarousel />
+
+        {/* 3 — Editorial: brand story and featured content */}
+        <FiftyFiftySection />
+
+        {/* 4 — Category grid: drive exploration */}
         <OneThirdTwoThirdsSection />
+
+        {/* 5 — Brand values: build trust before they consider leaving */}
+        <BrandDefinition />
+
+        {/* 6 — Personalised picks: closing nudge for return visitors */}
+        <PersonalizedRecommendations title="Recommended for You" />
       </main>
 
       <Footer />
