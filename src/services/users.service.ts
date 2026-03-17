@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { cloudflare as supabase } from '@/integrations/cloudflare/client';
 import type { Tables } from '@/integrations/supabase/types';
 import { logger } from '@/lib/logger';
 

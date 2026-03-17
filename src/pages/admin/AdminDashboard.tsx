@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { trackClarityEvent } from "@/lib/clarity";
-import { supabase } from "@/integrations/supabase/client";
+import { cloudflare as supabase } from "@/integrations/cloudflare/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
