@@ -5,49 +5,86 @@ import OptimizedImage from "@/components/ui/optimized-image";
 import { useGsapReveal } from "@/hooks/useGsapReveal";
 
 const LargeHero = () => {
-  const contentReveal = useGsapReveal({ direction: "up", distance: 30, duration: 1, ease: "power3.out" });
+  const contentReveal = useGsapReveal({ direction: "up", distance: 40, duration: 1.2, ease: "power3.out" });
 
   return (
-    <section className="w-full mb-[var(--space-xl)] px-md">
-      <div className="w-full aspect-[16/9] mb-[var(--space-md)] overflow-hidden relative rounded-[var(--radius-section)] shadow-[var(--shadow-ambient)]">
-        <OptimizedImage 
-          src={heroImage} 
-          alt="Premium wellness supplements by Healios" 
+    <section className="w-full px-page">
+      {/* Main hero image */}
+      <div className="w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] mb-5 overflow-hidden relative rounded-[var(--radius-section)] shadow-[var(--shadow-ambient)]">
+        <OptimizedImage
+          src={heroImage}
+          alt="Premium wellness supplements by Healios"
           priority={true}
           aspectRatio="video"
+          className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-        <div ref={contentReveal} className="absolute bottom-[var(--space-lg)] left-[var(--space-lg)] right-[var(--space-lg)] text-white">
-          <h1 className="cinematic-title font-serif mb-[var(--space-sm)]">
-            Feel Better. Live Better.
+
+        {/* Multi-layer gradient for depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent pointer-events-none" />
+
+        {/* Content positioned at bottom-left */}
+        <div
+          ref={contentReveal}
+          className="absolute bottom-[var(--space-lg)] left-[var(--space-lg)] right-[var(--space-lg)] md:right-auto md:max-w-xl text-white"
+        >
+          {/* Thin rule accent */}
+          <div className="w-8 h-px bg-white/50 mb-4" />
+
+          <span className="editorial-overline text-white/60 mb-3">Feel Better. Live Better.</span>
+
+          <h1 className="cinematic-title mb-[var(--space-sm)]">
+            Wellness,<br />Elevated.
           </h1>
-          <p className="text-base md:text-lg font-light opacity-90 max-w-2xl mb-md">
-            Science-backed supplements designed to help you sleep deeper, think clearer, and thrive every day.
+
+          <p className="text-sm md:text-base font-light opacity-80 max-w-sm mb-[var(--space-md)] leading-relaxed">
+            Science-backed gummy supplements designed to help you sleep deeper, think clearer, and thrive every day.
           </p>
-          <Link 
-            to="/wellness-quiz" 
-            className="inline-flex items-center gap-2 bg-white text-foreground px-md py-sm text-sm font-medium premium-btn rounded-[var(--radius)]"
-          >
-            <span>Find Your Perfect Supplement</span>
-            <ArrowRight size={14} />
-          </Link>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <Link
+              to="/wellness-quiz"
+              className="inline-flex items-center gap-2 bg-white text-foreground px-5 py-2.5 text-xs font-medium premium-btn rounded-[var(--radius)] tracking-wide uppercase"
+            >
+              <span>Find Your Supplement</span>
+              <ArrowRight size={12} />
+            </Link>
+            <Link
+              to="/category/all"
+              className="inline-flex items-center gap-2 text-white/80 hover:text-white text-xs font-light transition-colors duration-300 tracking-wide"
+            >
+              <span>Browse all products</span>
+              <ArrowRight size={11} />
+            </Link>
+          </div>
+        </div>
+
+        {/* Product count badge — top right */}
+        <div className="absolute top-[var(--space-md)] right-[var(--space-md)] bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1.5">
+          <span className="text-white text-[0.6rem] font-light tracking-[0.18em] uppercase">18 Products</span>
         </div>
       </div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-normal text-foreground mb-xs uppercase tracking-widest">
-            Premium Wellness
-          </h2>
-          <p className="text-sm font-light text-muted-foreground">
-            Clean ingredients, proven research, real results
-          </p>
+
+      {/* Caption strip below hero */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-[var(--space-lg)]">
+          {[
+            { label: "Free Delivery", sub: "Orders over R600" },
+            { label: "100% Vegan", sub: "Every product" },
+            { label: "SA Made", sub: "Premium quality" },
+          ].map(({ label, sub }) => (
+            <div key={label} className="hidden sm:block">
+              <p className="text-xs font-medium text-foreground tracking-wide">{label}</p>
+              <p className="text-xs font-light text-muted-foreground">{sub}</p>
+            </div>
+          ))}
         </div>
-        <Link 
-          to="/category/all" 
-          className="inline-flex items-center gap-1 text-sm font-light text-foreground hover:translate-x-1 transition-transform duration-300"
+        <Link
+          to="/category/all"
+          className="inline-flex items-center gap-1.5 text-xs font-light text-muted-foreground hover:text-foreground transition-colors duration-300 tracking-wide whitespace-nowrap"
         >
-          <span>Shop All Products</span>
-          <ArrowRight size={12} />
+          <span>All products</span>
+          <ArrowRight size={11} />
         </Link>
       </div>
     </section>

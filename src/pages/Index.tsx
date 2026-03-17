@@ -14,29 +14,38 @@ import SEOHead from "../components/seo/SEOHead";
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      {/* SEO Head */}
       <SEOHead
         title="Healios | Premium Gummy Vitamins & Supplements"
         description="Discover Healios premium gummy vitamins and supplements. Delicious, effective wellness made simple. Shop ashwagandha, collagen, magnesium and more."
         canonicalUrl="https://www.thehealios.com/"
-        keywords={["gummy vitamins", "supplements", "wellness", "ashwagandha gummies", "collagen gummies", "vitamin gummies UK"]}
+        keywords={["gummy vitamins", "supplements", "wellness", "ashwagandha gummies", "collagen gummies", "vitamin gummies"]}
       />
-      
-      {/* SEO Schemas */}
+
       <OrganizationSchema />
       <WebSiteSchema />
-      
+
       <Header />
-      
-      <main id="main-content" className="pb-[var(--space-2xl)] flex flex-col gap-[var(--space-xl)]">
+
+      <main id="main-content" className="flex flex-col gap-[var(--space-xl)] py-[var(--space-xl)]">
+        {/* Hero editorial grid — first impression */}
         <FiftyFiftySection />
+
+        {/* Product discovery */}
         <ProductCarousel />
-        <PersonalizedRecommendations title="Recommended for You" />
+
+        {/* Brand manifesto */}
         <BrandDefinition />
+
+        {/* Personalised picks */}
+        <PersonalizedRecommendations title="Recommended for You" />
+
+        {/* Full-width cinematic feature */}
         <LargeHero />
+
+        {/* Category editorial grid */}
         <OneThirdTwoThirdsSection />
       </main>
-      
+
       <Footer />
       <NewsletterPopup />
     </div>
