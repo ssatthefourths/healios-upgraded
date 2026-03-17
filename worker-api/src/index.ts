@@ -7,6 +7,9 @@ import { handleProducts } from './products';
 import { handleOrders } from './orders';
 import { handleWellnessChat } from './wellness-chat';
 import { handleCheckout } from './checkout';
+import { handleCurrency } from './currency';
+import { handleDiscount } from './discount';
+import { handleStripeWebhook } from './stripe-webhook';
 
 export interface Env {
   DB: D1Database;
@@ -15,6 +18,8 @@ export interface Env {
   JWT_SECRET: string;
   LOVABLE_API_KEY: string;
   STRIPE_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
+  RESEND_API_KEY: string;
 }
 
 export default {
@@ -56,6 +61,18 @@ export default {
 
       if (path === '/checkout-session') {
         return await handleCheckout(request, env);
+      }
+
+      if (path === '/currency') {
+        return await handleCurrency(request, env);
+      }
+
+      if (path === '/validate-discount') {
+        return await handleDiscount(request, env);
+      }
+
+      if (path === '/stripe-webhook') {
+        return await handleStripeWebhook(request, env);
       }
 
       return new Response('Healios API - Not Found', { status: 404, headers: corsHeaders });

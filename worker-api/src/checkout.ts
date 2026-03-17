@@ -2,9 +2,11 @@
  * Checkout Session Handler
  * Ported from Supabase edge function — creates a Stripe Checkout session
  * with server-side price validation against D1 products table.
+ * Supports multi-currency: pass currency code in request body.
  */
 
 import { Env } from './index';
+import { CURRENCY_RATES } from './currency';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -39,6 +41,7 @@ interface CheckoutRequest {
   shippingMethod?: string;
   shippingCost?: number;
   userId?: string;
+  currency?: string; // ISO 4217 code e.g. 'GBP', 'ZAR', 'USD'
 }
 
 // Stripe REST API base (no npm package in Workers)
@@ -93,13 +96,18 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
     return json({ error: 'Invalid request body' }, 400);
   }
 
-  const { cartItems, customerEmail, customerDetails, shippingAddress, billingAddress, discountAmount, shippingMethod, shippingCost = 0, userId } = body;
+  const { cartItems, customerEmail, customerDetails, shippingAddress, billingAddress, discountAmount, shippingMethod, shippingCost = 0, userId, currency: rawCurrency } = body;
 
   if (!Array.isArray(cartItems) || cartItems.length === 0) return json({ error: 'Cart cannot be empty' }, 400);
   if (!customerEmail || !customerEmail.includes('@')) return json({ error: 'Valid email required' }, 400);
   if (!customerDetails?.firstName || !customerDetails?.lastName) return json({ error: 'Customer name required' }, 400);
 
-  // Server-side price validation against D1
+  // Resolve currency — use passed code if supported, default to GBP
+  const requestedCurrency = (rawCurrency || 'GBP').toUpperCase();
+  const currencyCode = CURRENCY_RATES[requestedCurrency] !== undefined ? requestedCurrency : 'GBP';
+  const currencyRate = CURRENCY_RATES[currencyCode]; // GBP = 1, ZAR = 23.5, etc.
+
+  // Server-side price validation against D1 (products priced in GBP)
   const productIds = cartItems.map(i => i.id);
   const placeholders = productIds.map(() => '?').join(',');
   const { results: dbProducts } = await env.DB.prepare(
@@ -118,29 +126,28 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
       errors.push(`Insufficient stock for ${product.name}`);
       continue;
     }
-    const serverPrice = item.isSubscription ? Number(product.price) * 0.85 : Number(product.price);
-    validatedItems.push({ ...item, price: serverPrice, name: product.name, image: product.image, category: product.category });
+    // Price in GBP (base), apply subscription discount, then convert to target currency
+    const gbpPrice = item.isSubscription ? Number(product.price) * 0.85 : Number(product.price);
+    const displayPrice = gbpPrice * currencyRate;
+    validatedItems.push({ ...item, price: displayPrice, name: product.name, image: product.image, category: product.category });
   }
 
   if (errors.length > 0) return json({ error: 'Cart validation failed', details: errors }, 400);
 
   const origin = request.headers.get('origin') || 'https://www.thehealios.com';
   const hasSubscriptions = validatedItems.some(i => i.isSubscription);
+  const stripeCurrency = currencyCode.toLowerCase();
 
-  // Build Stripe line items
-  const lineItems: Record<string, unknown>[] = validatedItems.map((item, idx) => {
-    const unitAmount = Math.round(item.price * 100);
-    const base = {
-      [`line_items[${idx}][quantity]`]: item.quantity,
-      [`line_items[${idx}][price_data][currency]`]: 'zar',
-      [`line_items[${idx}][price_data][product_data][name]`]: item.name,
-      [`line_items[${idx}][price_data][unit_amount]`]: unitAmount,
-    };
-    if (item.isSubscription) {
-      Object.assign(base, { [`line_items[${idx}][price_data][recurring][interval]`]: 'month' });
-    }
-    return base;
-  });
+  // Stripe shipping countries by currency
+  const shippingCountriesByCurrency: Record<string, string[]> = {
+    gbp: ['GB', 'IE'],
+    zar: ['ZA'],
+    usd: ['US'],
+    eur: ['DE', 'FR', 'IT', 'ES', 'NL', 'AT', 'BE', 'PT', 'FI', 'GR', 'IE'],
+    cad: ['CA'],
+    aud: ['AU', 'NZ'],
+  };
+  const allowedShippingCountries = shippingCountriesByCurrency[stripeCurrency] || ['GB', 'ZA', 'US'];
 
   // Build flat params for Stripe
   const params: Record<string, unknown> = {
@@ -149,20 +156,30 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
     cancel_url: `${origin}/checkout?cancelled=true`,
     customer_email: customerEmail,
     'metadata[user_id]': userId || '',
+    'metadata[customer_email]': customerEmail,
+    'metadata[customer_first_name]': customerDetails.firstName,
+    'metadata[customer_last_name]': customerDetails.lastName,
+    'metadata[customer_phone]': customerDetails.phone || '',
     'metadata[shipping_address]': shippingAddress?.address || '',
     'metadata[shipping_city]': shippingAddress?.city || '',
     'metadata[shipping_postal_code]': shippingAddress?.postalCode || '',
     'metadata[shipping_country]': shippingAddress?.country || '',
     'metadata[shipping_method]': shippingMethod || '',
-    'metadata[shipping_cost]': String(shippingCost),
-    'metadata[cart_items]': JSON.stringify(validatedItems.map(i => ({ id: i.id, qty: i.quantity, price: i.price }))),
-    'shipping_address_collection[allowed_countries][0]': 'ZA',
+    'metadata[shipping_cost]': String(shippingCost * currencyRate),
+    'metadata[cart_items]': JSON.stringify(validatedItems.map(i => ({ id: i.id, name: i.name, image: i.image, category: i.category, quantity: i.quantity, price: i.price, isSubscription: i.isSubscription }))),
+    'metadata[discount_code]': body.discountCode || '',
+    'metadata[currency]': currencyCode,
   };
+
+  // Add allowed shipping countries
+  allowedShippingCountries.forEach((country, i) => {
+    params[`shipping_address_collection[allowed_countries][${i}]`] = country;
+  });
 
   // Flatten line items into params
   validatedItems.forEach((item, idx) => {
     params[`line_items[${idx}][quantity]`] = item.quantity;
-    params[`line_items[${idx}][price_data][currency]`] = 'zar';
+    params[`line_items[${idx}][price_data][currency]`] = stripeCurrency;
     params[`line_items[${idx}][price_data][product_data][name]`] = item.name;
     params[`line_items[${idx}][price_data][unit_amount]`] = Math.round(item.price * 100);
     if (item.isSubscription) {
@@ -170,13 +187,29 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
     }
   });
 
-  // Add shipping as line item if applicable
-  if (shippingCost > 0) {
+  // Add shipping as a line item
+  const shippingInCurrency = shippingCost * currencyRate;
+  if (shippingInCurrency > 0) {
     const idx = validatedItems.length;
     params[`line_items[${idx}][quantity]`] = 1;
-    params[`line_items[${idx}][price_data][currency]`] = 'zar';
+    params[`line_items[${idx}][price_data][currency]`] = stripeCurrency;
     params[`line_items[${idx}][price_data][product_data][name]`] = shippingMethod || 'Shipping';
-    params[`line_items[${idx}][price_data][unit_amount]`] = Math.round(shippingCost * 100);
+    params[`line_items[${idx}][price_data][unit_amount]`] = Math.round(shippingInCurrency * 100);
+  }
+
+  // Apply discount coupon if provided
+  if (discountAmount && discountAmount > 0) {
+    try {
+      const coupon = await stripePost('/coupons', {
+        amount_off: Math.round(discountAmount * currencyRate * 100),
+        currency: stripeCurrency,
+        duration: 'once',
+        name: body.discountCode || 'Discount',
+      }, stripeKey);
+      params['discounts[0][coupon]'] = coupon.id;
+    } catch (e: any) {
+      console.warn('Coupon creation failed, skipping discount:', e.message);
+    }
   }
 
   try {

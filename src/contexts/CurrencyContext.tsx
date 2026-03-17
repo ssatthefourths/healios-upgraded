@@ -11,6 +11,7 @@ export interface Currency {
 
 export const SUPPORTED_CURRENCIES: Currency[] = [
   { code: 'GBP', symbol: '£', name: 'British Pound', rate: 1 },
+  { code: 'ZAR', symbol: 'R', name: 'South African Rand', rate: 23.5 },
   { code: 'USD', symbol: '$', name: 'US Dollar', rate: 1.27 },
   { code: 'EUR', symbol: '€', name: 'Euro', rate: 1.17 },
   { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', rate: 1.72 },
@@ -56,36 +57,29 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
     saveCurrencyToStorage(newCurrency);
   }, []);
 
-  // Detect user's locale on first visit
+  // Detect user's currency on first visit via Cloudflare Worker geo-detection
   useEffect(() => {
     const stored = localStorage.getItem(CURRENCY_STORAGE_KEY);
     if (!stored) {
-      // Try to detect currency based on locale
-      const locale = navigator.language || 'en-GB';
-      const countryCode = locale.split('-')[1]?.toUpperCase();
-      
-      const currencyMap: Record<string, string> = {
-        'US': 'USD',
-        'CA': 'CAD',
-        'AU': 'AUD',
-        'GB': 'GBP',
-        'DE': 'EUR',
-        'FR': 'EUR',
-        'IT': 'EUR',
-        'ES': 'EUR',
-        'NL': 'EUR',
-        'AT': 'EUR',
-        'BE': 'EUR',
-        'IE': 'EUR',
-      };
-      
-      const detectedCode = currencyMap[countryCode];
-      if (detectedCode) {
-        const found = SUPPORTED_CURRENCIES.find(c => c.code === detectedCode);
-        if (found) {
-          setCurrency(found);
-        }
-      }
+      const workerBase =
+        import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
+
+      fetch(`${workerBase}/currency`)
+        .then(res => {
+          if (!res.ok) throw new Error(`Currency API returned ${res.status}`);
+          return res.json();
+        })
+        .then((data: { currency?: string }) => {
+          if (data?.currency) {
+            const found = SUPPORTED_CURRENCIES.find(c => c.code === data.currency);
+            if (found) {
+              setCurrency(found);
+            }
+          }
+        })
+        .catch(() => {
+          // Fall back silently — GBP default already set by loadCurrencyFromStorage
+        });
     }
   }, [setCurrency]);
 

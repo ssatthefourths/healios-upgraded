@@ -28,4 +28,6 @@ ENVIRONMENT = "production"
 # Secrets — set via wrangler CLI, never commit values:
 #   wrangler secret put JWT_SECRET
 #   wrangler secret put LOVABLE_API_KEY
-#   wrangler secret put STRIPE_KEY        ← Stripe secret key (sk_live_... or sk_test_...)
+#   wrangler secret put STRIPE_KEY              ← Stripe secret key (sk_live_... or sk_test_...)
+#   wrangler secret put STRIPE_WEBHOOK_SECRET   ← Signing secret from Stripe Webhooks dashboard
+#   wrangler secret put RESEND_API_KEY          ← Resend API key for order confirmation emails

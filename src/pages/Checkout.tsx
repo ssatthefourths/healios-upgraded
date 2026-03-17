@@ -45,7 +45,7 @@ interface SavedAddress {
 
 const Checkout = () => {
   const { cartItems, updateQuantity, subtotal, clearCart, addToCart } = useCart();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currency } = useCurrency();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -562,6 +562,7 @@ const Checkout = () => {
           shippingCost: shipping,
           userId: user?.id,
           attribution: getAttributionData(),
+          currency: currency.code,
         },
       });
 
