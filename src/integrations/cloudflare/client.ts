@@ -215,5 +215,39 @@ export const cloudflare = {
       });
       return { data: { subscription: { unsubscribe: () => {} } } };
     }
+  },
+
+  // Route Supabase edge function calls to Cloudflare Worker endpoints
+  functions: {
+    async invoke(name: string, options?: { body?: any }) {
+      // Map function names to worker routes
+      const routeMap: Record<string, string> = {
+        'create-checkout-session': '/checkout-session',
+        'validate-discount': '/validate-discount',
+      };
+
+      const route = routeMap[name];
+      if (!route) {
+        console.warn(`functions.invoke: '${name}' not implemented in worker`);
+        return { data: null, error: { message: `Function '${name}' not available` } };
+      }
+
+      try {
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('cf_session') : null;
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const response = await fetch(`${API_URL}${route}`, {
+          method: 'POST',
+          headers,
+          body: options?.body ? JSON.stringify(options.body) : undefined,
+        });
+
+        const data = await response.json();
+        return response.ok ? { data, error: null } : { data: null, error: data };
+      } catch (err: any) {
+        return { data: null, error: { message: err.message } };
+      }
+    }
   }
 } as any;

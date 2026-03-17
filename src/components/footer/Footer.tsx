@@ -112,10 +112,10 @@ const Footer = () => {
               <h4 className="text-sm font-normal mb-4">Shop</h4>
               <ul className="space-y-2">
                 <li><Link to="/category/all" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">All Products</Link></li>
-                <li><Link to="/category/vitamins" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Vitamins & Minerals</Link></li>
+                <li><Link to="/category/vitamins-minerals" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Vitamins & Minerals</Link></li>
                 <li><Link to="/category/adaptogens" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Adaptogens</Link></li>
-                <li><Link to="/category/digestive" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Digestive Health</Link></li>
-                <li><Link to="/category/sleep" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Sleep & Relaxation</Link></li>
+                <li><Link to="/category/digestive-health" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Digestive Health</Link></li>
+                <li><Link to="/category/sleep-relaxation" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Sleep & Relaxation</Link></li>
               </ul>
             </div>
 

@@ -6,6 +6,7 @@ import { handleAuth } from './auth';
 import { handleProducts } from './products';
 import { handleOrders } from './orders';
 import { handleWellnessChat } from './wellness-chat';
+import { handleCheckout } from './checkout';
 
 export interface Env {
   DB: D1Database;
@@ -13,6 +14,7 @@ export interface Env {
   BUCKET: R2Bucket;
   JWT_SECRET: string;
   LOVABLE_API_KEY: string;
+  STRIPE_KEY: string;
 }
 
 export default {
@@ -50,6 +52,10 @@ export default {
 
       if (path === '/wellness-chat') {
         return await handleWellnessChat(request, env);
+      }
+
+      if (path === '/checkout-session') {
+        return await handleCheckout(request, env);
       }
 
       return new Response('Healios API - Not Found', { status: 404, headers: corsHeaders });
