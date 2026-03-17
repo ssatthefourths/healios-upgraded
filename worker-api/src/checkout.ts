@@ -6,7 +6,7 @@
  */
 
 import { Env } from './index';
-import { CURRENCY_RATES } from './currency';
+import { fetchLiveRates } from './currency';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -102,10 +102,11 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
   if (!customerEmail || !customerEmail.includes('@')) return json({ error: 'Valid email required' }, 400);
   if (!customerDetails?.firstName || !customerDetails?.lastName) return json({ error: 'Customer name required' }, 400);
 
-  // Resolve currency — use passed code if supported, default to GBP
+  // Resolve currency using live exchange rates
   const requestedCurrency = (rawCurrency || 'GBP').toUpperCase();
-  const currencyCode = CURRENCY_RATES[requestedCurrency] !== undefined ? requestedCurrency : 'GBP';
-  const currencyRate = CURRENCY_RATES[currencyCode]; // GBP = 1, ZAR = 23.5, etc.
+  const liveRates = await fetchLiveRates();
+  const currencyCode = liveRates[requestedCurrency] !== undefined ? requestedCurrency : 'GBP';
+  const currencyRate = liveRates[currencyCode]; // GBP = 1, ZAR = live rate, etc.
 
   // Server-side price validation against D1 (products priced in GBP)
   const productIds = cartItems.map(i => i.id);

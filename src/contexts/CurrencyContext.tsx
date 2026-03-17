@@ -57,31 +57,38 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
     saveCurrencyToStorage(newCurrency);
   }, []);
 
-  // Detect user's currency on first visit via Cloudflare Worker geo-detection
+  // Detect user's currency on first visit via Cloudflare Worker geo-detection.
+  // The worker returns a live exchange rate — we update the matched currency's
+  // rate so display prices are always current, even if the user has a stored
+  // preference (we refresh their stored entry's rate on every session start).
   useEffect(() => {
-    const stored = localStorage.getItem(CURRENCY_STORAGE_KEY);
-    if (!stored) {
-      const workerBase =
-        import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
+    const workerBase =
+      import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
 
-      fetch(`${workerBase}/currency`)
-        .then(res => {
-          if (!res.ok) throw new Error(`Currency API returned ${res.status}`);
-          return res.json();
-        })
-        .then((data: { currency?: string }) => {
-          if (data?.currency) {
-            const found = SUPPORTED_CURRENCIES.find(c => c.code === data.currency);
-            if (found) {
-              setCurrency(found);
-            }
-          }
-        })
-        .catch(() => {
-          // Fall back silently — GBP default already set by loadCurrencyFromStorage
-        });
-    }
-  }, [setCurrency]);
+    fetch(`${workerBase}/currency`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Currency API returned ${res.status}`);
+        return res.json();
+      })
+      .then((data: { currency?: string; rate?: number }) => {
+        if (!data?.currency) return;
+        const stored = localStorage.getItem(CURRENCY_STORAGE_KEY);
+        // Only auto-set the currency if the user hasn't chosen one yet
+        const targetCode = stored
+          ? JSON.parse(stored).code
+          : data.currency;
+        const found = SUPPORTED_CURRENCIES.find(c => c.code === targetCode);
+        if (found) {
+          // Patch in the live rate if the worker returned one for this currency
+          const liveRate = targetCode === data.currency ? (data.rate ?? found.rate) : found.rate;
+          setCurrency({ ...found, rate: liveRate });
+        }
+      })
+      .catch(() => {
+        // Fall back silently — stored or default GBP already set
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const convertPrice = useCallback((priceInGBP: number): number => {
     return priceInGBP * currency.rate;
