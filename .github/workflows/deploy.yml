@@ -1,0 +1,65 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # ── Frontend → Cloudflare Pages ──────────────────────────────────
+  deploy-pages:
+    name: Deploy Frontend (Pages)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_CF_WORKER_URL: https://healios-api.ss-f01.workers.dev
+          VITE_CLARITY_ID: vsma9av1yg
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: f019b80d70e4abeb4f0c28087db7db16
+          command: pages deploy dist --project-name=healios-upgraded --branch=main
+
+  # ── Worker API → Cloudflare Workers ──────────────────────────────
+  deploy-worker:
+    name: Deploy Worker API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker-api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: worker-api/package-lock.json
+
+      - name: Install worker dependencies
+        run: npm ci
+
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: f019b80d70e4abeb4f0c28087db7db16
+          workingDirectory: worker-api
