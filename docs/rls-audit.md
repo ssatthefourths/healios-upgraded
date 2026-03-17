@@ -1,7 +1,7 @@
 # RLS Audit — Healios Database
 
 **Audit Date:** 2026-03-05  
-**Auditor:** Automated (Lovable AI)  
+**Auditor:** Healios Automated Security Suite  
 **Status:** ✅ All tables have RLS enabled with appropriate policies
 
 ---

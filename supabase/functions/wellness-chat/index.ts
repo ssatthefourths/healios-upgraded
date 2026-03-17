@@ -111,7 +111,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
-      console.error("LOVABLE_API_KEY is not configured");
+      console.error("AI API key is not configured");
       throw new Error("AI service is not configured");
     }
 
@@ -153,7 +153,7 @@ ${productContext}
 
 Remember: You're here to help customers find the right supplements, not to diagnose or treat medical conditions.`;
 
-    console.log("Sending request to Lovable AI gateway...");
+    console.log("Sending request to AI advisory gateway...");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

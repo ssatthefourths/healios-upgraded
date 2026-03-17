@@ -237,7 +237,7 @@ const Auth = () => {
             </p>
           </div>
            <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
-            <OptimizedImage src="/healios-logo.png" alt="The Healios Health Co." priority={true} className="h-10 brightness-0 invert" />
+            <OptimizedImage src="/healios-logo.png" alt="The Healios Health Co." priority={true} fit="contain" className="h-10 brightness-0 invert" />
           </Link>
         </div>
       </div>
@@ -247,7 +247,7 @@ const Auth = () => {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <Link to="/" className="lg:hidden mb-12 block text-center hover:opacity-80 transition-opacity">
-            <OptimizedImage src="/healios-logo.png" alt="The Healios Health Co." priority={true} className="h-8 mx-auto" />
+            <OptimizedImage src="/healios-logo.png" alt="The Healios Health Co." priority={true} fit="contain" className="h-8 mx-auto" />
           </Link>
 
           {/* Back button for forgot password */}

@@ -35,12 +35,12 @@ export default {
       if (path.startsWith('/auth')) {
         return await handleAuth(request, env);
       }
-      
+
       if (path.startsWith('/products')) {
         return await handleProducts(request, env);
       }
 
-      if (path === '/categories') {
+      if (path === '/categories' || path === '/categories/') {
         return await handleProducts(request, env);
       }
 
@@ -55,9 +55,9 @@ export default {
       return new Response('Healios API - Not Found', { status: 404, headers: corsHeaders });
     } catch (err: any) {
       console.error(err);
-      return new Response(JSON.stringify({ error: err.message || 'Internal Server Error' }), { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      return new Response(JSON.stringify({ error: err.message || 'Internal Server Error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
   },

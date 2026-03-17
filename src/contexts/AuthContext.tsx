@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { cloudflare as supabase } from '@/integrations/cloudflare/client';
+import { setAnalyticsUserId, clearAnalyticsUserId, trackLogin, trackSignUp } from '@/lib/analytics';
+import { trackClarityEvent, tagClaritySession } from '@/lib/clarity';
 
 // Local auth types (no Supabase dependency)
 interface User { id: string; email?: string; first_name?: string; last_name?: string; role?: string; [key: string]: any; }
 interface Session { user: User; access_token: string; }
-import { setAnalyticsUserId, clearAnalyticsUserId, trackLogin, trackSignUp } from '@/lib/analytics';
-import { trackClarityEvent, tagClaritySession } from '@/lib/clarity';
 
 interface AuthContextType {
   user: User | null;
@@ -34,17 +34,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Handle GA4 user_id for cross-device tracking
         if (session?.user) {
           setAnalyticsUserId(session.user.id);
           tagClaritySession('user_id', session.user.id);
-          
-          // Track login/signup events
+
           if (event === 'SIGNED_IN') {
             trackLogin('email');
             trackClarityEvent('login_success');
           } else if (event === 'USER_UPDATED' && !user) {
-            // New signup confirmed
             trackSignUp('email');
             trackClarityEvent('signup_completed');
           }
@@ -55,12 +52,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Set user_id if already logged in
       if (session?.user) {
         setAnalyticsUserId(session.user.id);
       }
@@ -70,33 +66,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signUp = async (email: string, password: string, firstName?: string, lastName?: string) => {
-    // Use production domain for email redirect
-    const baseUrl = window.location.origin.includes('localhost') 
-      ? window.location.origin 
+    const baseUrl = window.location.origin.includes('localhost')
+      ? window.location.origin
       : 'https://www.thehealios.com';
     const redirectUrl = `${baseUrl}/`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-        }
+        data: { first_name: firstName, last_name: lastName }
       }
     });
-    
+
     return { error: error as Error | null };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
   };
 
@@ -105,32 +93,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const resetPassword = async (email: string) => {
-    // Use production domain for password reset redirects
-    const baseUrl = window.location.origin.includes('localhost') 
-      ? window.location.origin 
+    const baseUrl = window.location.origin.includes('localhost')
+      ? window.location.origin
       : 'https://www.thehealios.com';
     const redirectUrl = `${baseUrl}/auth?reset=true`;
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl,
-    });
-    
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
     return { error: error as Error | null };
   };
 
   const updatePassword = async (newPassword: string) => {
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-    
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
     return { error: error as Error | null };
   };
 
   const updateEmail = async (newEmail: string) => {
-    const { error } = await supabase.auth.updateUser({
-      email: newEmail,
-    });
-    
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
     return { error: error as Error | null };
   };
 

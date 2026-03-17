@@ -133,7 +133,7 @@ async function handleWebhook(req: Request): Promise<Response> {
   const apiKey = Deno.env.get('LOVABLE_API_KEY')
 
   if (!apiKey) {
-    console.error('LOVABLE_API_KEY not configured')
+    console.error("Email service API key not configured");
     return new Response(
       JSON.stringify({ error: 'Server configuration error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -233,7 +233,7 @@ async function handleWebhook(req: Request): Promise<Response> {
     plainText: true,
   })
 
-  // Send email via Lovable Email API
+  // Send email via transactional email API
   // The callback URL is provided in the payload by Lovable, ensuring correct routing
   // for both production and local development
   const callbackUrl = payload.data.callback_url

@@ -27,20 +27,24 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Load cart from localStorage
+// Load cart from sessionStorage
 const loadCartFromStorage = (): CartItem[] => {
   try {
-    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    // Clear old localStorage if it exists to avoid stale contamination
+    if (localStorage.getItem(CART_STORAGE_KEY)) {
+      localStorage.removeItem(CART_STORAGE_KEY);
+    }
+    const stored = sessionStorage.getItem(CART_STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
   }
 };
 
-// Save cart to localStorage
+// Save cart to sessionStorage
 const saveCartToStorage = (items: CartItem[]) => {
   try {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   } catch {
     // Storage might be full or unavailable
   }
@@ -49,7 +53,7 @@ const saveCartToStorage = (items: CartItem[]) => {
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => loadCartFromStorage());
 
-  // Sync cart to localStorage whenever it changes
+  // Sync cart to sessionStorage whenever it changes
   useEffect(() => {
     saveCartToStorage(cartItems);
   }, [cartItems]);

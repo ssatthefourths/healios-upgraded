@@ -1,175 +1,132 @@
 /**
  * Cloudflare D1 / Worker Client Wrapper
- * This file mimics the Supabase client interface to minimize frontend refactoring.
+ * Uses a thenable QueryBuilder so all chained calls (.eq, .order, .limit, etc.)
+ * work correctly — single fetch fires on await, not on each chained call.
  */
 
-const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'http://localhost:8787';
+const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
 
-interface CloudflareClient {
-  from: (table: string) => {
-    select: (columns: string, options?: any) => any;
-    insert: (data: any) => any;
-    update: (data: any) => any;
-    delete: () => any;
+class QueryBuilder {
+  private table: string;
+  private query: {
+    select: string;
+    filters: { column: string; operator: string; value: any }[];
+    orFilters: string[];
+    order: { column: string; ascending: boolean }[];
+    limit?: number;
+    range?: { from: number; to: number };
+    single?: boolean;
+    maybeSingle?: boolean;
   };
-  auth: {
-    getSession: () => Promise<{ data: { session: any }; error: any }>;
-    signInWithPassword: (credentials: any) => Promise<{ data: any; error: any }>;
-    signUp: (credentials: any) => Promise<{ data: any; error: any }>;
-    signOut: () => Promise<void>;
-    onAuthStateChange: (callback: any) => { data: { subscription: any } };
-  };
+
+  constructor(table: string) {
+    this.table = table;
+    this.query = {
+      select: '*',
+      filters: [],
+      orFilters: [],
+      order: [],
+    };
+  }
+
+  select(columns: string = '*') { this.query.select = columns; return this; }
+  eq(column: string, value: any) { this.query.filters.push({ column, operator: 'eq', value }); return this; }
+  neq(column: string, value: any) { this.query.filters.push({ column, operator: 'neq', value }); return this; }
+  gt(column: string, value: any) { this.query.filters.push({ column, operator: 'gt', value }); return this; }
+  gte(column: string, value: any) { this.query.filters.push({ column, operator: 'gte', value }); return this; }
+  lt(column: string, value: any) { this.query.filters.push({ column, operator: 'lt', value }); return this; }
+  lte(column: string, value: any) { this.query.filters.push({ column, operator: 'lte', value }); return this; }
+  ilike(column: string, pattern: string) { this.query.filters.push({ column, operator: 'ilike', value: pattern }); return this; }
+  in(column: string, values: any[]) { this.query.filters.push({ column, operator: 'in', value: values }); return this; }
+  or(filters: string) { this.query.orFilters.push(filters); return this; }
+  order(column: string, { ascending = true } = {}) { this.query.order.push({ column, ascending }); return this; }
+  limit(count: number) { this.query.limit = count; return this; }
+  range(from: number, to: number) { this.query.range = { from, to }; return this; }
+  single() { this.query.single = true; return this; }
+  maybeSingle() { this.query.maybeSingle = true; return this; }
+
+  async then(onfulfilled?: (value: any) => any, onrejected?: (reason: any) => any) {
+    try {
+      const url = new URL(`${API_URL}/${this.table}`);
+
+      this.query.filters.forEach(f => {
+        url.searchParams.append(f.column, `${f.operator}.${f.value}`);
+      });
+
+      if (this.query.orFilters.length > 0) {
+        url.searchParams.append('or', this.query.orFilters.join(','));
+      }
+
+      if (this.query.limit) {
+        url.searchParams.append('limit', this.query.limit.toString());
+      }
+
+      if (this.query.order.length > 0) {
+        url.searchParams.append('order', this.query.order.map(o => `${o.column}.${o.ascending ? 'asc' : 'desc'}`).join(','));
+      }
+
+      if (this.query.range) {
+        url.searchParams.append('offset', this.query.range.from.toString());
+      }
+
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('cf_session') : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(url.toString(), { headers });
+      let data = await response.json();
+
+      if (this.query.single || this.query.maybeSingle) {
+        data = Array.isArray(data) ? data[0] : data;
+        if (this.query.single && !data) {
+          throw new Error('No rows found for .single()');
+        }
+      }
+
+      const result = { data, error: response.ok ? null : { message: 'Fetch error' }, count: null };
+      return onfulfilled ? onfulfilled(result) : result;
+    } catch (err) {
+      const result = { data: null, error: err, count: 0 };
+      return onrejected ? onrejected(result) : result;
+    }
+  }
 }
 
 export const cloudflare = {
   from(table: string) {
+    const builder = new QueryBuilder(table);
     return {
-      select(columns = '*', options: any = {}) {
-        const queryParams = new URLSearchParams();
-        if (options.limit) queryParams.append('limit', options.limit);
-        
-        const fetchData = async (extraParams: URLSearchParams = new URLSearchParams()) => {
-          try {
-            const finalParams = new URLSearchParams(queryParams);
-            extraParams.forEach((v, k) => finalParams.append(k, v));
-            const response = await fetch(`${API_URL}/${table}?${finalParams.toString()}`);
-            const data = await response.json();
-            return { data, error: response.ok ? null : { message: data.error || 'Fetch error' } };
-          } catch (err: any) {
-            return { data: null, error: { message: err.message } };
-          }
-        };
-
-        const createPromise = (params = new URLSearchParams()) => {
-          const promise = fetchData(params) as any;
-          promise.order = (col: string, opt: any) => { 
-            params.append('order', col); 
-            if (opt?.ascending === false) params.append('dir', 'desc');
-            return createPromise(params); 
-          };
-          promise.limit = (l: number) => { 
-            params.append('limit', l.toString()); 
-            return createPromise(params); 
-          };
-          promise.eq = (col: string, val: any) => { 
-            params.append(col, val); 
-            return createPromise(params); 
-          };
-          promise.or = (filter: string) => { 
-            params.append('or', filter); 
-            return createPromise(params); 
-          };
-          promise.ilike = (col: string, val: string) => { 
-            params.append('search', val.replace(/%/g, '')); 
-            return createPromise(params); 
-          };
-          promise.in = (col: string, vals: any[]) => { 
-            params.append('in', vals.join(',')); 
-            return createPromise(params); 
-          };
-          promise.single = async () => {
-            const res = await fetchData(params);
-            return { ...res, data: Array.isArray(res.data) ? res.data[0] : res.data };
-          };
-          promise.maybeSingle = async () => {
-            const res = await fetchData(params);
-            return { ...res, data: Array.isArray(res.data) ? (res.data.length > 0 ? res.data[0] : null) : res.data };
-          };
-          promise.range = (from: number, to: number) => {
-            params.append('offset', from.toString());
-            params.append('limit', (to - from + 1).toString());
-            return createPromise(params);
-          };
-          return promise;
-        };
-
-        return createPromise();
+      select: (columns?: string, _options?: any) => builder.select(columns),
+      insert: async (data: any) => {
+        const token = localStorage.getItem('cf_session');
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch(`${API_URL}/${table}`, {
+          method: 'POST', headers, body: JSON.stringify(data),
+        });
+        const result = await response.json();
+        return { data: result, error: response.ok ? null : result };
       },
-      
-      async insert(data: any) {
-        try {
-          const response = await fetch(`${API_URL}/${table}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-          });
-          const result = await response.json();
-          const finalResult = { data: result, error: response.ok ? null : result };
-          
-          return {
-            ...finalResult,
-            select: () => ({
-              ...finalResult,
-              single: () => ({ ...finalResult, data: Array.isArray(result) ? result[0] : result })
-            })
-          };
-        } catch (err: any) {
-          return { data: null, error: { message: err.message } };
-        }
+      update: async (data: any) => {
+        const token = localStorage.getItem('cf_session');
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch(`${API_URL}/${table}`, {
+          method: 'PUT', headers, body: JSON.stringify(data),
+        });
+        const result = await response.json();
+        return { data: result, error: response.ok ? null : result };
       },
-
-      async update(data: any) {
-        const queryMethods = {
-          eq: (col: string, val: any) => ({
-            async select() {
-              const response = await fetch(`${API_URL}/${table}/${val}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-              });
-              const result = await response.json();
-              return { data: result, error: response.ok ? null : result, single: () => ({ data: result, error: null }) };
-            }
-          })
-        };
-        return queryMethods;
+      delete: async () => {
+        const token = localStorage.getItem('cf_session');
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch(`${API_URL}/${table}`, { method: 'DELETE', headers });
+        const result = await response.json();
+        return { data: result, error: response.ok ? null : result };
       },
-
-      async upsert(data: any) {
-        return { data: null, error: null };
-      },
-
-      async delete() {
-        return { data: null, error: null };
-      },
-
-      eq(column: string, value: any) {
-        const queryMethods = {
-          order: (col: string, opt: any) => queryMethods,
-          limit: (l: number) => queryMethods,
-          async select(columns = '*') {
-            const response = await fetch(`${API_URL}/${table}/${value}`);
-            const data = await response.json();
-            const result = { data, error: response.ok ? null : { message: 'Fetch error' } };
-            return {
-              ...result,
-              single: () => result,
-              maybeSingle: () => result
-            };
-          },
-          async update(data: any) {
-            const response = await fetch(`${API_URL}/${table}/${value}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data),
-            });
-            const result = await response.json();
-            return { data: result, error: response.ok ? null : result, select: () => ({ single: () => ({ data: result }) }) };
-          },
-          async delete() {
-            const response = await fetch(`${API_URL}/${table}/${value}`, {
-              method: 'DELETE',
-            });
-            const result = await response.json();
-            return { data: result, error: response.ok ? null : result };
-          }
-        };
-        return queryMethods;
-      },
-      
-      async maybeSingle() {
-        return { data: null, error: null };
-      },
+      eq: (column: string, value: any) => builder.eq(column, value),
+      in: (column: string, values: any[]) => builder.in(column, values),
     };
   },
 
@@ -187,7 +144,7 @@ export const cloudflare = {
     async getSession() {
       const token = localStorage.getItem('cf_session');
       if (!token) return { data: { session: null }, error: null };
-      
+
       try {
         const response = await fetch(`${API_URL}/auth/verify`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -221,11 +178,11 @@ export const cloudflare = {
       const response = await fetch(`${API_URL}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email, 
-          password, 
-          firstName: options?.data?.first_name, 
-          lastName: options?.data?.last_name 
+        body: JSON.stringify({
+          email,
+          password,
+          firstName: options?.data?.first_name,
+          lastName: options?.data?.last_name
         }),
       });
       const data = await response.json();
@@ -240,25 +197,22 @@ export const cloudflare = {
       localStorage.removeItem('cf_session');
     },
 
-    async resetPasswordForEmail(email: string, options?: any) {
-      // Placeholder for worker endpoint
-      console.log('Reset password for:', email, options);
+    async resetPasswordForEmail(email: string, _options?: any) {
+      // TODO: implement password reset endpoint in worker
+      console.log('Reset password for:', email);
       return { data: {}, error: null };
     },
 
     async updateUser(data: any) {
-      // Placeholder for worker endpoint
+      // TODO: implement update user endpoint in worker
       console.log('Update user:', data);
       return { data: { user: {} }, error: null };
     },
 
     onAuthStateChange(callback: any) {
-      // Basic event emitter for auth changes
-      // Immediately call with current session if available
-      this.getSession().then(({ data: { session } }) => {
+      this.getSession().then(({ data: { session } }: any) => {
         callback('INITIAL_SESSION', session);
       });
-
       return { data: { subscription: { unsubscribe: () => {} } } };
     }
   }

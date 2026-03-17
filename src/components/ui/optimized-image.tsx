@@ -13,6 +13,7 @@ interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
   priority?: boolean; // Use for LCP/above-the-fold images
   aspectRatio?: "square" | "video" | "auto";
   showSkeleton?: boolean;
+  fit?: "cover" | "contain";
 }
 
 const OptimizedImage = ({
@@ -21,6 +22,7 @@ const OptimizedImage = ({
   priority = false,
   aspectRatio = "auto",
   showSkeleton = true,
+  fit = "cover",
   className,
   ...props
 }: OptimizedImageProps) => {
@@ -61,7 +63,7 @@ const OptimizedImage = ({
   }[aspectRatio];
 
   return (
-    <div ref={imgRef} className={cn("relative overflow-hidden", aspectClass)}>
+    <div ref={imgRef} className={cn("relative overflow-hidden", aspectClass, className)}>
       {/* Skeleton placeholder */}
       {showSkeleton && !isLoaded && (
         <Skeleton className="absolute inset-0 w-full h-full" />
@@ -77,9 +79,9 @@ const OptimizedImage = ({
           fetchPriority={priority ? "high" : "auto"}
           onLoad={() => setIsLoaded(true)}
           className={cn(
-            "w-full h-full object-cover transition-opacity duration-300",
-            isLoaded ? "opacity-100" : "opacity-0",
-            className
+            "w-full h-full transition-opacity duration-300",
+            fit === "cover" ? "object-cover" : "object-contain",
+            isLoaded ? "opacity-100" : "opacity-0"
           )}
           {...props}
         />
