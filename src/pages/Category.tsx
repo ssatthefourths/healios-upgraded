@@ -408,7 +408,7 @@ const Category = () => {
         {isNewIn ? (
           <FeaturedArrivalsSection />
         ) : (
-          <PageContainer maxWidth="wide" className="pt-6 pb-12">
+          <PageContainer maxWidth="wide">
             <CategoryHeader 
               category={categoryDisplayName} 
             />

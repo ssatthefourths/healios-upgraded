@@ -49,7 +49,7 @@ const ProductCarousel = () => {
 
   if (isLoading) {
     return (
-      <section className="w-full mb-16 px-6">
+      <section className="w-full mb-16 px-page">
         <div className="mb-6">
           <Skeleton className="h-6 w-32 mb-2" />
           <Skeleton className="h-4 w-48" />
@@ -73,7 +73,7 @@ const ProductCarousel = () => {
   }
 
   return (
-    <section className="w-full mb-[var(--space-xl)] px-md">
+    <section className="w-full mb-[var(--space-xl)] px-page">
       <div className="mb-[var(--space-md)]">
         <h2 className="text-lg font-medium text-foreground uppercase tracking-widest">Bestsellers</h2>
         <p className="text-sm font-light text-muted-foreground">Our most-loved supplements</p>

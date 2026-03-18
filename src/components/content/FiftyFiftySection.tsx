@@ -82,7 +82,7 @@ const FiftyFiftySection = () => {
 
           {/* Trust micro-strip beneath right image */}
           <div className="flex items-center gap-[var(--space-md)] px-1">
-            {["UK Made", "Vegan", "Science-Backed"].map((val) => (
+            {["Premium Quality", "Vegan", "Science-Backed"].map((val) => (
               <span key={val} className="text-[0.65rem] font-light text-muted-foreground uppercase tracking-[0.18em]">
                 {val}
               </span>

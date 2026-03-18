@@ -67,7 +67,7 @@ const ProductDetail = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <main>
-          <PageContainer maxWidth="wide" className="py-6">
+          <PageContainer maxWidth="wide">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <Skeleton className="aspect-square w-full" />
               <div className="space-y-4">

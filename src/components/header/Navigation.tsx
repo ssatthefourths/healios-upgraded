@@ -162,7 +162,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
     <nav 
       className="relative bg-white/90"
     >
-      <div className="flex items-center justify-between h-16 px-6">
+      <div className="flex items-center justify-between h-16 px-page">
         {/* Mobile hamburger button */}
         <button
           type="button"
@@ -374,7 +374,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
           onMouseEnter={() => setActiveDropdown(activeDropdown)}
           onMouseLeave={() => setActiveDropdown(null)}
         >
-          <div className="mx-auto max-w-7xl px-8 h-[450px]">
+          <div className="mx-auto max-w-7xl px-page h-[450px]">
             <div className="flex justify-between w-full h-full py-12 gap-16">
               {/* Left side - Menu items */}
               <div className="w-1/4 flex flex-col justify-start">
@@ -468,7 +468,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
         <div 
           className="absolute top-full left-0 right-0 bg-nav border-b border-border z-[60]"
         >
-          <div className="px-6 py-8">
+          <div className="px-page py-8">
             <div className="max-w-2xl mx-auto">
               {/* Search input */}
               <div className="relative mb-8">
@@ -574,7 +574,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
       {/* Mobile navigation menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden absolute top-full left-0 right-0 bg-nav border-b border-border z-[60]">
-          <div className="px-6 py-8">
+          <div className="px-page py-8">
             <div className="space-y-6">
               {navItems.map((item) => (
                 <div key={item.name}>

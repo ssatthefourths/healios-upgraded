@@ -49,8 +49,8 @@ const PersonalizedRecommendations = ({
 
   if (isLoading) {
     return (
-      <section className="w-full px-6 mb-16">
-        <div className="container mx-auto max-w-7xl">
+      <section className="w-full px-page mb-16">
+        <div className="max-w-7xl mx-auto">
           <Skeleton className="h-6 w-48 mb-8" />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
             {Array.from({ length: limit }).map((_, i) => (
@@ -72,8 +72,8 @@ const PersonalizedRecommendations = ({
   }
 
   return (
-    <section className="w-full px-md mb-[var(--space-xl)]">
-      <div className="container mx-auto max-w-7xl">
+    <section className="w-full px-page mb-[var(--space-xl)]">
+      <div className="max-w-7xl mx-auto">
         <h2 className="text-lg font-medium text-foreground mb-[var(--space-md)] uppercase tracking-widest">{title}</h2>
 
         <div ref={staggerReveal} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-[var(--space-sm)] md:gap-[var(--space-md)]">

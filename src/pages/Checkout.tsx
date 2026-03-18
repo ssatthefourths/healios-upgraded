@@ -617,8 +617,8 @@ const Checkout = () => {
       <div className="min-h-screen bg-background">
         <CheckoutHeader />
         <main>
-          <PageContainer maxWidth="wide" className="py-6">
-            <OrderConfirmation 
+          <PageContainer maxWidth="wide">
+            <OrderConfirmation
               sessionId={completedOrderId || ''} 
               customerEmail={customerDetails.email}
               isLoggedIn={!!user}
@@ -636,7 +636,7 @@ const Checkout = () => {
       <div className="min-h-screen bg-background">
         <CheckoutHeader />
         <main>
-          <PageContainer maxWidth="wide" className="text-center py-20">
+          <PageContainer maxWidth="wide" className="text-center">
             <h1 className="text-2xl font-light text-foreground mb-4">Your bag is empty</h1>
             <p className="text-muted-foreground mb-8">Add some products to your bag to proceed with checkout.</p>
             <Link to="/">
@@ -654,7 +654,7 @@ const Checkout = () => {
       <CheckoutHeader />
       
       <main>
-        <PageContainer maxWidth="wide" className="py-6">
+        <PageContainer maxWidth="wide">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             {/* Order Summary - First on mobile, last on desktop */}

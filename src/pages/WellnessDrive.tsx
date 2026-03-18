@@ -121,9 +121,9 @@ const WellnessDrive = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="pt-6">
+      <main>
         {/* Hero Image */}
-        <section className="px-6 md:px-12 lg:px-16">
+        <section className="px-page">
           <div className="max-w-6xl mx-auto">
           <div className="relative overflow-hidden rounded-lg">
             <OptimizedImage 
@@ -137,7 +137,7 @@ const WellnessDrive = () => {
         </section>
 
         {/* Hero Text Section */}
-        <section className="px-6 py-12 md:py-16 text-center max-w-3xl mx-auto">
+        <section className="px-page py-[var(--space-xl)] text-center max-w-3xl mx-auto">
           <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
             <h1 className="text-3xl md:text-4xl font-normal text-foreground">
               Women's Wellness Drive
@@ -158,7 +158,7 @@ const WellnessDrive = () => {
         </section>
 
         {/* Submission Form */}
-        <section id="submit" className="px-6 py-8 bg-muted/30">
+        <section id="submit" className="px-page py-[var(--space-md)] bg-muted/30">
           <div className="max-w-xl mx-auto">
             <h2 className="text-xl font-normal text-foreground mb-6 text-center">
               Submit Your Wellness Story
@@ -229,7 +229,7 @@ const WellnessDrive = () => {
         </section>
 
         {/* Approved Posts Grid */}
-        <section className="px-6 py-12">
+        <section className="px-page py-[var(--space-xl)]">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-xl font-normal text-foreground mb-8 text-center">
               Community Wellness Stories
