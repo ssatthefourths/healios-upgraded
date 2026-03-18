@@ -76,7 +76,6 @@ const OptimizedImage = ({
           alt={alt}
           loading={priority ? "eager" : "lazy"}
           decoding={priority ? "sync" : "async"}
-          fetchPriority={priority ? "high" : "auto"}
           onLoad={() => setIsLoaded(true)}
           className={cn(
             "w-full h-full transition-opacity duration-300",

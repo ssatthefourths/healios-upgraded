@@ -10,6 +10,9 @@ import { handleCheckout } from './checkout';
 import { handleCurrency } from './currency';
 import { handleDiscount } from './discount';
 import { handleStripeWebhook } from './stripe-webhook';
+import { handleBlog } from './blog';
+import { handleReviews } from './reviews';
+import { handleWellness } from './wellness';
 
 export interface Env {
   DB: D1Database;
@@ -73,6 +76,18 @@ export default {
 
       if (path === '/stripe-webhook') {
         return await handleStripeWebhook(request, env);
+      }
+
+      if (path.startsWith('/blog_posts') || path.startsWith('/blog_categories')) {
+        return await handleBlog(request, env);
+      }
+
+      if (path.startsWith('/product_reviews')) {
+        return await handleReviews(request, env);
+      }
+
+      if (path.startsWith('/wellness_posts')) {
+        return await handleWellness(request, env);
       }
 
       return new Response('Healios API - Not Found', { status: 404, headers: corsHeaders });
