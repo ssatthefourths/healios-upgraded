@@ -275,33 +275,10 @@ const BlogPostPage = () => {
             <Separator className="mb-lg" />
 
             {/* Content */}
-            <div className="prose prose-lg max-w-none prose-headings:font-medium prose-headings:uppercase prose-headings:tracking-widest prose-headings:text-foreground prose-p:text-foreground/80 prose-p:leading-relaxed prose-a:text-primary prose-strong:text-foreground font-light">
-              {/* Render content - supports basic markdown-like formatting */}
-              <div className="whitespace-pre-wrap text-foreground/80 leading-relaxed">
-                {post.content.split('\n\n').map((paragraph, index) => {
-                  // Handle headings
-                  if (paragraph.startsWith('## ')) {
-                    return <h2 key={index} className="text-xl font-medium text-foreground mt-lg mb-md uppercase tracking-widest">{paragraph.slice(3)}</h2>;
-                  }
-                  if (paragraph.startsWith('### ')) {
-                    return <h3 key={index} className="text-lg font-medium text-foreground mt-md mb-sm uppercase tracking-wider">{paragraph.slice(4)}</h3>;
-                  }
-                  // Handle lists
-                  if (paragraph.startsWith('- ') || paragraph.startsWith('* ')) {
-                    const items = paragraph.split('\n').filter(line => line.startsWith('- ') || line.startsWith('* '));
-                    return (
-                      <ul key={index} className="list-disc list-inside my-4 space-y-2">
-                        {items.map((item, i) => (
-                          <li key={i}>{item.slice(2)}</li>
-                        ))}
-                      </ul>
-                    );
-                  }
-                  // Regular paragraph
-                  return <p key={index} className="mb-4">{paragraph}</p>;
-                })}
-              </div>
-            </div>
+            <div
+              className="prose prose-lg max-w-none prose-headings:font-medium prose-headings:uppercase prose-headings:tracking-widest prose-headings:text-foreground prose-p:text-foreground/80 prose-p:leading-relaxed prose-a:text-primary prose-strong:text-foreground prose-ul:text-foreground/80 prose-li:text-foreground/80 font-light"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
 
             <Separator className="my-8" />
 

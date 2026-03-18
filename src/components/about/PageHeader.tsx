@@ -5,7 +5,7 @@ interface PageHeaderProps {
 
 const PageHeader = ({ title, subtitle }: PageHeaderProps) => {
   return (
-    <header className="pr-6 py-16 border-b border-border">
+    <header className="pr-6 pt-2 pb-10 border-b border-border">
       <h1 className="text-4xl md:text-5xl font-light text-foreground mb-4">
         {title}
       </h1>
