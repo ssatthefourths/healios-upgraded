@@ -1,89 +1,97 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { trackClarityEvent } from "@/lib/clarity";
-import { cloudflare as supabase } from "@/integrations/cloudflare/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Package, 
-  ShoppingCart, 
-  Mail, 
-  Star, 
+import { Badge } from "@/components/ui/badge";
+import {
+  Package,
+  ShoppingCart,
+  Mail,
+  Star,
   Users,
   ShoppingBag,
-  Tag, 
+  Tag,
   Heart,
   AlertTriangle,
   ArrowRight,
   Target,
-  Repeat
+  Repeat,
+  TrendingUp,
+  CalendarDays,
+  Clock,
 } from "lucide-react";
+
+const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
+
+interface RecentOrder {
+  id: string;
+  email: string;
+  total: number;
+  status: string;
+  created_at: string;
+}
 
 interface DashboardStats {
   totalOrders: number;
   pendingOrders: number;
   totalRevenue: number;
+  todayOrders: number;
+  monthRevenue: number;
   pendingReviews: number;
   lowStockProducts: number;
   totalProducts: number;
   newsletterSubscribers: number;
   pendingWellnessPosts: number;
   activeDiscounts: number;
+  recentOrders: RecentOrder[];
 }
+
+const STATUS_COLORS: Record<string, string> = {
+  pending:           "bg-amber-100 text-amber-800 border-amber-200",
+  payment_confirmed: "bg-blue-100 text-blue-800 border-blue-200",
+  processing:        "bg-sky-100 text-sky-800 border-sky-200",
+  shipped:           "bg-indigo-100 text-indigo-800 border-indigo-200",
+  delivered:         "bg-green-100 text-green-800 border-green-200",
+  cancelled:         "bg-red-100 text-red-800 border-red-200",
+  refunded:          "bg-rose-100 text-rose-800 border-rose-200",
+};
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({
     totalOrders: 0,
     pendingOrders: 0,
     totalRevenue: 0,
+    todayOrders: 0,
+    monthRevenue: 0,
     pendingReviews: 0,
     lowStockProducts: 0,
     totalProducts: 0,
     newsletterSubscribers: 0,
     pendingWellnessPosts: 0,
     activeDiscounts: 0,
+    recentOrders: [],
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     trackClarityEvent('dashboard_view');
 
     const fetchStats = async () => {
-      // Fetch all stats in parallel
-      const [
-        ordersResult,
-        pendingOrdersResult,
-        revenueResult,
-        reviewsResult,
-        lowStockResult,
-        totalProductsResult,
-        subscribersResult,
-        wellnessResult,
-        discountsResult,
-      ] = await Promise.all([
-        supabase.from("orders").select("id", { count: "exact", head: true }),
-        supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("orders").select("total"),
-        supabase.from("product_reviews").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("products").select("id", { count: "exact", head: true }).lt("stock_quantity", 10),
-        supabase.from("products").select("id", { count: "exact", head: true }),
-        supabase.from("newsletter_subscriptions").select("id", { count: "exact", head: true }).eq("is_active", true),
-        supabase.from("wellness_posts").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("discount_codes").select("id", { count: "exact", head: true }).eq("is_active", true),
-      ]);
-
-      const totalRevenue = revenueResult.data?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
-
-      setStats({
-        totalOrders: ordersResult.count || 0,
-        pendingOrders: pendingOrdersResult.count || 0,
-        totalRevenue,
-        pendingReviews: reviewsResult.count || 0,
-        lowStockProducts: lowStockResult.count || 0,
-        totalProducts: totalProductsResult.count || 0,
-        newsletterSubscribers: subscribersResult.count || 0,
-        pendingWellnessPosts: wellnessResult.count || 0,
-        activeDiscounts: discountsResult.count || 0,
-      });
+      try {
+        const token = localStorage.getItem('cf_session');
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const res = await fetch(`${API_URL}/admin/stats`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard stats', err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchStats();
@@ -105,7 +113,7 @@ const AdminDashboard = () => {
       icon: ShoppingBag,
       href: "/admin/products",
       stat: stats.totalProducts,
-      statLabel: "total products",
+      statLabel: "published products",
     },
     {
       title: "Reviews",
@@ -168,74 +176,139 @@ const AdminDashboard = () => {
     },
   ];
 
+  const hasAlerts = stats.pendingOrders > 0 || stats.lowStockProducts > 0 || stats.pendingReviews > 0 || stats.pendingWellnessPosts > 0;
+
+  const formatCurrency = (amount: number) =>
+    `£${Number(amount).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const formatDate = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch { return iso; }
+  };
+
   return (
     <AdminLayout title="Dashboard" subtitle="Overview of your store's performance and quick actions">
-      {/* Quick Stats Banner */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card className="bg-primary text-primary-foreground">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+
+      {/* Revenue + Orders stats row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card className="bg-primary text-primary-foreground col-span-2 md:col-span-1">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-primary-foreground/80 text-sm">Total Revenue</p>
-                <p className="text-3xl font-bold">£{stats.totalRevenue.toFixed(2)}</p>
+                <p className="text-primary-foreground/70 text-xs font-medium uppercase tracking-wide">All-time Revenue</p>
+                <p className="text-2xl font-bold mt-1">{loading ? "—" : formatCurrency(stats.totalRevenue)}</p>
               </div>
-              <ShoppingCart className="h-10 w-10 opacity-50" />
+              <TrendingUp className="h-8 w-8 opacity-40 shrink-0 mt-1" />
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-muted-foreground text-sm">Total Orders</p>
-                <p className="text-3xl font-bold text-foreground">{stats.totalOrders}</p>
+                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">This Month</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{loading ? "—" : formatCurrency(stats.monthRevenue)}</p>
               </div>
-              <Package className="h-10 w-10 text-muted-foreground/50" />
+              <CalendarDays className="h-8 w-8 text-muted-foreground/40 shrink-0 mt-1" />
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-muted-foreground text-sm">Newsletter Subscribers</p>
-                <p className="text-3xl font-bold text-foreground">{stats.newsletterSubscribers}</p>
+                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Orders Today</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{loading ? "—" : stats.todayOrders}</p>
               </div>
-              <Users className="h-10 w-10 text-muted-foreground/50" />
+              <Clock className="h-8 w-8 text-muted-foreground/40 shrink-0 mt-1" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Total Orders</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{loading ? "—" : stats.totalOrders}</p>
+                {stats.pendingOrders > 0 && (
+                  <p className="text-amber-600 text-xs mt-1 font-medium">{stats.pendingOrders} pending</p>
+                )}
+              </div>
+              <ShoppingCart className="h-8 w-8 text-muted-foreground/40 shrink-0 mt-1" />
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Alerts strip */}
+      {!loading && hasAlerts && (
+        <div className="flex flex-wrap gap-2 mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <div className="flex items-center gap-2 text-amber-700 font-medium text-sm mr-2">
+            <AlertTriangle className="h-4 w-4" />
+            Attention needed:
+          </div>
+          {stats.pendingOrders > 0 && (
+            <Link to="/admin/orders">
+              <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200 cursor-pointer">
+                {stats.pendingOrders} pending orders
+              </Badge>
+            </Link>
+          )}
+          {stats.lowStockProducts > 0 && (
+            <Link to="/admin/inventory">
+              <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300 hover:bg-orange-200 cursor-pointer">
+                {stats.lowStockProducts} low stock
+              </Badge>
+            </Link>
+          )}
+          {stats.pendingReviews > 0 && (
+            <Link to="/admin/reviews">
+              <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200 cursor-pointer">
+                {stats.pendingReviews} pending reviews
+              </Badge>
+            </Link>
+          )}
+          {stats.pendingWellnessPosts > 0 && (
+            <Link to="/admin/wellness">
+              <Badge variant="outline" className="bg-pink-100 text-pink-800 border-pink-300 hover:bg-pink-200 cursor-pointer">
+                {stats.pendingWellnessPosts} wellness posts
+              </Badge>
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Admin Sections Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
         {adminSections.map((section) => (
           <Link key={section.href} to={section.href}>
-            <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group">
-              <CardHeader>
+            <Card className="h-full hover:shadow-md transition-shadow cursor-pointer group border-border/60">
+              <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div className="p-2 rounded-lg bg-primary/10">
-                    <section.icon className="h-6 w-6 text-primary" />
+                    <section.icon className="h-5 w-5 text-primary" />
                   </div>
                   {section.alert && (
-                    <div className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-medium">
+                    <div className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-medium border border-amber-200">
                       <AlertTriangle className="h-3 w-3" />
                       {section.alert}
                     </div>
                   )}
                 </div>
-                <CardTitle className="flex items-center justify-between mt-4">
+                <CardTitle className="flex items-center justify-between mt-3 text-base">
                   {section.title}
                   <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                 </CardTitle>
-                <CardDescription>{section.description}</CardDescription>
+                <CardDescription className="text-xs">{section.description}</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-semibold text-foreground">
-                  {section.stat}
-                  <span className="text-sm font-normal text-muted-foreground ml-2">
+              <CardContent className="pt-0">
+                <div className="text-xl font-semibold text-foreground">
+                  {loading ? <span className="text-muted-foreground/40">—</span> : section.stat}
+                  <span className="text-xs font-normal text-muted-foreground ml-2">
                     {section.statLabel}
                   </span>
                 </div>
@@ -244,6 +317,64 @@ const AdminDashboard = () => {
           </Link>
         ))}
       </div>
+
+      {/* Recent Orders */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Recent Orders</CardTitle>
+              <CardDescription className="text-xs mt-0.5">Latest 8 orders across the store</CardDescription>
+            </div>
+            <Link to="/admin/orders" className="text-xs text-primary hover:underline flex items-center gap-1">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="px-6 py-8 text-center text-muted-foreground text-sm">Loading orders…</div>
+          ) : stats.recentOrders.length === 0 ? (
+            <div className="px-6 py-8 text-center text-muted-foreground text-sm">No orders yet</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Order ID</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Customer</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Amount</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</th>
+                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.recentOrders.map((order, i) => (
+                    <tr key={order.id} className={`border-b border-border/40 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? '' : 'bg-muted/10'}`}>
+                      <td className="px-6 py-3 font-mono text-xs text-muted-foreground">
+                        {order.id.slice(0, 8)}…
+                      </td>
+                      <td className="px-4 py-3 text-foreground truncate max-w-[160px]">{order.email || '—'}</td>
+                      <td className="px-4 py-3 text-right font-medium">{formatCurrency(order.total)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_COLORS[order.status] ?? 'bg-muted text-muted-foreground border-border'}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3 text-muted-foreground text-xs">{formatDate(order.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Architecture note */}
+      <p className="text-xs text-muted-foreground/60 mt-4 text-center">
+        Revenue figures shown in GBP (base currency). ZAR/USD/EUR conversions apply at checkout time via live exchange rates.
+      </p>
     </AdminLayout>
   );
 };

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
 import AdminSidebar from "./AdminSidebar";
@@ -31,41 +30,19 @@ const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => {
   });
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
-      checkAdminRole();
+    if (authLoading) return;
+    if (!user) {
+      navigate("/auth");
+      return;
     }
-  }, [user, authLoading, navigate]);
-
-  const checkAdminRole = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        setIsAdmin(true);
-      } else {
-        toast.error("You don't have admin access");
-        navigate("/");
-      }
-    } catch (error) {
-      console.error("Error checking admin role:", error);
+    if (user.role !== 'admin') {
+      toast.error("You don't have admin access");
       navigate("/");
-    } finally {
-      setCheckingAdmin(false);
+      return;
     }
-  };
+    setIsAdmin(true);
+    setCheckingAdmin(false);
+  }, [user, authLoading, navigate]);
 
   if (authLoading || checkingAdmin) {
     return (

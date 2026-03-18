@@ -92,6 +92,43 @@ class QueryBuilder {
   }
 }
 
+class MutationBuilder {
+  private table: string;
+  private method: 'PUT' | 'DELETE';
+  private data?: any;
+  private filters: [string, string][] = [];
+
+  constructor(table: string, method: 'PUT' | 'DELETE', data?: any) {
+    this.table = table;
+    this.method = method;
+    this.data = data;
+  }
+
+  eq(col: string, val: any) { this.filters.push([col, String(val)]); return this; }
+
+  async then(resolve?: (v: any) => any, reject?: (e: any) => any) {
+    const url = new URL(`${API_URL}/${this.table}`);
+    this.filters.forEach(([k, v]) => url.searchParams.append(k, `eq.${v}`));
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('cf_session') : null;
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (this.data) headers['Content-Type'] = 'application/json';
+    try {
+      const res = await fetch(url.toString(), {
+        method: this.method,
+        headers,
+        body: this.data ? JSON.stringify(this.data) : undefined,
+      });
+      const result = await res.json();
+      const out = { data: result, error: res.ok ? null : result };
+      return resolve ? resolve(out) : out;
+    } catch (err) {
+      const out = { data: null, error: err };
+      return reject ? reject(out) : out;
+    }
+  }
+}
+
 export const cloudflare = {
   from(table: string) {
     const builder = new QueryBuilder(table);
@@ -107,24 +144,8 @@ export const cloudflare = {
         const result = await response.json();
         return { data: result, error: response.ok ? null : result };
       },
-      update: async (data: any) => {
-        const token = localStorage.getItem('cf_session');
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        const response = await fetch(`${API_URL}/${table}`, {
-          method: 'PUT', headers, body: JSON.stringify(data),
-        });
-        const result = await response.json();
-        return { data: result, error: response.ok ? null : result };
-      },
-      delete: async () => {
-        const token = localStorage.getItem('cf_session');
-        const headers: Record<string, string> = {};
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        const response = await fetch(`${API_URL}/${table}`, { method: 'DELETE', headers });
-        const result = await response.json();
-        return { data: result, error: response.ok ? null : result };
-      },
+      update: (data: any) => new MutationBuilder(table, 'PUT', data),
+      delete: () => new MutationBuilder(table, 'DELETE'),
       eq: (column: string, value: any) => builder.eq(column, value),
       in: (column: string, values: any[]) => builder.in(column, values),
     };

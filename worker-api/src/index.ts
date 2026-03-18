@@ -14,6 +14,7 @@ import { handleBlog } from './blog';
 import { handleReviews } from './reviews';
 import { handleWellness } from './wellness';
 import { handleTable } from './table-handler';
+import { handleAdminStats } from './admin-stats';
 
 export interface Env {
   DB: D1Database;
@@ -90,6 +91,10 @@ export default {
 
       if (path.startsWith('/wellness_posts')) {
         return await handleWellness(request, env);
+      }
+
+      if (path === '/admin/stats' && request.method === 'GET') {
+        return await handleAdminStats(request, env);
       }
 
       const TABLE_PATHS = [
