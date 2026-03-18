@@ -245,6 +245,7 @@ export const cloudflare = {
       const routeMap: Record<string, string> = {
         'create-checkout-session': '/checkout-session',
         'validate-discount': '/validate-discount',
+        'admin-user-management': '/admin/user-management',
       };
 
       const route = routeMap[name];

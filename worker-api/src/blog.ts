@@ -117,5 +117,38 @@ export async function handleBlog(request: Request, env: Env): Promise<Response> 
     }
   }
 
+  // ── PUT /blog_posts (Admin) ───────────────────────────────────────────────
+  if (path === '/blog_posts' && method === 'PUT') {
+    const rawId = url.searchParams.get('id');
+    const postId = rawId?.startsWith('eq.') ? rawId.slice(3) : rawId;
+    if (!postId) {
+      return new Response(JSON.stringify({ error: 'Post ID required' }), { status: 400, headers: corsHeaders });
+    }
+    try {
+      const data = await request.json() as any;
+      const BLOG_COLS = ['slug', 'title', 'excerpt', 'content', 'featured_image', 'status',
+        'category_id', 'seo_title', 'meta_description', 'reading_time_minutes', 'published_at', 'author_id'];
+      const setClauses: string[] = [];
+      const bindings: any[] = [];
+      for (const col of BLOG_COLS) {
+        if (col in data) {
+          setClauses.push(`${col} = ?`);
+          bindings.push(data[col] ?? null);
+        }
+      }
+      if (setClauses.length === 0) {
+        return new Response(JSON.stringify({ error: 'No fields to update' }), { status: 400, headers: corsHeaders });
+      }
+      setClauses.push('updated_at = ?');
+      bindings.push(new Date().toISOString());
+      bindings.push(postId);
+      await env.DB.prepare(`UPDATE blog_posts SET ${setClauses.join(', ')} WHERE id = ?`)
+        .bind(...bindings).run();
+      return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
+    } catch (err: any) {
+      return new Response(JSON.stringify({ error: err.message }), { status: 400, headers: corsHeaders });
+    }
+  }
+
   return new Response(JSON.stringify({ error: 'Blog endpoint not found' }), { status: 404, headers: corsHeaders });
 }

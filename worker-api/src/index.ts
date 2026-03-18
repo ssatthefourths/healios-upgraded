@@ -15,6 +15,7 @@ import { handleReviews } from './reviews';
 import { handleWellness } from './wellness';
 import { handleTable } from './table-handler';
 import { handleAdminStats } from './admin-stats';
+import { handleAdminUsers } from './admin-users';
 
 export interface Env {
   DB: D1Database;
@@ -97,10 +98,15 @@ export default {
         return await handleAdminStats(request, env);
       }
 
+      if (path === '/admin/user-management' && request.method === 'POST') {
+        return await handleAdminUsers(request, env);
+      }
+
       const TABLE_PATHS = [
         '/profiles', '/addresses', '/wishlist', '/loyalty_points',
         '/loyalty_transactions', '/subscriptions', '/order_items',
-        '/newsletter_subscriptions', '/discount_codes', '/users'
+        '/newsletter_subscriptions', '/discount_codes', '/users',
+        '/product_versions', '/scheduled_newsletters', '/admin_audit_log',
       ];
       if (TABLE_PATHS.some(t => path.startsWith(t))) {
         return await handleTable(request, env);
