@@ -6,9 +6,9 @@ interface ContentSectionProps {
 
 const ContentSection = ({ title, children, className = "" }: ContentSectionProps) => {
   return (
-    <section className={`pr-6 py-16 ${className}`}>
+    <section className={`py-10 border-b border-border last:border-b-0 ${className}`}>
       {title && (
-        <h2 className="text-3xl font-light text-foreground mb-8">
+        <h2 className="text-2xl font-light text-foreground mb-6">
           {title}
         </h2>
       )}
