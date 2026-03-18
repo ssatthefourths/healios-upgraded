@@ -1,6 +1,7 @@
 // GA4 Analytics utility functions
 
-export { hasAnalyticsConsent } from '@/lib/consentMode';
+import { hasAnalyticsConsent } from '@/lib/consentMode';
+export { hasAnalyticsConsent };
 
 /**
  * Track newsletter signup event (GA4 generate_lead + custom newsletter_signup)
