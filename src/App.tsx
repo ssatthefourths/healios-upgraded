@@ -33,6 +33,7 @@ const QualitySourcing = lazy(() => import("./pages/about/QualitySourcing"));
 const ProductGuide = lazy(() => import("./pages/about/ProductGuide"));
 const CustomerCare = lazy(() => import("./pages/about/CustomerCare"));
 const WholesalePartners = lazy(() => import("./pages/about/WholesalePartners"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const ShippingReturns = lazy(() => import("./pages/ShippingReturns"));
@@ -122,6 +123,7 @@ const App = () => (
                       <Route path="/about/wholesale" element={<WholesalePartners />} />
                       
                       {/* Legal/Info pages (lazy loaded) */}
+                      <Route path="/reset-password" element={<ResetPassword />} />
                       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                       <Route path="/terms-of-service" element={<TermsOfService />} />
                       <Route path="/shipping-returns" element={<ShippingReturns />} />

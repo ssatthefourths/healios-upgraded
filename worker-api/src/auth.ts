@@ -116,11 +116,66 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
     }), { headers: corsHeaders });
   }
 
+  // POST /auth/request-reset
+  if (path === '/auth/request-reset' && method === 'POST') {
+    const { email } = await request.json() as any;
+    // Always return success to prevent email enumeration
+    const user = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first<any>();
+    if (user) {
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      await env.DB.prepare(
+        'INSERT INTO password_reset_tokens (token, user_id, expires_at, used) VALUES (?, ?, ?, 0)'
+      ).bind(token, user.id, expiresAt).run();
+
+      const resetUrl = `https://thehealios.com/reset-password?token=${token}`;
+      if ((env as any).RESEND_API_KEY) {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(env as any).RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Healios <noreply@thehealios.com>',
+            to: [email],
+            subject: 'Reset your Healios password',
+            html: `<p>Hi,</p>
+                   <p>Click the link below to reset your password. This link expires in 1 hour.</p>
+                   <p><a href="${resetUrl}">${resetUrl}</a></p>
+                   <p>If you didn't request this, you can ignore this email.</p>
+                   <p>The Healios Team</p>`,
+          }),
+        });
+      }
+    }
+    return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
+  }
+
+  // POST /auth/reset-password
+  if (path === '/auth/reset-password' && method === 'POST') {
+    const { token, password } = await request.json() as any;
+    if (!token || !password || password.length < 8) {
+      return new Response(JSON.stringify({ error: 'Token and password (min 8 chars) required' }), { status: 400, headers: corsHeaders });
+    }
+
+    const row = await env.DB.prepare(
+      'SELECT user_id, expires_at, used FROM password_reset_tokens WHERE token = ?'
+    ).bind(token).first<any>();
+
+    if (!row || row.used || new Date(row.expires_at) < new Date()) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired reset link' }), { status: 400, headers: corsHeaders });
+    }
+
+    const hash = await hashPassword(password);
+    await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(hash, row.user_id).run();
+    await env.DB.prepare('UPDATE password_reset_tokens SET used = 1 WHERE token = ?').bind(token).run();
+
+    return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
+  }
+
   return new Response('Auth endpoint not found', { status: 404, headers: corsHeaders });
 }
 
 // Helper functions (simplified for Worker environment)
-async function hashPassword(password: string): Promise<string> {
+export async function hashPassword(password: string): Promise<string> {
   const msgUint8 = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
   const hashArray = Array.from(new Uint8Array(hashBuffer));

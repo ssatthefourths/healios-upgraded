@@ -1,5 +1,17 @@
 import { Env } from './index';
 
+function serializeForD1(val: any): any {
+  if (val !== null && typeof val === 'object') return JSON.stringify(val);
+  return val;
+}
+
+function tryParseJson(val: any): any {
+  if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
+    try { return JSON.parse(val); } catch { /* not JSON */ }
+  }
+  return val;
+}
+
 const USER_TABLES = new Set([
   'profiles', 'addresses', 'orders', 'order_items',
   'wishlist', 'loyalty_points', 'loyalty_transactions', 'subscriptions'
@@ -86,7 +98,12 @@ export async function handleTable(request: Request, env: Env): Promise<Response>
 
     try {
       const { results } = await env.DB.prepare(sql).bind(...bindings).all();
-      return new Response(JSON.stringify(results ?? []), { headers: cors });
+      const parsed = (results ?? []).map((row: any) => {
+        const out: Record<string, any> = {};
+        for (const [k, v] of Object.entries(row)) out[k] = tryParseJson(v);
+        return out;
+      });
+      return new Response(JSON.stringify(parsed), { headers: cors });
     } catch (err: any) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: cors });
     }
@@ -99,7 +116,7 @@ export async function handleTable(request: Request, env: Env): Promise<Response>
       if (USER_TABLES.has(tableName) && userId && !body.user_id) body.user_id = userId;
       const cols = Object.keys(body);
       const sql = `INSERT INTO ${tableName} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`;
-      await env.DB.prepare(sql).bind(...Object.values(body)).run();
+      await env.DB.prepare(sql).bind(...Object.values(body).map(serializeForD1)).run();
       return new Response(JSON.stringify(body), { status: 201, headers: cors });
     } catch (err: any) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: cors });
@@ -119,7 +136,7 @@ export async function handleTable(request: Request, env: Env): Promise<Response>
       const setClause = Object.keys(body).map(k => `${k} = ?`).join(', ');
       const whereClause = filters.map(f => `${f.col} = ?`).join(' AND ');
       const sql = `UPDATE ${tableName} SET ${setClause} WHERE ${whereClause}`;
-      await env.DB.prepare(sql).bind(...Object.values(body), ...filters.map(f => f.val)).run();
+      await env.DB.prepare(sql).bind(...Object.values(body).map(serializeForD1), ...filters.map(f => f.val)).run();
       return new Response(JSON.stringify({ success: true }), { headers: cors });
     } catch (err: any) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: cors });

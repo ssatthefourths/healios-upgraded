@@ -1,9 +1,27 @@
 import { Env } from './index';
+import { hashPassword } from './auth';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Content-Type': 'application/json',
 };
+
+async function sendEmail(env: Env, to: string, subject: string, html: string): Promise<void> {
+  if (!env.RESEND_API_KEY) return;
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: 'Healios <noreply@thehealios.com>',
+      to: [to],
+      subject,
+      html,
+    }),
+  });
+}
 
 async function getAdminUserId(request: Request, env: Env): Promise<string | null> {
   try {
@@ -80,8 +98,34 @@ export async function handleAdminUsers(request: Request, env: Env): Promise<Resp
     return new Response(JSON.stringify({ success: true }), { headers: cors });
   }
 
+  if (action === 'set_password') {
+    const { new_password } = body;
+    if (!target_user_id) return new Response(JSON.stringify({ error: 'target_user_id required' }), { status: 400, headers: cors });
+    if (!new_password || new_password.length < 8) return new Response(JSON.stringify({ error: 'Password must be at least 8 characters' }), { status: 400, headers: cors });
+    const hash = await hashPassword(new_password);
+    await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(hash, target_user_id).run();
+    await logAudit(env, adminId, 'set_password', target_user_id);
+    return new Response(JSON.stringify({ success: true }), { headers: cors });
+  }
+
   if (action === 'send_password_reset') {
     if (!target_email) return new Response(JSON.stringify({ error: 'target_email required' }), { status: 400, headers: cors });
+    const user = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(target_email).first<any>();
+    if (user) {
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      await env.DB.prepare(
+        'INSERT INTO password_reset_tokens (token, user_id, expires_at, used) VALUES (?, ?, ?, 0)'
+      ).bind(token, user.id, expiresAt).run();
+      const resetUrl = `https://thehealios.com/reset-password?token=${token}`;
+      await sendEmail(env, target_email, 'Reset Your Healios Password',
+        `<p>Hi,</p>
+         <p>An admin has requested a password reset for your Healios account. Click the link below to set a new password. This link expires in 1 hour.</p>
+         <p><a href="${resetUrl}">${resetUrl}</a></p>
+         <p>If you didn't request this, you can ignore this email.</p>
+         <p>The Healios Team</p>`
+      );
+    }
     await logAudit(env, adminId, 'send_password_reset', undefined, target_email);
     return new Response(JSON.stringify({ success: true }), { headers: cors });
   }
@@ -110,6 +154,18 @@ export async function handleAdminUsers(request: Request, env: Env): Promise<Resp
     } catch {
       return new Response(JSON.stringify({ error: 'User already exists' }), { status: 400, headers: cors });
     }
+    const resetToken = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    await env.DB.prepare(
+      'INSERT INTO password_reset_tokens (token, user_id, expires_at, used) VALUES (?, ?, ?, 0)'
+    ).bind(resetToken, id, expiresAt).run();
+    const resetUrl = `https://thehealios.com/reset-password?token=${resetToken}`;
+    await sendEmail(env, target_email, 'Welcome to Healios — Set your password',
+      `<p>Hi,</p>
+       <p>You've been invited to Healios. Click the link below to set your password and activate your account. This link expires in 24 hours.</p>
+       <p><a href="${resetUrl}">Set my password</a></p>
+       <p>The Healios Team</p>`
+    );
     await logAudit(env, adminId, 'invite_user', id, target_email, { make_admin: !!make_admin });
     return new Response(JSON.stringify({ success: true }), { headers: cors });
   }

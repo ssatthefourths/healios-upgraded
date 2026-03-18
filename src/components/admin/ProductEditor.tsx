@@ -94,6 +94,18 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
     low_stock_threshold: product?.low_stock_threshold || 10,
     sort_order: product?.sort_order || 0,
     pairs_well_with: safeParseArray(product?.pairs_well_with),
+    // Dietary flags
+    is_vegan: product?.is_vegan ?? false,
+    is_gluten_free: product?.is_gluten_free ?? false,
+    is_sugar_free: product?.is_sugar_free ?? false,
+    is_keto_friendly: product?.is_keto_friendly ?? false,
+    contains_allergens: safeParseArray(product?.contains_allergens),
+    // Availability
+    is_coming_soon: product?.is_coming_soon ?? false,
+    // Bundle
+    is_bundle: product?.is_bundle ?? false,
+    bundle_products: safeParseArray(product?.bundle_products),
+    bundle_discount_percent: product?.bundle_discount_percent || 0,
   });
 
   const categories = [
@@ -162,6 +174,15 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
         low_stock_threshold: formData.low_stock_threshold,
         sort_order: formData.sort_order,
         pairs_well_with: formData.pairs_well_with,
+        is_vegan: formData.is_vegan,
+        is_gluten_free: formData.is_gluten_free,
+        is_sugar_free: formData.is_sugar_free,
+        is_keto_friendly: formData.is_keto_friendly,
+        contains_allergens: formData.contains_allergens,
+        is_coming_soon: formData.is_coming_soon,
+        is_bundle: formData.is_bundle,
+        bundle_products: formData.bundle_products,
+        bundle_discount_percent: formData.bundle_discount_percent,
       };
 
       if (isEditing) {
@@ -641,6 +662,17 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
                   />
                 </div>
 
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Coming Soon</Label>
+                    <p className="text-xs text-muted-foreground">Show as coming soon (not purchasable)</p>
+                  </div>
+                  <Switch
+                    checked={formData.is_coming_soon}
+                    onCheckedChange={(checked) => handleChange("is_coming_soon", checked)}
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="sort_order">Sort Order</Label>
                   <Input
@@ -693,6 +725,83 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
                     }
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Dietary & Allergens</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[
+                  { key: "is_vegan", label: "Vegan" },
+                  { key: "is_gluten_free", label: "Gluten Free" },
+                  { key: "is_sugar_free", label: "Sugar Free" },
+                  { key: "is_keto_friendly", label: "Keto Friendly" },
+                ].map(({ key, label }) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <Label>{label}</Label>
+                    <Switch
+                      checked={formData[key as keyof typeof formData] as boolean}
+                      onCheckedChange={(checked) => handleChange(key, checked)}
+                    />
+                  </div>
+                ))}
+                <div className="space-y-2">
+                  <Label htmlFor="contains_allergens">Contains Allergens</Label>
+                  <Input
+                    id="contains_allergens"
+                    value={(formData.contains_allergens || []).join(", ")}
+                    onChange={(e) =>
+                      handleChange("contains_allergens", e.target.value.split(",").map((k) => k.trim()).filter(Boolean))
+                    }
+                    placeholder="e.g., Tree Nuts, Soy"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="col-span-2">
+              <CardHeader>
+                <CardTitle>Bundle Configuration</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Is Bundle</Label>
+                    <p className="text-xs text-muted-foreground">This product is a bundle of other products</p>
+                  </div>
+                  <Switch
+                    checked={formData.is_bundle}
+                    onCheckedChange={(checked) => handleChange("is_bundle", checked)}
+                  />
+                </div>
+                {formData.is_bundle && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="bundle_discount_percent">Bundle Discount (%)</Label>
+                      <Input
+                        id="bundle_discount_percent"
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={formData.bundle_discount_percent}
+                        onChange={(e) => handleChange("bundle_discount_percent", parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="bundle_products">Bundle Product IDs</Label>
+                      <Input
+                        id="bundle_products"
+                        value={(formData.bundle_products || []).join(", ")}
+                        onChange={(e) =>
+                          handleChange("bundle_products", e.target.value.split(",").map((k) => k.trim()).filter(Boolean))
+                        }
+                        placeholder="Comma-separated product IDs"
+                      />
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 

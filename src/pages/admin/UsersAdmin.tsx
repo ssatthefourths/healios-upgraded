@@ -79,6 +79,8 @@ const UsersAdmin = () => {
   const [inviteAsAdmin, setInviteAsAdmin] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
   const [removeAdminConfirm, setRemoveAdminConfirm] = useState<User | null>(null);
+  const [setPasswordUser, setSetPasswordUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState("");
 
   // Fetch all users
   const { data: usersData, isLoading: usersLoading, refetch: refetchUsers } = useQuery({
@@ -158,6 +160,18 @@ const UsersAdmin = () => {
     },
   });
 
+  const setPasswordMutation = useMutation({
+    mutationFn: ({ userId, password }: { userId: string; password: string }) =>
+      callAdminApi("set_password", { target_user_id: userId, new_password: password }),
+    onSuccess: () => {
+      toast.success("Password updated");
+      setSetPasswordUser(null);
+      setNewPassword("");
+      queryClient.invalidateQueries({ queryKey: ["admin-audit-logs"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const inviteUserMutation = useMutation({
     mutationFn: () => callAdminApi("invite_user", { target_email: inviteEmail, make_admin: inviteAsAdmin }),
     onSuccess: () => {
@@ -183,6 +197,7 @@ const UsersAdmin = () => {
     const labels: Record<string, string> = {
       add_admin: "Added admin role",
       remove_admin: "Removed admin role",
+      set_password: "Set password manually",
       send_password_reset: "Sent password reset",
       delete_user: "Deleted user",
       invite_user: "Invited user",
@@ -290,11 +305,19 @@ const UsersAdmin = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                title="Send password reset"
+                                title="Set password manually"
+                                onClick={() => { setSetPasswordUser(user); setNewPassword(""); }}
+                              >
+                                <Key className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Send password reset email"
                                 onClick={() => sendPasswordResetMutation.mutate(user.email)}
                                 disabled={sendPasswordResetMutation.isPending}
                               >
-                                <Key className="h-4 w-4" />
+                                <Mail className="h-4 w-4" />
                               </Button>
                               {user.roles.includes("admin") ? (
                                 <Button
@@ -512,6 +535,37 @@ const UsersAdmin = () => {
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : null}
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Set Password Dialog */}
+      <AlertDialog open={!!setPasswordUser} onOpenChange={() => { setSetPasswordUser(null); setNewPassword(""); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Set Password</AlertDialogTitle>
+            <AlertDialogDescription>
+              Set a new password for <strong>{setPasswordUser?.email}</strong>. Share this password with the user through a secure channel.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Input
+              type="text"
+              placeholder="New password (min 8 characters)"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => setPasswordUser && setPasswordMutation.mutate({ userId: setPasswordUser.id, password: newPassword })}
+              disabled={newPassword.length < 8 || setPasswordMutation.isPending}
+            >
+              {setPasswordMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Set Password
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
