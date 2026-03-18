@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { initializeMetaPixel } from '@/lib/metaPixel';
-import { restoreConsentState, grantAnalyticsConsent } from '@/lib/consentMode';
+import { restoreConsentState, hasAnalyticsConsent, hasMarketingConsent } from '@/lib/consentMode';
 import { initializeClarity } from '@/lib/clarity';
 
-const COOKIE_CONSENT_KEY = 'healios-cookie-consent';
 const GA_SCRIPT_ID = 'google-analytics-script';
 
 declare global {
@@ -14,60 +13,55 @@ declare global {
 }
 
 export const Analytics = () => {
-  const [initialized, setInitialized] = useState(false);
+  const [gaInitialized, setGaInitialized] = useState(false);
 
   const initializeGA = () => {
     const gaId = import.meta.env.VITE_GA_ID;
-    
-    if (!gaId || initialized) return;
-    
-    // Check if script already exists
+
+    if (!gaId || gaInitialized) return;
     if (document.getElementById(GA_SCRIPT_ID)) return;
 
-    // Load GA script
     const script = document.createElement('script');
     script.id = GA_SCRIPT_ID;
     script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
     script.async = true;
     document.head.appendChild(script);
 
-    // gtag function is already defined in index.html for Consent Mode
-    // Just configure the property
     window.gtag('config', gaId, {
-      developer: 'The Fourths Digital Agency'
+      developer: 'The Fourths Digital Agency',
     });
 
-    setInitialized(true);
+    setGaInitialized(true);
   };
 
-  const initializeAllAnalytics = () => {
-    initializeGA();
-    initializeMetaPixel();
-    initializeClarity();
+  const initAnalyticsScripts = () => {
+    if (hasAnalyticsConsent()) {
+      initializeGA();
+      initializeClarity();
+    }
+  };
+
+  const initMarketingScripts = () => {
+    if (hasMarketingConsent()) {
+      initializeMetaPixel();
+    }
   };
 
   useEffect(() => {
-    // Restore consent state from localStorage on page load
-    // This updates Consent Mode based on previous user choice
+    // Restore consent signals to gtag from stored preference (before GA fires first hit)
     restoreConsentState();
-    
-    // Check if user has already accepted cookies
-    const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
-    if (consent === 'accepted') {
-      initializeAllAnalytics();
-    }
 
-    // Listen for cookie consent acceptance
-    const handleConsentAccepted = () => {
-      initializeAllAnalytics();
+    initAnalyticsScripts();
+    initMarketingScripts();
+
+    const handleConsentEvent = () => {
+      initAnalyticsScripts();
+      initMarketingScripts();
     };
 
-    window.addEventListener('cookie-consent-accepted', handleConsentAccepted);
-
-    return () => {
-      window.removeEventListener('cookie-consent-accepted', handleConsentAccepted);
-    };
-  }, [initialized]);
+    window.addEventListener('cookie-consent-accepted', handleConsentEvent);
+    return () => window.removeEventListener('cookie-consent-accepted', handleConsentEvent);
+  }, [gaInitialized]);
 
   return null;
 };

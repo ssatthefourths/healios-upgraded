@@ -1,13 +1,6 @@
 // GA4 Analytics utility functions
 
-const COOKIE_CONSENT_KEY = "healios-cookie-consent";
-
-/**
- * Check if user has granted cookie consent
- */
-export const hasAnalyticsConsent = (): boolean => {
-  return localStorage.getItem(COOKIE_CONSENT_KEY) === "accepted";
-};
+export { hasAnalyticsConsent } from '@/lib/consentMode';
 
 /**
  * Track newsletter signup event (GA4 generate_lead + custom newsletter_signup)

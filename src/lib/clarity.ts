@@ -4,6 +4,8 @@
  * Clarity Project ID is read from VITE_CLARITY_ID env variable.
  */
 
+import { hasAnalyticsConsent } from '@/lib/consentMode';
+
 const CLARITY_SCRIPT_ID = 'microsoft-clarity-script';
 
 declare global {
@@ -34,15 +36,17 @@ export const initializeClarity = () => {
   })(window, document, 'clarity', 'script', clarityId);
 };
 
-/** Fire a Clarity custom event (no-op if Clarity isn't loaded) */
+/** Fire a Clarity custom event (no-op if Clarity isn't loaded or consent not granted) */
 export const trackClarityEvent = (name: string) => {
+  if (!hasAnalyticsConsent()) return;
   if (typeof window.clarity === 'function') {
     window.clarity('event', name);
   }
 };
 
-/** Tag a Clarity session with a custom key/value */
+/** Tag a Clarity session with a custom key/value (no-op if consent not granted) */
 export const tagClaritySession = (key: string, value: string) => {
+  if (!hasAnalyticsConsent()) return;
   if (typeof window.clarity === 'function') {
     window.clarity('set', key, value);
   }

@@ -162,6 +162,12 @@ const Footer = () => {
             <Link to="/terms-of-service" className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors">
               Terms of Service
             </Link>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('open-cookie-preferences'))}
+              className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors"
+            >
+              Cookie Settings
+            </button>
           </div>
         </div>
       </div>

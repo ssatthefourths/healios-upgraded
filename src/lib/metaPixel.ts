@@ -1,6 +1,7 @@
 // Meta Pixel (Facebook Pixel) utility functions
 
-const COOKIE_CONSENT_KEY = "healios-cookie-consent";
+import { hasMarketingConsent } from '@/lib/consentMode';
+
 const META_PIXEL_SCRIPT_ID = "meta-pixel-script";
 
 declare global {
@@ -10,12 +11,8 @@ declare global {
   }
 }
 
-/**
- * Check if user has granted cookie consent
- */
-export const hasMetaPixelConsent = (): boolean => {
-  return localStorage.getItem(COOKIE_CONSENT_KEY) === "accepted";
-};
+/** Check if user has granted marketing/Meta Pixel consent */
+export const hasMetaPixelConsent = hasMarketingConsent;
 
 /**
  * Initialize Meta Pixel
