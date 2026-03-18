@@ -45,7 +45,7 @@ const BlogPostEditor = ({ post, onSave, onCancel }: BlogPostEditorProps) => {
   const [content, setContent] = useState(post?.content || "");
   const [excerpt, setExcerpt] = useState(post?.excerpt || "");
   const [featuredImage, setFeaturedImage] = useState(post?.featured_image || "");
-  const [categoryId, setCategoryId] = useState(post?.category_id || "");
+  const [categoryId, setCategoryId] = useState(post?.category_id || "__none__");
   const [status, setStatus] = useState<"draft" | "published" | "archived">(post?.status || "draft");
   const [publishedAt, setPublishedAt] = useState<Date | undefined>(
     post?.published_at ? new Date(post.published_at) : undefined
@@ -142,7 +142,7 @@ const BlogPostEditor = ({ post, onSave, onCancel }: BlogPostEditorProps) => {
       content: content.trim(),
       excerpt: excerpt.trim() || null,
       featured_image: featuredImage || null,
-      category_id: categoryId || null,
+      category_id: (categoryId && categoryId !== "__none__") ? categoryId : null,
       status,
       published_at: status === "published" ? (publishedAt?.toISOString() || new Date().toISOString()) : null,
       seo_title: seoTitle.trim() || null,
@@ -338,7 +338,7 @@ const BlogPostEditor = ({ post, onSave, onCancel }: BlogPostEditorProps) => {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Uncategorized</SelectItem>
+                    <SelectItem value="__none__">Uncategorized</SelectItem>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.name}

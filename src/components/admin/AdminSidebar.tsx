@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
 
 interface NavItem {
   title: string;
@@ -50,15 +50,21 @@ const AdminSidebar = ({ collapsed = false, onCollapse }: AdminSidebarProps) => {
   }, []);
 
   const fetchQuickStats = async () => {
-    const [ordersRes, stockRes, reviewsRes] = await Promise.all([
-      supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "pending"),
-      supabase.from("products").select("id", { count: "exact", head: true }).lt("stock_quantity", 10),
-      supabase.from("product_reviews").select("id", { count: "exact", head: true }).eq("status", "pending"),
-    ]);
-    
-    setPendingOrders(ordersRes.count || 0);
-    setLowStock(stockRes.count || 0);
-    setPendingReviews(reviewsRes.count || 0);
+    try {
+      const token = localStorage.getItem('cf_session');
+      if (!token) return;
+      const res = await fetch(`${API_URL}/admin/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPendingOrders(data.pendingOrders ?? 0);
+        setLowStock(data.lowStockProducts ?? 0);
+        setPendingReviews(data.pendingReviews ?? 0);
+      }
+    } catch {
+      // non-critical — badges just won't show counts
+    }
   };
 
   const handleCollapse = () => {
@@ -100,11 +106,11 @@ const AdminSidebar = ({ collapsed = false, onCollapse }: AdminSidebarProps) => {
   return (
     <aside 
       className={cn(
-        "bg-card border-r border-border h-[calc(100vh-4rem)] sticky top-16 transition-all duration-200",
+        "bg-card border-r border-border self-start sticky top-16 transition-all duration-200",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col">
         {/* Collapse Toggle */}
         <div className="p-2 border-b border-border flex justify-end">
           <Button
@@ -118,7 +124,7 @@ const AdminSidebar = ({ collapsed = false, onCollapse }: AdminSidebarProps) => {
         </div>
 
         {/* Main Navigation */}
-        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+        <nav className="p-2 space-y-1">
           {!isCollapsed && (
             <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Management
