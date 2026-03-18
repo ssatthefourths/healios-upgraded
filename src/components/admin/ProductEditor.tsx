@@ -47,11 +47,19 @@ const generateId = (name: string) => {
     .replace(/^-|-$/g, "");
 };
 
+const safeParseArray = (val: any): any[] => {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string' && val.startsWith('[')) {
+    try { return JSON.parse(val); } catch { /* ignore */ }
+  }
+  return [];
+};
+
 const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
   const { user } = useAuth();
   const isEditing = !!product;
   const [saving, setSaving] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     id: product?.id || "",
     name: product?.name || "",
@@ -61,7 +69,7 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
     image: product?.image || "",
     description: product?.description || "",
     hero_paragraph: product?.hero_paragraph || "",
-    benefits: product?.benefits || [],
+    benefits: safeParseArray(product?.benefits),
     what_is_it: product?.what_is_it || "",
     why_gummy: product?.why_gummy || "",
     who_is_it_for: product?.who_is_it_for || "",
@@ -70,14 +78,14 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
     routine_30_day: product?.routine_30_day || "",
     what_makes_different: product?.what_makes_different || "",
     subscription_info: product?.subscription_info || "",
-    ingredients: product?.ingredients || [],
+    ingredients: safeParseArray(product?.ingredients),
     safety_info: product?.safety_info || "",
     product_cautions: product?.product_cautions || "",
-    faqs: product?.faqs || [],
+    faqs: safeParseArray(product?.faqs),
     seo_title: product?.seo_title || "",
     meta_description: product?.meta_description || "",
     primary_keyword: product?.primary_keyword || "",
-    secondary_keywords: product?.secondary_keywords || [],
+    secondary_keywords: safeParseArray(product?.secondary_keywords),
     is_published: product?.is_published ?? true,
     is_adults_only: product?.is_adults_only ?? false,
     is_kids_product: product?.is_kids_product ?? false,
@@ -85,7 +93,7 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
     stock_quantity: product?.stock_quantity || 100,
     low_stock_threshold: product?.low_stock_threshold || 10,
     sort_order: product?.sort_order || 0,
-    pairs_well_with: product?.pairs_well_with || [],
+    pairs_well_with: safeParseArray(product?.pairs_well_with),
   });
 
   const categories = [

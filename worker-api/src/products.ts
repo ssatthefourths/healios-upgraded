@@ -22,12 +22,25 @@ const PRODUCT_COLS = [
 
 // These are stored as JSON strings in D1 (SQLite has no array type)
 const ARRAY_COLS = new Set([
-  'benefits', 'ingredients', 'faqs', 'pairs_well_with', 'secondary_keywords', 'bundle_products',
+  'benefits', 'ingredients', 'faqs', 'pairs_well_with', 'secondary_keywords',
+  'bundle_products', 'contains_allergens',
 ]);
 
 function serializeVal(col: string, val: any): any {
   if (ARRAY_COLS.has(col) && Array.isArray(val)) return JSON.stringify(val);
   return val;
+}
+
+/** Parse JSON string columns back to arrays for GET responses */
+function deserializeProduct(row: any): any {
+  if (!row) return row;
+  const out = { ...row };
+  for (const col of ARRAY_COLS) {
+    if (typeof out[col] === 'string') {
+      try { out[col] = JSON.parse(out[col]); } catch { out[col] = []; }
+    }
+  }
+  return out;
 }
 
 /** Returns admin userId if the request has a valid admin session, null otherwise */
@@ -120,7 +133,7 @@ export async function handleProducts(request: Request, env: Env): Promise<Respon
     params.push(limit);
 
     const products = await env.DB.prepare(query).bind(...params).all();
-    return new Response(JSON.stringify(products.results), { headers: corsHeaders });
+    return new Response(JSON.stringify(products.results.map(deserializeProduct)), { headers: corsHeaders });
   }
 
   // ── GET /products/:idOrSlug ──────────────────────────────────────────────
@@ -140,7 +153,7 @@ export async function handleProducts(request: Request, env: Env): Promise<Respon
         { status: 404, headers: corsHeaders }
       );
     }
-    return new Response(JSON.stringify(product), { headers: corsHeaders });
+    return new Response(JSON.stringify(deserializeProduct(product)), { headers: corsHeaders });
   }
 
   // ── POST /products ───────────────────────────────────────────────────────
