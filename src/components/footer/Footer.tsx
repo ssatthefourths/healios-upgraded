@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { trackNewsletterSignup } from "@/lib/analytics";
 import { trackMetaLead } from "@/lib/metaPixel";
 import { BRAND } from "@/constants/brand";
+import { ROUTES } from "@/constants/routes";
 import logger from "@/lib/logger";
 
 const Footer = () => {
@@ -111,11 +112,11 @@ const Footer = () => {
             <div>
               <h4 className="text-sm font-normal mb-4">Shop</h4>
               <ul className="space-y-2">
-                <li><Link to="/category/all" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">All Products</Link></li>
-                <li><Link to="/category/vitamins-minerals" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Vitamins & Minerals</Link></li>
-                <li><Link to="/category/adaptogens" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Adaptogens</Link></li>
-                <li><Link to="/category/digestive-health" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Digestive Health</Link></li>
-                <li><Link to="/category/sleep-relaxation" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Sleep & Relaxation</Link></li>
+                <li><Link to={ROUTES.CATEGORY.ALL} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">All Products</Link></li>
+                <li><Link to={ROUTES.CATEGORY.VITAMINS} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Vitamins & Minerals</Link></li>
+                <li><Link to={ROUTES.CATEGORY.ADAPTOGENS} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Adaptogens</Link></li>
+                <li><Link to={ROUTES.CATEGORY.DIGESTIVE} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Digestive Health</Link></li>
+                <li><Link to={ROUTES.CATEGORY.SLEEP} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Sleep & Relaxation</Link></li>
               </ul>
             </div>
 
@@ -123,13 +124,13 @@ const Footer = () => {
             <div>
               <h4 className="text-sm font-normal mb-4">Support</h4>
               <ul className="space-y-2">
-                <li><Link to="/subscribe" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Subscribe & Save</Link></li>
-                <li><Link to="/gift-cards" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Gift Cards</Link></li>
-                <li><Link to="/faq" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">FAQ</Link></li>
-                <li><Link to="/about/product-guide" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Product Guide</Link></li>
-                <li><Link to="/about/quality-sourcing" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Quality & Sourcing</Link></li>
-                <li><Link to="/about/customer-care" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Customer Care</Link></li>
-                <li><Link to="/about/wholesale" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Wholesale</Link></li>
+                <li><Link to={ROUTES.SUBSCRIBE} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Subscribe & Save</Link></li>
+                <li><Link to={ROUTES.GIFT_CARDS} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Gift Cards</Link></li>
+                <li><Link to={ROUTES.FAQ} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">FAQ</Link></li>
+                <li><Link to={ROUTES.ABOUT.GUIDE} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Product Guide</Link></li>
+                <li><Link to={ROUTES.ABOUT.QUALITY} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Quality & Sourcing</Link></li>
+                <li><Link to={ROUTES.ABOUT.CARE} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Customer Care</Link></li>
+                <li><Link to={ROUTES.ABOUT.WHOLESALE} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Wholesale</Link></li>
               </ul>
             </div>
 
@@ -137,9 +138,9 @@ const Footer = () => {
             <div>
               <h4 className="text-sm font-normal mb-4">About</h4>
               <ul className="space-y-2">
-                <li><Link to="/about/our-story" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Our Story</Link></li>
-                <li><Link to="/blog" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Wellness Journal</Link></li>
-                <li><Link to="/about/wholesale" className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Partner With Us</Link></li>
+                <li><Link to={ROUTES.ABOUT.STORY} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Our Story</Link></li>
+                <li><Link to={ROUTES.BLOG} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Wellness Journal</Link></li>
+                <li><Link to={ROUTES.ABOUT.WHOLESALE} className="text-sm font-light text-muted-foreground hover:text-foreground transition-colors">Partner With Us</Link></li>
               </ul>
             </div>
           </div>
@@ -153,13 +154,13 @@ const Footer = () => {
             © {new Date().getFullYear()} {BRAND.name} · Built by The Fourths Digital Agency
           </p>
           <div className="flex space-x-6">
-            <Link to="/shipping-returns" className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors">
+            <Link to={ROUTES.SHIPPING} className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors">
               Shipping & Returns
             </Link>
-            <Link to="/privacy-policy" className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors">
+            <Link to={ROUTES.PRIVACY} className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors">
               Privacy Policy
             </Link>
-            <Link to="/terms-of-service" className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors">
+            <Link to={ROUTES.TERMS} className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors">
               Terms of Service
             </Link>
             <button

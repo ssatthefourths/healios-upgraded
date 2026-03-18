@@ -2,6 +2,7 @@ import { ArrowRight, X, User, Settings, Loader2 } from "lucide-react";
 import OptimizedImage from "@/components/ui/optimized-image";
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,57 +103,57 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
   ];
   
   const navItems = [
-    { 
-      name: "Shop", 
-      href: "/category/all",
+    {
+      name: "Shop",
+      href: ROUTES.CATEGORY.ALL,
       submenuItems: [
-        { name: "All Products", href: "/category/all", image: magnesiumImage, description: "Discover our full range of scientifically-backed supplements." },
-        { name: "Vitamins & Minerals", href: "/category/vitamins-minerals", image: magnesiumImage, description: "Essential micronutrients to support your daily metabolic functions." },
-        { name: "Adaptogens", href: "/category/adaptogens", image: ashwagandhaImage, description: "Powerful herbs to help your body manage stress and maintain balance." },
-        { name: "Digestive Health", href: "/category/digestive-health", image: probioticsImage, description: "Support your gut microbiome for better immunity and mood." },
-        { name: "Sleep & Relaxation", href: "/category/sleep-relaxation", image: "/products/sleep-support-gummies.png", description: "Natural solutions for deep, restorative sleep and daily calm." },
-        { name: "Subscribe & Save", href: "/subscribe", image: "/products/morning-energy-stack.png", description: "Join our community and save up to 25% on your monthly essentials." },
-        { name: "Take the Wellness Quiz", href: "/wellness-quiz", image: "/images/navigation/wellness-quiz.png", description: "Get a personalized supplement plan tailored to your unique goals." }
+        { name: "All Products",           href: ROUTES.CATEGORY.ALL,       image: magnesiumImage,                             description: "Discover our full range of scientifically-backed supplements." },
+        { name: "Vitamins & Minerals",    href: ROUTES.CATEGORY.VITAMINS,  image: magnesiumImage,                             description: "Essential micronutrients to support your daily metabolic functions." },
+        { name: "Adaptogens",             href: ROUTES.CATEGORY.ADAPTOGENS, image: ashwagandhaImage,                          description: "Powerful herbs to help your body manage stress and maintain balance." },
+        { name: "Digestive Health",       href: ROUTES.CATEGORY.DIGESTIVE, image: probioticsImage,                            description: "Support your gut microbiome for better immunity and mood." },
+        { name: "Sleep & Relaxation",     href: ROUTES.CATEGORY.SLEEP,     image: "/products/sleep-support-gummies.png",      description: "Natural solutions for deep, restorative sleep and daily calm." },
+        { name: "Subscribe & Save",       href: ROUTES.SUBSCRIBE,          image: "/products/morning-energy-stack.png",       description: "Join our community and save up to 25% on your monthly essentials." },
+        { name: "Take the Wellness Quiz", href: ROUTES.WELLNESS_QUIZ,      image: "/images/navigation/wellness-quiz.png",     description: "Get a personalized supplement plan tailored to your unique goals." }
       ],
       images: [
-        { src: magnesiumImage, alt: "Vitamins & Minerals Collection", label: "Vitamins", href: "/category/vitamins-minerals" },
-        { src: ashwagandhaImage, alt: "Adaptogens Collection", label: "Adaptogens", href: "/category/adaptogens" }
+        { src: magnesiumImage,   alt: "Vitamins & Minerals Collection", label: "Vitamins",   href: ROUTES.CATEGORY.VITAMINS },
+        { src: ashwagandhaImage, alt: "Adaptogens Collection",          label: "Adaptogens", href: ROUTES.CATEGORY.ADAPTOGENS }
       ]
     },
-    { 
-      name: "New In", 
-      href: "/category/new-in",
+    {
+      name: "New In",
+      href: ROUTES.CATEGORY.NEW_IN,
       submenuItems: [
-        { name: "Latest Arrivals", href: "/category/new-in", image: "/images/navigation/new-supplement.png", description: "Explore our newest innovations in nutritional science." },
-        { name: "Best Sellers", href: "/category/best-sellers", image: magnesiumImage, description: "Our community's most-loved and trusted wellness essentials." },
-        { name: "Bundles & Stacks", href: "/category/bundles", image: "/products/morning-energy-stack.png", description: "Curated combinations for targeted health and wellness goals." }
+        { name: "Latest Arrivals",  href: ROUTES.CATEGORY.NEW_IN,      image: "/images/navigation/new-supplement.png",        description: "Explore our newest innovations in nutritional science." },
+        { name: "Best Sellers",     href: ROUTES.CATEGORY.BEST_SELLERS, image: magnesiumImage,                                description: "Our community's most-loved and trusted wellness essentials." },
+        { name: "Bundles & Stacks", href: ROUTES.CATEGORY.BUNDLES,     image: "/products/morning-energy-stack.png",           description: "Curated combinations for targeted health and wellness goals." }
       ],
       images: [
-        { src: "/images/navigation/new-supplement.png", alt: "New Arrivals", label: "Shop New", href: "/category/new-in" }
+        { src: "/images/navigation/new-supplement.png", alt: "New Arrivals", label: "Shop New", href: ROUTES.CATEGORY.NEW_IN }
       ]
     },
-    { 
-      name: "Wellness Drive", 
-      href: "/wellness-drive",
+    {
+      name: "Wellness Drive",
+      href: ROUTES.WELLNESS_DRIVE,
       submenuItems: [
-        { name: "Community Stories", href: "/wellness-drive", image: "/images/navigation/wellness-drive-stories.png", description: "Real wellness journeys shared by women in our community." },
-        { name: "Submit Your Story", href: "/wellness-drive#submit", image: "/images/navigation/wellness-drive-submit.png", description: "Share your daily routine and inspire others on their path." },
-        { name: "Wellness Journal", href: "/blog", image: "/images/navigation/wellness-journal.png", description: "Expert advice and insights for your holistic health journey." }
+        { name: "Community Stories", href: ROUTES.WELLNESS_DRIVE,        image: "/images/navigation/wellness-drive-stories.png", description: "Real wellness journeys shared by women in our community." },
+        { name: "Submit Your Story", href: ROUTES.WELLNESS_DRIVE_SUBMIT, image: "/images/navigation/wellness-drive-submit.png",  description: "Share your daily routine and inspire others on their path." },
+        { name: "Wellness Journal",  href: ROUTES.BLOG,                  image: "/images/navigation/wellness-journal.png",       description: "Expert advice and insights for your holistic health journey." }
       ],
       images: []
     },
-    { 
-      name: "About", 
-      href: "/about/our-story",
+    {
+      name: "About",
+      href: ROUTES.ABOUT.STORY,
       submenuItems: [
-        { name: "Our Story", href: "/about/our-story", image: "/founders.png", description: "The vision and values behind The Healios Health Co." },
-        { name: "Quality & Sourcing", href: "/about/quality-sourcing", image: "/images/navigation/quality-sourcing.png", description: "Our commitment to the highest purity and ethical standards." },
-        { name: "Product Guide", href: "/about/product-guide", image: "/images/navigation/new-supplement.png", description: "Everything you need to know about our range and benefits." },
-        { name: "Customer Care", href: "/about/customer-care", image: "/founders.png", description: "We're here to support you at every stage of your journey." },
-        { name: "Wholesale Partners", href: "/about/wholesale", image: "/images/navigation/quality-sourcing.png", description: "Bring premium wellness to your studio, clinic, or storefront." }
+        { name: "Our Story",           href: ROUTES.ABOUT.STORY,     image: "/founders.png",                              description: "The vision and values behind The Healios Health Co." },
+        { name: "Quality & Sourcing",  href: ROUTES.ABOUT.QUALITY,   image: "/images/navigation/quality-sourcing.png",   description: "Our commitment to the highest purity and ethical standards." },
+        { name: "Product Guide",       href: ROUTES.ABOUT.GUIDE,     image: "/images/navigation/new-supplement.png",     description: "Everything you need to know about our range and benefits." },
+        { name: "Customer Care",       href: ROUTES.ABOUT.CARE,      image: "/founders.png",                              description: "We're here to support you at every stage of your journey." },
+        { name: "Wholesale Partners",  href: ROUTES.ABOUT.WHOLESALE, image: "/images/navigation/quality-sourcing.png",   description: "Bring premium wellness to your studio, clinic, or storefront." }
       ],
       images: [
-        { src: "/founders.png", alt: "Our Story", label: "Read our story", href: "/about/our-story" }
+        { src: "/founders.png", alt: "Our Story", label: "Read our story", href: ROUTES.ABOUT.STORY }
       ]
     }
   ];
