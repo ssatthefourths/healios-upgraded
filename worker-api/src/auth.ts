@@ -54,11 +54,15 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
       'SELECT first_name, last_name FROM profiles WHERE id = ?'
     ).bind(user.id).first<any>();
 
+    const roleData = await env.DB.prepare(
+      'SELECT role FROM user_roles WHERE user_id = ?'
+    ).bind(user.id).first<any>();
+
     const sessionToken = await createSession(user.id, env);
 
-    return new Response(JSON.stringify({ 
-      user: { id: user.id, email: user.email, ...profile }, 
-      session: sessionToken 
+    return new Response(JSON.stringify({
+      user: { id: user.id, email: user.email, ...profile, role: roleData?.role || 'user' },
+      session: sessionToken
     }), { headers: corsHeaders });
   }
 
@@ -103,8 +107,12 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
       'SELECT first_name, last_name FROM profiles WHERE id = ?'
     ).bind(userId).first<any>();
 
-    return new Response(JSON.stringify({ 
-      user: { id: user.id, email: user.email, ...profile } 
+    const roleData = await env.DB.prepare(
+      'SELECT role FROM user_roles WHERE user_id = ?'
+    ).bind(userId).first<any>();
+
+    return new Response(JSON.stringify({
+      user: { id: user.id, email: user.email, ...profile, role: roleData?.role || 'user' }
     }), { headers: corsHeaders });
   }
 

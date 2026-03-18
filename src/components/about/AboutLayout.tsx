@@ -110,7 +110,7 @@ const AboutLayout = ({
         </div>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 px-page py-10 max-w-4xl">
+        <main className="flex-1 min-w-0 px-page py-[var(--space-lg)]">
           {children}
         </main>
       </div>

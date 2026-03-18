@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       : 'https://www.thehealios.com';
     const redirectUrl = `${baseUrl}/`;
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -80,16 +80,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
+    if (!error && data?.user) {
+      setUser(data.user);
+      setSession({ user: data.user, access_token: data.session });
+    }
+
     return { error: error as Error | null };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error && data?.user) {
+      setUser(data.user);
+      setSession({ user: data.user, access_token: data.session });
+    }
     return { error: error as Error | null };
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
   };
 
   const resetPassword = async (email: string) => {

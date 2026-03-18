@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import OptimizedImage from "@/components/ui/optimized-image";
+import SEOHead from "@/components/seo/SEOHead";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -119,8 +120,14 @@ const WellnessDrive = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Women's Wellness Drive | Healios"
+        description="Share your daily wellness routine with the Healios community. Submit your story, get featured, and inspire other women on their wellness journey."
+        canonicalUrl="https://www.thehealios.com/wellness-drive"
+        keywords={["wellness drive", "women's wellness", "community stories", "wellness journey"]}
+      />
       <Header />
-      
+
       <main>
         {/* Hero Image */}
         <section className="px-page">
@@ -137,9 +144,10 @@ const WellnessDrive = () => {
         </section>
 
         {/* Hero Text Section */}
-        <section className="px-page py-[var(--space-xl)] text-center max-w-3xl mx-auto">
+        <section className="px-page py-[var(--space-xl)] text-center">
+          <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
-            <h1 className="text-3xl md:text-4xl font-normal text-foreground">
+            <h1 className="font-serif font-light text-foreground leading-tight" style={{ fontSize: 'var(--fs-xl)' }}>
               Women's Wellness Drive
             </h1>
             <a 
@@ -155,6 +163,7 @@ const WellnessDrive = () => {
             Post a video showing how you incorporate wellness into your day, tag us, and submit the link below. 
             Your story could inspire countless others on their wellness journey.
           </p>
+          </div>
         </section>
 
         {/* Submission Form */}

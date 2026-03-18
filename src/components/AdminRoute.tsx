@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -18,28 +17,9 @@ const AdminRoute = () => {
       return;
     }
 
-    const checkAdminRole = async () => {
-      try {
-        const { data, error } = await supabase.rpc("has_role", {
-          _user_id: user.id,
-          _role: "admin",
-        });
-
-        if (error) {
-          console.error("Error checking admin role:", error);
-          setIsAdmin(false);
-        } else {
-          setIsAdmin(!!data);
-        }
-      } catch (err) {
-        console.error("Admin role check failed:", err);
-        setIsAdmin(false);
-      } finally {
-        setCheckingRole(false);
-      }
-    };
-
-    checkAdminRole();
+    // Role is returned by /auth/verify and /auth/signin in the worker
+    setIsAdmin(user.role === 'admin');
+    setCheckingRole(false);
   }, [user, authLoading]);
 
   if (authLoading || checkingRole) {

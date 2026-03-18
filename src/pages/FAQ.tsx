@@ -112,7 +112,7 @@ const FAQ = () => {
             resultCounts={categoryResultCounts}
           />
           
-          <div className="flex-1 max-w-3xl">
+          <div className="flex-1">
             {/* Header */}
             <div className="mb-lg">
               <p className="text-xs tracking-widest uppercase text-muted-foreground mb-sm">

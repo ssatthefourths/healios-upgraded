@@ -13,6 +13,7 @@ import { handleStripeWebhook } from './stripe-webhook';
 import { handleBlog } from './blog';
 import { handleReviews } from './reviews';
 import { handleWellness } from './wellness';
+import { handleTable } from './table-handler';
 
 export interface Env {
   DB: D1Database;
@@ -55,6 +56,7 @@ export default {
       }
 
       if (path.startsWith('/orders')) {
+        if (request.method === 'GET') return await handleTable(request, env);
         return await handleOrders(request, env);
       }
 
@@ -88,6 +90,15 @@ export default {
 
       if (path.startsWith('/wellness_posts')) {
         return await handleWellness(request, env);
+      }
+
+      const TABLE_PATHS = [
+        '/profiles', '/addresses', '/wishlist', '/loyalty_points',
+        '/loyalty_transactions', '/subscriptions', '/order_items',
+        '/newsletter_subscriptions', '/discount_codes', '/users'
+      ];
+      if (TABLE_PATHS.some(t => path.startsWith(t))) {
+        return await handleTable(request, env);
       }
 
       return new Response('Healios API - Not Found', { status: 404, headers: corsHeaders });

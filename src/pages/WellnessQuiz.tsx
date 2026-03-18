@@ -288,11 +288,11 @@ const WellnessQuiz = () => {
       <SEOHead
         title="Wellness Quiz - Find Your Perfect Supplements | Healios"
         description="Take our personalized wellness quiz to discover the perfect supplements for your health goals. Get custom recommendations based on your lifestyle and needs."
-        canonicalUrl="https://healios.shop/wellness-quiz"
+        canonicalUrl="https://www.thehealios.com/wellness-quiz"
       />
       <Header />
       <main className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-12 max-w-3xl">
+        <div className="max-w-3xl mx-auto px-page py-[var(--space-xl)]">
           {!showResults ? (
             <>
               {/* Progress */}

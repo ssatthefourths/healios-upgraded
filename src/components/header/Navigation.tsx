@@ -1,6 +1,6 @@
 import { ArrowRight, X, User, Settings, Loader2 } from "lucide-react";
 import OptimizedImage from "@/components/ui/optimized-image";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,8 +32,8 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
   const [offCanvasType, setOffCanvasType] = useState<'favorites' | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isShoppingBagOpen, setIsShoppingBagOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isAdminLoading, setIsAdminLoading] = useState(true);
+  const isAdmin = user?.role === 'admin';
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Close dropdowns on scroll
   const closeAllDropdowns = useCallback(() => {
@@ -54,30 +54,6 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activeDropdown, isSearchOpen, closeAllDropdowns, onScrollChange]);
 
-  // Check if user has admin role
-  useEffect(() => {
-    const checkAdminRole = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        setIsAdminLoading(false);
-        return;
-      }
-      
-      setIsAdminLoading(true);
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
-      
-      setIsAdmin(!!data && !error);
-      setIsAdminLoading(false);
-    };
-    
-    checkAdminRole();
-  }, [user]);
-  
   // Preload dropdown images for faster display
   useEffect(() => {
     const imagesToPreload = [
@@ -191,15 +167,17 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
               key={item.name}
               className="relative"
               onMouseEnter={() => {
+                if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
                 if (item.submenuItems.length > 0 || item.images.length > 0) {
                   setActiveDropdown(item.name);
-                  // Set initial hovered subitem if available
                   if (item.submenuItems.length > 0) {
                     setHoveredSubItem(item.submenuItems[0]);
                   }
                 }
               }}
-              onMouseLeave={() => setActiveDropdown(null)}
+              onMouseLeave={() => {
+                closeTimeoutRef.current = setTimeout(() => setActiveDropdown(null), 150);
+              }}
             >
               <Link
                 to={item.href}
@@ -249,11 +227,16 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
             </svg>
           </button>
-          {!isAdminLoading && isAdmin && (
+          {isAdmin && (
             <div
               className="relative hidden lg:block"
-              onMouseEnter={() => setActiveDropdown('admin')}
-              onMouseLeave={() => setActiveDropdown(null)}
+              onMouseEnter={() => {
+                if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+                setActiveDropdown('admin');
+              }}
+              onMouseLeave={() => {
+                closeTimeoutRef.current = setTimeout(() => setActiveDropdown(null), 150);
+              }}
             >
               <button 
                 type="button"
@@ -372,8 +355,12 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
         <div 
           key={activeDropdown}
           className="absolute top-full left-0 right-0 bg-nav border-b border-border z-[60] shadow-xl overflow-hidden"
-          onMouseEnter={() => setActiveDropdown(activeDropdown)}
-          onMouseLeave={() => setActiveDropdown(null)}
+          onMouseEnter={() => {
+            if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+          }}
+          onMouseLeave={() => {
+            closeTimeoutRef.current = setTimeout(() => setActiveDropdown(null), 150);
+          }}
         >
           <div className="mx-auto max-w-7xl px-page h-[450px]">
             <div className="flex justify-between w-full h-full py-12 gap-16">

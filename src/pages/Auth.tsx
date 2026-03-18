@@ -49,7 +49,7 @@ const Auth = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate('/account');
     }
   }, [user, navigate]);
 
@@ -171,7 +171,7 @@ const Auth = () => {
           }
         } else {
           toast.success('Account created successfully! Welcome to Healios.');
-          navigate('/');
+          navigate('/account');
         }
       } else {
         const { error } = await signIn(email, password);
@@ -184,7 +184,7 @@ const Auth = () => {
           }
         } else {
           toast.success('Welcome back!');
-          navigate('/');
+          navigate('/account');
         }
       }
     } catch (err) {

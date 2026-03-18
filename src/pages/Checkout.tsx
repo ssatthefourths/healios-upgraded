@@ -293,6 +293,17 @@ const Checkout = () => {
     fetchSavedAddresses();
   }, [user]);
 
+  // Pre-fill customer details from user profile when user becomes available
+  useEffect(() => {
+    if (!user) return;
+    setCustomerDetails(prev => ({
+      ...prev,
+      email: prev.email || user.email || "",
+      firstName: prev.firstName || user.first_name || "",
+      lastName: prev.lastName || user.last_name || "",
+    }));
+  }, [user?.id]);
+
   const handleSelectSavedAddress = (addressId: string) => {
     setSelectedAddressId(addressId);
     

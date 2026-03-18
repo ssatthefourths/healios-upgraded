@@ -10,11 +10,9 @@ database_name = "healios-db"
 database_id = "c5dbb000-df94-4742-8844-fe7c1f195f71"
 
 # KV Namespace for Sessions (REQUIRED for Login)
-# 1. Run: npx wrangler kv:namespace create SESSIONS
-# 2. Paste the generated ID below and uncomment lines below
-# [[kv_namespaces]]
-# binding = "SESSIONS"
-# id = "PASTE_KV_ID_HERE"
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "a36c2cd6a06c44e4acbbe8ce6c593a3f"
 
 # R2 Bucket for Assets
 # 1. Run: npx wrangler r2 bucket create healios-assets
