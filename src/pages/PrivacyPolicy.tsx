@@ -21,7 +21,7 @@ const PrivacyPolicy = () => {
         <PageContainer maxWidth="content">
           <PageHeader 
             title="Privacy Policy"
-            subtitle="Last updated: January 15, 2024"
+            subtitle="Last updated: March 26, 2026"
             centered
           />
 
@@ -103,9 +103,102 @@ const PrivacyPolicy = () => {
             </SectionContainer>
 
             <SectionContainer title="Cookies and Tracking">
-              <p className="text-muted-foreground leading-relaxed">
-                We use cookies and similar tracking technologies to enhance your browsing experience, analyze website traffic, and personalize content. You can control cookie settings through your browser preferences, though this may affect website functionality.
-              </p>
+              <div className="space-y-4">
+                <p className="text-muted-foreground leading-relaxed">
+                  We use cookies and similar tracking technologies to enhance your browsing experience, analyse website traffic, and support personalised marketing. The table below lists every cookie set by this site, who sets it, its purpose, and how long it is retained.
+                </p>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="py-2 pr-4 text-left font-medium text-foreground">Cookie</th>
+                        <th className="py-2 pr-4 text-left font-medium text-foreground">Category</th>
+                        <th className="py-2 pr-4 text-left font-medium text-foreground">Set by</th>
+                        <th className="py-2 pr-4 text-left font-medium text-foreground">Purpose</th>
+                        <th className="py-2 text-left font-medium text-foreground">Retention</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-muted-foreground">
+                      <tr className="border-b border-border">
+                        <td className="py-2 pr-4 font-mono text-xs">healios-consent</td>
+                        <td className="py-2 pr-4">Essential</td>
+                        <td className="py-2 pr-4">First-party</td>
+                        <td className="py-2 pr-4">Stores your cookie preferences</td>
+                        <td className="py-2">365 days</td>
+                      </tr>
+                      <tr className="border-b border-border">
+                        <td className="py-2 pr-4 font-mono text-xs">_ga</td>
+                        <td className="py-2 pr-4">Analytics</td>
+                        <td className="py-2 pr-4">Google Analytics</td>
+                        <td className="py-2 pr-4">Distinguishes unique users</td>
+                        <td className="py-2">2 years</td>
+                      </tr>
+                      <tr className="border-b border-border">
+                        <td className="py-2 pr-4 font-mono text-xs">_gid</td>
+                        <td className="py-2 pr-4">Analytics</td>
+                        <td className="py-2 pr-4">Google Analytics</td>
+                        <td className="py-2 pr-4">Identifies a session</td>
+                        <td className="py-2">24 hours</td>
+                      </tr>
+                      <tr className="border-b border-border">
+                        <td className="py-2 pr-4 font-mono text-xs">_ga_[ID]</td>
+                        <td className="py-2 pr-4">Analytics</td>
+                        <td className="py-2 pr-4">Google Analytics</td>
+                        <td className="py-2 pr-4">Maintains session state for a GA4 property</td>
+                        <td className="py-2">2 years</td>
+                      </tr>
+                      <tr className="border-b border-border">
+                        <td className="py-2 pr-4 font-mono text-xs">_clck</td>
+                        <td className="py-2 pr-4">Analytics</td>
+                        <td className="py-2 pr-4">Microsoft Clarity</td>
+                        <td className="py-2 pr-4">Persists a unique user ID</td>
+                        <td className="py-2">1 year</td>
+                      </tr>
+                      <tr className="border-b border-border">
+                        <td className="py-2 pr-4 font-mono text-xs">_clsk</td>
+                        <td className="py-2 pr-4">Analytics</td>
+                        <td className="py-2 pr-4">Microsoft Clarity</td>
+                        <td className="py-2 pr-4">Connects multiple page views within one session</td>
+                        <td className="py-2">1 day</td>
+                      </tr>
+                      <tr className="border-b border-border">
+                        <td className="py-2 pr-4 font-mono text-xs">_fbp</td>
+                        <td className="py-2 pr-4">Marketing</td>
+                        <td className="py-2 pr-4">Meta Pixel</td>
+                        <td className="py-2 pr-4">Identifies browsers for Meta ad delivery and measurement</td>
+                        <td className="py-2">3 months</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 pr-4 font-mono text-xs">_fbc</td>
+                        <td className="py-2 pr-4">Marketing</td>
+                        <td className="py-2 pr-4">Meta Pixel</td>
+                        <td className="py-2 pr-4">Stores the click identifier from a Meta ad</td>
+                        <td className="py-2">Session</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="space-y-2 text-muted-foreground leading-relaxed">
+                  <p>
+                    <span className="text-foreground font-light">Essential cookies</span> are strictly necessary for the site to function and cannot be refused.
+                  </p>
+                  <p>
+                    <span className="text-foreground font-light">Analytics and Marketing cookies</span> are only placed after you have given consent via our cookie banner. You may withdraw or adjust your consent at any time.
+                  </p>
+                </div>
+
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent('open-cookie-preferences'))}
+                    className="text-sm underline text-foreground hover:text-muted-foreground transition-colors"
+                  >
+                    Cookie Settings
+                  </button>
+                </div>
+              </div>
             </SectionContainer>
 
             <SectionContainer title="Changes to This Policy">
