@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { X } from "lucide-react";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 export interface ProductFilters {
   priceRanges: string[];
@@ -36,12 +37,13 @@ interface FilterSortBarProps {
   onResetAll?: () => void;
 }
 
-const PRICE_RANGES = [
-  { label: "Under £15", value: "under-15" },
-  { label: "£15 - £18", value: "15-18" },
-  { label: "£18 - £20", value: "18-20" },
-  { label: "Over £20", value: "over-20" },
-];
+// GBP thresholds — labels are converted to selected currency for display
+const PRICE_THRESHOLDS = [
+  { value: "under-15", below: 15 },
+  { value: "15-18", from: 15, to: 18 },
+  { value: "18-20", from: 18, to: 20 },
+  { value: "over-20", above: 20 },
+] as const;
 
 const SUITABILITY_OPTIONS = [
   { label: "Kids Friendly", value: "kids" },
@@ -57,17 +59,25 @@ const CATEGORY_OPTIONS = [
   { label: "Women's Health", value: "Women's Health" },
 ];
 
-const FilterSortBar = ({ 
-  filtersOpen, 
-  setFiltersOpen, 
-  itemCount, 
-  sortBy, 
+const FilterSortBar = ({
+  filtersOpen,
+  setFiltersOpen,
+  itemCount,
+  sortBy,
   onSortChange,
   filters,
   onFiltersChange,
   showCategoryFilter = false,
   onResetAll
 }: FilterSortBarProps) => {
+  const { convertPrice, formatPrice } = useCurrency();
+
+  // Build localised labels from GBP thresholds
+  const priceRanges = PRICE_THRESHOLDS.map(t => {
+    if ('below' in t) return { value: t.value, label: `Under ${formatPrice(convertPrice(t.below))}` };
+    if ('above' in t) return { value: t.value, label: `Over ${formatPrice(convertPrice(t.above))}` };
+    return { value: t.value, label: `${formatPrice(convertPrice(t.from))} – ${formatPrice(convertPrice(t.to))}` };
+  });
 
   const handlePriceToggle = (value: string) => {
     const newPrices = filters.priceRanges.includes(value)
@@ -102,7 +112,7 @@ const FilterSortBar = ({
     const chips: { type: 'price' | 'suitability' | 'category'; value: string; label: string }[] = [];
     
     filters.priceRanges.forEach(value => {
-      const range = PRICE_RANGES.find(r => r.value === value);
+      const range = priceRanges.find(r => r.value === value);
       if (range) chips.push({ type: 'price', value, label: range.label });
     });
     
@@ -165,7 +175,7 @@ const FilterSortBar = ({
                   <div>
                     <h3 className="text-sm font-light mb-4 text-foreground">Price</h3>
                     <div className="space-y-3">
-                      {PRICE_RANGES.map((range) => (
+                      {priceRanges.map((range) => (
                         <div key={range.value} className="flex items-center space-x-3">
                           <Checkbox 
                             id={range.value} 

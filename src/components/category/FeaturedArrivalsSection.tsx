@@ -5,8 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Featured products for UK market
 const FEATURED_PRODUCT_IDS = [
-  'vitamin-d3-4000iu-gummies',
-  'ashwagandha-gummies', 
+  'vitamin-d3-gummies',
+  'ashwagandha-gummies',
   'magnesium-gummies'
 ];
 
