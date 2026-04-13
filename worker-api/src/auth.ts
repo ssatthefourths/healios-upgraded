@@ -129,10 +129,10 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
       ).bind(token, user.id, expiresAt).run();
 
       const resetUrl = `https://thehealios.com/reset-password?token=${token}`;
-      if ((env as any).RESEND_API_KEY) {
-        await fetch('https://api.resend.com/emails', {
+      if (env.RESEND_API_KEY) {
+        const emailRes = await fetch('https://api.resend.com/emails', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(env as any).RESEND_API_KEY}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.RESEND_API_KEY}` },
           body: JSON.stringify({
             from: 'Healios <noreply@thehealios.com>',
             to: [email],
@@ -144,6 +144,9 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
                    <p>The Healios Team</p>`,
           }),
         });
+        if (!emailRes.ok) {
+          console.error('Resend error:', await emailRes.text());
+        }
       }
     }
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
