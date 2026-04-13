@@ -17,6 +17,7 @@ import { handleTable } from './table-handler';
 import { handleAdminStats } from './admin-stats';
 import { handleAdminUsers } from './admin-users';
 import { handleNewsletter } from './newsletter';
+import { handleGiftCards } from './gift-cards';
 
 export interface Env {
   DB: D1Database;
@@ -105,6 +106,10 @@ export default {
 
       if (path === '/newsletter/subscribe') {
         return await handleNewsletter(request, env);
+      }
+
+      if (path.startsWith('/gift-cards')) {
+        return await handleGiftCards(request, env);
       }
 
       const TABLE_PATHS = [

@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import SEOHead from "@/components/seo/SEOHead";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { toast } from "sonner";
@@ -84,46 +83,26 @@ const GiftCards = () => {
 
     setIsProcessing(true);
 
+    const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
     try {
-      // Generate gift card code
-      const { data: codeData, error: codeError } = await supabase.rpc('generate_gift_card_code');
-      
-      if (codeError) {
-        throw new Error('Failed to generate gift card code');
-      }
-
-      // Create gift card in database
-      const { data: giftCard, error: insertError } = await supabase
-        .from('gift_cards')
-        .insert({
-          code: codeData,
-          original_amount: finalAmount,
-          remaining_balance: finalAmount,
-          purchaser_id: user?.id || null,
-          purchaser_email: senderEmail,
-          recipient_email: recipientEmail || null,
-          recipient_name: sanitizeInput(recipientName) || null,
-          personal_message: sanitizeInput(personalMessage) || null,
-          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year expiry
-        })
-        .select()
-        .single();
-
-      if (insertError) {
-        throw new Error('Failed to create gift card');
-      }
-
-      // Record purchase transaction
-      await supabase.from('gift_card_transactions').insert({
-        gift_card_id: giftCard.id,
-        amount: finalAmount,
-        transaction_type: 'purchase',
+      const res = await fetch(`${API_URL}/gift-cards/purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: finalAmount,
+          senderEmail,
+          recipientEmail: recipientEmail || null,
+          recipientName: sanitizeInput(recipientName) || null,
+          personalMessage: sanitizeInput(personalMessage) || null,
+          userId: user?.id || null,
+        }),
       });
 
+      const data = await res.json() as any;
+      if (!res.ok) throw new Error(data.error || 'Failed to create gift card');
+
       toast.success("Gift card created successfully!");
-      
-      // Show the gift card code
-      navigate(`/gift-cards/success?code=${codeData}&amount=${finalAmount}`);
+      navigate(`/gift-cards/success?code=${data.code}&amount=${finalAmount}`);
     } catch (error) {
       console.error('Gift card purchase error:', error);
       toast.error("Failed to create gift card. Please try again.");

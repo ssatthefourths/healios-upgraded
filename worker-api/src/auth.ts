@@ -174,6 +174,35 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
   }
 
+  // POST /auth/update-user — change password or email for authenticated user
+  if (path === '/auth/update-user' && method === 'POST') {
+    const token = request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
+    if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    const userId = await env.SESSIONS.get(token);
+    if (!userId) return new Response(JSON.stringify({ error: 'Invalid session' }), { status: 401, headers: corsHeaders });
+
+    const body = await request.json() as any;
+
+    if (body.password) {
+      if (body.password.length < 8) {
+        return new Response(JSON.stringify({ error: 'Password must be at least 8 characters' }), { status: 400, headers: corsHeaders });
+      }
+      const hash = await hashPassword(body.password);
+      await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(hash, userId).run();
+    }
+
+    if (body.email) {
+      const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ? AND id != ?').bind(body.email, userId).first();
+      if (existing) {
+        return new Response(JSON.stringify({ error: 'Email already in use' }), { status: 409, headers: corsHeaders });
+      }
+      await env.DB.prepare('UPDATE users SET email = ? WHERE id = ?').bind(body.email.toLowerCase().trim(), userId).run();
+    }
+
+    const user = await env.DB.prepare('SELECT id, email FROM users WHERE id = ?').bind(userId).first<any>();
+    return new Response(JSON.stringify({ user }), { headers: corsHeaders });
+  }
+
   return new Response('Auth endpoint not found', { status: 404, headers: corsHeaders });
 }
 

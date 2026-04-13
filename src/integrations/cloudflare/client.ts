@@ -219,15 +219,37 @@ export const cloudflare = {
     },
 
     async resetPasswordForEmail(email: string, _options?: any) {
-      // TODO: implement password reset endpoint in worker
-      console.log('Reset password for:', email);
-      return { data: {}, error: null };
+      try {
+        const response = await fetch(`${API_URL}/auth/request-reset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        return response.ok ? { data: {}, error: null } : { data: null, error: { message: 'Failed to send reset email' } };
+      } catch {
+        return { data: null, error: { message: 'Network error' } };
+      }
     },
 
     async updateUser(data: any) {
-      // TODO: implement update user endpoint in worker
-      console.log('Update user:', data);
-      return { data: { user: {} }, error: null };
+      const token = localStorage.getItem('cf_session');
+      if (!token) return { data: null, error: { message: 'Not authenticated' } };
+      try {
+        const response = await fetch(`${API_URL}/auth/update-user`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
+        });
+        const result = await response.json();
+        return response.ok
+          ? { data: { user: result.user || {} }, error: null }
+          : { data: null, error: { message: result.error || 'Update failed' } };
+      } catch {
+        return { data: null, error: { message: 'Network error' } };
+      }
     },
 
     onAuthStateChange(callback: any) {

@@ -38,10 +38,12 @@ export async function handleNewsletter(request: Request, env: Env): Promise<Resp
     return new Response(JSON.stringify({ success: true }), { headers: cors });
   }
 
-  // Insert subscription
+  // Insert subscription — table columns: id, email, subscribed_at, is_active, created_at
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
   await env.DB.prepare(
-    'INSERT INTO newsletter_subscriptions (email, subscribed_at, status) VALUES (?, ?, ?)'
-  ).bind(email, new Date().toISOString(), 'active').run();
+    'INSERT INTO newsletter_subscriptions (id, email, subscribed_at, is_active, created_at) VALUES (?, ?, ?, 1, ?)'
+  ).bind(id, email, now, now).run();
 
   // Send confirmation email via Resend
   if (env.RESEND_API_KEY) {
