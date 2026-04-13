@@ -21,6 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -1027,22 +1035,22 @@ const NewsletterAdmin = () => {
             </div>
           ) : filteredSubscribers.length > 0 ? (
             <div className="bg-card border border-border rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="text-left p-4 text-sm font-medium text-foreground">Email</th>
-                    <th className="text-left p-4 text-sm font-medium text-foreground">Subscribed</th>
-                    <th className="text-left p-4 text-sm font-medium text-foreground">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead className="p-4">Email</TableHead>
+                    <TableHead className="p-4">Subscribed</TableHead>
+                    <TableHead className="p-4">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredSubscribers.map((subscriber) => (
-                    <tr key={subscriber.id} className="border-t border-border">
-                      <td className="p-4 text-sm text-foreground">{subscriber.email}</td>
-                      <td className="p-4 text-sm text-muted-foreground">
+                    <TableRow key={subscriber.id}>
+                      <TableCell className="p-4 text-sm text-foreground">{subscriber.email}</TableCell>
+                      <TableCell className="p-4 text-sm text-muted-foreground">
                         {format(new Date(subscriber.subscribed_at), "MMM d, yyyy")}
-                      </td>
-                      <td className="p-4">
+                      </TableCell>
+                      <TableCell className="p-4">
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={subscriber.is_active}
@@ -1055,11 +1063,11 @@ const NewsletterAdmin = () => {
                             {subscriber.is_active ? "Active" : "Inactive"}
                           </span>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           ) : (
             <div className="text-center py-12 bg-card border border-border rounded-lg">
@@ -1074,4 +1082,3 @@ const NewsletterAdmin = () => {
 };
 
 export default NewsletterAdmin;
-

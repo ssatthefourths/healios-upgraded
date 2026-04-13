@@ -5,6 +5,14 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Package,
   ShoppingCart,
   Mail,
@@ -20,6 +28,10 @@ import {
   TrendingUp,
   CalendarDays,
   Clock,
+  BarChart3,
+  Shield,
+  FileText,
+  UserCog,
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
@@ -116,15 +128,6 @@ const AdminDashboard = () => {
       statLabel: "published products",
     },
     {
-      title: "Reviews",
-      description: "Moderate product reviews and ratings",
-      icon: Star,
-      href: "/admin/reviews",
-      stat: stats.pendingReviews,
-      statLabel: "pending reviews",
-      alert: stats.pendingReviews > 0 ? "Needs attention" : undefined,
-    },
-    {
       title: "Inventory",
       description: "Track stock levels and manage inventory",
       icon: Package,
@@ -134,12 +137,37 @@ const AdminDashboard = () => {
       alert: stats.lowStockProducts > 0 ? "Low stock alert" : undefined,
     },
     {
+      title: "Reviews",
+      description: "Moderate product reviews and ratings",
+      icon: Star,
+      href: "/admin/reviews",
+      stat: stats.pendingReviews,
+      statLabel: "pending reviews",
+      alert: stats.pendingReviews > 0 ? "Needs attention" : undefined,
+    },
+    {
+      title: "Blog",
+      description: "Manage wellness blog posts and categories",
+      icon: FileText,
+      href: "/admin/blog",
+      stat: "Manage",
+      statLabel: "articles",
+    },
+    {
       title: "Newsletter",
       description: "Manage subscribers and send newsletters",
       icon: Mail,
       href: "/admin/newsletter",
       stat: stats.newsletterSubscribers,
       statLabel: "active subscribers",
+    },
+    {
+      title: "Discounts",
+      description: "Create and manage discount codes",
+      icon: Tag,
+      href: "/admin/discounts",
+      stat: stats.activeDiscounts,
+      statLabel: "active codes",
     },
     {
       title: "Wellness Drive",
@@ -151,12 +179,20 @@ const AdminDashboard = () => {
       alert: stats.pendingWellnessPosts > 0 ? "Needs review" : undefined,
     },
     {
-      title: "Discounts",
-      description: "Create and manage discount codes",
-      icon: Tag,
-      href: "/admin/discounts",
-      stat: stats.activeDiscounts,
-      statLabel: "active codes",
+      title: "Users",
+      description: "Manage customer profiles and admin roles",
+      icon: UserCog,
+      href: "/admin/users",
+      stat: "Manage",
+      statLabel: "accounts",
+    },
+    {
+      title: "Analytics",
+      description: "General store performance and traffic",
+      icon: BarChart3,
+      href: "/admin/analytics",
+      stat: "View",
+      statLabel: "reports",
     },
     {
       title: "CLV Analytics",
@@ -173,6 +209,14 @@ const AdminDashboard = () => {
       href: "/admin/subscriptions",
       stat: "View",
       statLabel: "dashboard",
+    },
+    {
+      title: "Checkout Security",
+      description: "Monitor and block suspicious behavior",
+      icon: Shield,
+      href: "/admin/security",
+      stat: "Secure",
+      statLabel: "gateway",
     },
   ];
 
@@ -338,34 +382,34 @@ const AdminDashboard = () => {
             <div className="px-6 py-8 text-center text-muted-foreground text-sm">No orders yet</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Order ID</th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Customer</th>
-                    <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Amount</th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="w-[100px] px-6">Order ID</TableHead>
+                    <TableHead className="px-4">Customer</TableHead>
+                    <TableHead className="text-right px-4">Amount</TableHead>
+                    <TableHead className="px-4">Status</TableHead>
+                    <TableHead className="px-6">Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {stats.recentOrders.map((order, i) => (
-                    <tr key={order.id} className={`border-b border-border/40 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? '' : 'bg-muted/10'}`}>
-                      <td className="px-6 py-3 font-mono text-xs text-muted-foreground">
+                    <TableRow key={order.id} className={i % 2 === 0 ? '' : 'bg-muted/10'}>
+                      <TableCell className="px-6 font-mono text-xs text-muted-foreground">
                         {order.id.slice(0, 8)}…
-                      </td>
-                      <td className="px-4 py-3 text-foreground truncate max-w-[160px]">{order.email || '—'}</td>
-                      <td className="px-4 py-3 text-right font-medium">{formatCurrency(order.total)}</td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell className="px-4 text-foreground truncate max-w-[160px]">{order.email || '—'}</TableCell>
+                      <TableCell className="px-4 text-right font-medium">{formatCurrency(order.total)}</TableCell>
+                      <TableCell className="px-4">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_COLORS[order.status] ?? 'bg-muted text-muted-foreground border-border'}`}>
                           {order.status}
                         </span>
-                      </td>
-                      <td className="px-6 py-3 text-muted-foreground text-xs">{formatDate(order.created_at)}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell className="px-6 text-muted-foreground text-xs">{formatDate(order.created_at)}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { cloudflare as supabase } from "@/integrations/cloudflare/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,10 +21,8 @@ import IngredientsEditor from "./IngredientsEditor";
 import PairsWellWithEditor from "./PairsWellWithEditor";
 import ProductImageUpload from "./ProductImageUpload";
 import ProductVersionHistory from "./ProductVersionHistory";
-import { Save, Loader2 } from "lucide-react";
-import type { Tables } from "@/integrations/supabase/types";
-
-type Product = Tables<"products">;
+import { AdminFormLayout } from "./ui/AdminFormLayout";
+import { Product } from "@/types/admin";
 
 interface ProductEditorProps {
   product: Product | null;
@@ -68,24 +65,24 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
     category: product?.category || "Vitamins & Minerals",
     image: product?.image || "",
     description: product?.description || "",
-    hero_paragraph: product?.hero_paragraph || "",
-    benefits: safeParseArray(product?.benefits),
-    what_is_it: product?.what_is_it || "",
-    why_gummy: product?.why_gummy || "",
-    who_is_it_for: product?.who_is_it_for || "",
-    how_it_works: product?.how_it_works || "",
-    how_to_take: product?.how_to_take || "",
-    routine_30_day: product?.routine_30_day || "",
-    what_makes_different: product?.what_makes_different || "",
-    subscription_info: product?.subscription_info || "",
-    ingredients: safeParseArray(product?.ingredients),
-    safety_info: product?.safety_info || "",
-    product_cautions: product?.product_cautions || "",
-    faqs: safeParseArray(product?.faqs),
-    seo_title: product?.seo_title || "",
-    meta_description: product?.meta_description || "",
-    primary_keyword: product?.primary_keyword || "",
-    secondary_keywords: safeParseArray(product?.secondary_keywords),
+    hero_paragraph: (product as any)?.hero_paragraph || "",
+    benefits: safeParseArray((product as any)?.benefits),
+    what_is_it: (product as any)?.what_is_it || "",
+    why_gummy: (product as any)?.why_gummy || "",
+    who_is_it_for: (product as any)?.who_is_it_for || "",
+    how_it_works: (product as any)?.how_it_works || "",
+    how_to_take: (product as any)?.how_to_take || "",
+    routine_30_day: (product as any)?.routine_30_day || "",
+    what_makes_different: (product as any)?.what_makes_different || "",
+    subscription_info: (product as any)?.subscription_info || "",
+    ingredients: safeParseArray((product as any)?.ingredients),
+    safety_info: (product as any)?.safety_info || "",
+    product_cautions: (product as any)?.product_cautions || "",
+    faqs: safeParseArray((product as any)?.faqs),
+    seo_title: (product as any)?.seo_title || "",
+    meta_description: (product as any)?.meta_description || "",
+    primary_keyword: (product as any)?.primary_keyword || "",
+    secondary_keywords: safeParseArray((product as any)?.secondary_keywords),
     is_published: product?.is_published ?? true,
     is_adults_only: product?.is_adults_only ?? false,
     is_kids_product: product?.is_kids_product ?? false,
@@ -95,13 +92,13 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
     sort_order: product?.sort_order || 0,
     pairs_well_with: safeParseArray(product?.pairs_well_with),
     // Dietary flags
-    is_vegan: product?.is_vegan ?? false,
-    is_gluten_free: product?.is_gluten_free ?? false,
-    is_sugar_free: product?.is_sugar_free ?? false,
-    is_keto_friendly: product?.is_keto_friendly ?? false,
-    contains_allergens: safeParseArray(product?.contains_allergens),
+    is_vegan: (product as any)?.is_vegan ?? false,
+    is_gluten_free: (product as any)?.is_gluten_free ?? false,
+    is_sugar_free: (product as any)?.is_sugar_free ?? false,
+    is_keto_friendly: (product as any)?.is_keto_friendly ?? false,
+    contains_allergens: safeParseArray((product as any)?.contains_allergens),
     // Availability
-    is_coming_soon: product?.is_coming_soon ?? false,
+    is_coming_soon: (product as any)?.is_coming_soon ?? false,
     // Bundle
     is_bundle: product?.is_bundle ?? false,
     bundle_products: safeParseArray(product?.bundle_products),
@@ -186,52 +183,12 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
       };
 
       if (isEditing) {
-        // Calculate changes for version history
-        const changes: Record<string, any> = {};
-        const previousValues: Record<string, any> = {};
-        
-        Object.keys(productData).forEach((key) => {
-          const oldValue = product[key as keyof Product];
-          const newValue = productData[key as keyof typeof productData];
-          
-          // Compare stringified values for objects/arrays
-          const oldStr = JSON.stringify(oldValue);
-          const newStr = JSON.stringify(newValue);
-          
-          if (oldStr !== newStr) {
-            changes[key] = newValue;
-            previousValues[key] = oldValue;
-          }
-        });
-
         const { error } = await supabase
           .from("products")
           .update(productData)
           .eq("id", product.id);
 
         if (error) throw error;
-
-        // Log version history if there were changes
-        if (Object.keys(changes).length > 0) {
-          await supabase.from("product_versions").insert({
-            product_id: product.id,
-            changed_by: user?.id || null,
-            action: "update",
-            changes,
-            previous_values: previousValues,
-          });
-
-          // Send notification to admins (fire and forget)
-          supabase.functions.invoke("notify-product-change", {
-            body: {
-              product_id: product.id,
-              product_name: formData.name,
-              action: "update",
-              changed_by_email: user?.email,
-              changes,
-            },
-          }).catch(console.error);
-        }
 
         toast.success("Product updated successfully");
       } else {
@@ -240,26 +197,6 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
           .insert(productData);
 
         if (error) throw error;
-
-        // Log creation in version history
-        await supabase.from("product_versions").insert({
-          product_id: formData.id,
-          changed_by: user?.id || null,
-          action: "create",
-          changes: productData,
-          previous_values: {},
-        });
-
-        // Send notification to admins (fire and forget)
-        supabase.functions.invoke("notify-product-change", {
-          body: {
-            product_id: formData.id,
-            product_name: formData.name,
-            action: "create",
-            changed_by_email: user?.email,
-            changes: productData,
-          },
-        }).catch(console.error);
 
         toast.success("Product created successfully");
       }
@@ -274,25 +211,17 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-light">
-          {isEditing ? `Edit: ${product.name}` : "Create New Product"}
-        </h2>
-        <div className="flex gap-2">
-          {isEditing && (
-            <ProductVersionHistory productId={product.id} productName={product.name} />
-          )}
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={saving} className="gap-2">
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {isEditing ? "Save Changes" : "Create Product"}
-          </Button>
-        </div>
-      </div>
-
+    <AdminFormLayout
+      title={isEditing ? `Edit: ${product.name}` : "Create New Product"}
+      subtitle={isEditing ? "Update product details, inventory, and content" : "Add a new product to your catalog"}
+      onSave={handleSave}
+      onCancel={onCancel}
+      isSaving={saving}
+      isEditing={isEditing}
+      extraActions={isEditing && (
+        <ProductVersionHistory productId={product.id} productName={product.name} />
+      )}
+    >
       <Tabs defaultValue="basic" className="space-y-4">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -820,7 +749,7 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </AdminFormLayout>
   );
 };
 

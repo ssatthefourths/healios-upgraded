@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(curl:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(node:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(nslookup:*)",
+      "Bash(ls:*)",
+      "Bash(npm run:*)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3 ../scripts/seed_blog.py)",
+      "Bash(where python:*)",
+      "Bash(/c/Python314/python ../scripts/seed_blog.py)",
+      "Bash(/c/Python314/python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''{len\\(d\\)} posts''''\\); [print\\(f''''  - {p[\"\"slug\"\"]} [{p[\"\"status\"\"]}]''''\\) for p in d]\")",
+      "Bash(/c/Python314/python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''{len\\(d\\)} categories''''\\); [print\\(f''''  - {c[\"\"name\"\"]} \\({c[\"\"slug\"\"]}\\)''''\\) for c in d]\")",
+      "Bash(fi)",
+      "Bash(done)"
+    ]
+  }
+}

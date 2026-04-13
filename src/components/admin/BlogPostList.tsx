@@ -31,10 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Search, Edit, Trash2, Eye, EyeOff, Calendar } from "lucide-react";
 import { format } from "date-fns";
-import type { Tables } from "@/integrations/supabase/types";
-
-type BlogPost = Tables<"blog_posts">;
-type BlogCategory = Tables<"blog_categories">;
+import { BlogPost, BlogCategory } from "@/types/admin";
 
 interface BlogPostListProps {
   onEdit: (post: BlogPost) => void;
@@ -65,7 +62,7 @@ const BlogPostList = ({ onEdit }: BlogPostListProps) => {
       toast.error("Failed to fetch posts");
       console.error(error);
     } else {
-      setPosts(data || []);
+      setPosts(data as BlogPost[] || []);
     }
     setLoading(false);
   };
@@ -77,7 +74,7 @@ const BlogPostList = ({ onEdit }: BlogPostListProps) => {
       .order("sort_order");
 
     if (!error && data) {
-      setCategories(data);
+      setCategories(data as BlogCategory[]);
     }
   };
 

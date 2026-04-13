@@ -32,9 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Plus, Edit, Trash2, GripVertical, Loader2 } from "lucide-react";
-import type { Tables } from "@/integrations/supabase/types";
-
-type BlogCategory = Tables<"blog_categories">;
+import { BlogCategory } from "@/types/admin";
 
 const BlogCategoryManager = () => {
   const [categories, setCategories] = useState<BlogCategory[]>([]);
@@ -60,7 +58,7 @@ const BlogCategoryManager = () => {
       toast.error("Failed to fetch categories");
       console.error(error);
     } else {
-      setCategories(data || []);
+      setCategories(data as BlogCategory[] || []);
     }
     setLoading(false);
   };

@@ -5,6 +5,14 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { format, subMonths, startOfMonth, endOfMonth, differenceInMonths } from "date-fns";
 import { 
   TrendingUp, 
@@ -488,28 +496,28 @@ const CLVDashboard = () => {
             <CardContent>
               {cohortData.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4 font-medium">Cohort</th>
-                        <th className="text-right py-3 px-4 font-medium">Customers</th>
-                        <th className="text-right py-3 px-4 font-medium">Total Revenue</th>
-                        <th className="text-right py-3 px-4 font-medium">Actual CLV</th>
-                        <th className="text-right py-3 px-4 font-medium">Projected CLV</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="py-3 px-4">Cohort</TableHead>
+                        <TableHead className="text-right py-3 px-4">Customers</TableHead>
+                        <TableHead className="text-right py-3 px-4">Total Revenue</TableHead>
+                        <TableHead className="text-right py-3 px-4">Actual CLV</TableHead>
+                        <TableHead className="text-right py-3 px-4">Projected CLV</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {cohortData.map((cohort) => (
-                        <tr key={cohort.cohort} className="border-b">
-                          <td className="py-3 px-4">{cohort.cohort}</td>
-                          <td className="py-3 px-4 text-right">{cohort.customers}</td>
-                          <td className="py-3 px-4 text-right">£{cohort.totalRevenue.toFixed(2)}</td>
-                          <td className="py-3 px-4 text-right">£{cohort.clv.toFixed(2)}</td>
-                          <td className="py-3 px-4 text-right">£{cohort.projectedClv.toFixed(2)}</td>
-                        </tr>
+                        <TableRow key={cohort.cohort}>
+                          <TableCell className="py-3 px-4">{cohort.cohort}</TableCell>
+                          <TableCell className="py-3 px-4 text-right">{cohort.customers}</TableCell>
+                          <TableCell className="py-3 px-4 text-right">£{cohort.totalRevenue.toFixed(2)}</TableCell>
+                          <TableCell className="py-3 px-4 text-right">£{cohort.clv.toFixed(2)}</TableCell>
+                          <TableCell className="py-3 px-4 text-right">£{cohort.projectedClv.toFixed(2)}</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               ) : (
                 <div className="py-8 text-center text-muted-foreground">

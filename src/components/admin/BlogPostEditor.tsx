@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -15,16 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Save, Eye, Loader2, Upload, X } from "lucide-react";
+import { CalendarIcon, Eye, Loader2, Upload, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import type { Tables } from "@/integrations/supabase/types";
-
-type BlogPost = Tables<"blog_posts">;
-type BlogCategory = Tables<"blog_categories">;
+import { AdminFormLayout } from "./ui/AdminFormLayout";
+import { BlogPost, BlogCategory } from "@/types/admin";
 
 interface BlogPostEditorProps {
   post: BlogPost | null;
@@ -34,7 +30,8 @@ interface BlogPostEditorProps {
 
 const BlogPostEditor = ({ post, onSave, onCancel }: BlogPostEditorProps) => {
   const { user } = useAuth();
-  const [loading, setSaving] = useState(false);
+  const isEditing = !!post;
+  const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -83,7 +80,7 @@ const BlogPostEditor = ({ post, onSave, onCancel }: BlogPostEditorProps) => {
       .order("sort_order");
 
     if (!error && data) {
-      setCategories(data);
+      setCategories(data as any[]);
     }
   };
 
@@ -151,64 +148,55 @@ const BlogPostEditor = ({ post, onSave, onCancel }: BlogPostEditorProps) => {
       author_id: user?.id || "",
     };
 
-    if (post) {
-      // Update existing post
-      const { error } = await supabase
-        .from("blog_posts")
-        .update(postData)
-        .eq("id", post.id);
+    try {
+      if (post) {
+        const { error } = await supabase
+          .from("blog_posts")
+          .update(postData)
+          .eq("id", post.id);
 
-      if (error) {
-        toast.error("Failed to update post");
+        if (error) throw error;
+        toast.success("Post updated successfully");
+      } else {
+        const { error } = await supabase
+          .from("blog_posts")
+          .insert(postData);
+
+        if (error) throw error;
+        toast.success("Post created successfully");
+      }
+      onSave();
+    } catch (error: any) {
+      if (error.code === "23505") {
+        toast.error("A post with this slug already exists");
+      } else {
+        toast.error(error.message || "Failed to save post");
         console.error(error);
-      } else {
-        toast.success("Post updated");
-        onSave();
       }
-    } else {
-      // Create new post
-      const { error } = await supabase
-        .from("blog_posts")
-        .insert(postData);
-
-      if (error) {
-        if (error.code === "23505") {
-          toast.error("A post with this slug already exists");
-        } else {
-          toast.error("Failed to create post");
-          console.error(error);
-        }
-      } else {
-        toast.success("Post created");
-        onSave();
-      }
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-light text-foreground">
-          {post ? "Edit Post" : "Create New Post"}
-        </h2>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowPreview(!showPreview)}
-            className="gap-2"
-          >
-            <Eye size={16} />
-            {showPreview ? "Hide Preview" : "Preview"}
-          </Button>
-          <Button onClick={handleSave} disabled={loading} className="gap-2">
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            Save
-          </Button>
-        </div>
-      </div>
-
+    <AdminFormLayout
+      title={isEditing ? `Edit: ${title}` : "Create New Post"}
+      subtitle={isEditing ? "Update your blog post content and visibility" : "Draft a new article for your wellness blog"}
+      onSave={handleSave}
+      onCancel={onCancel}
+      isSaving={saving}
+      isEditing={isEditing}
+      extraActions={
+        <Button
+          variant="outline"
+          onClick={() => setShowPreview(!showPreview)}
+          className="gap-2"
+        >
+          <Eye size={16} />
+          {showPreview ? "Hide Preview" : "Preview"}
+        </Button>
+      }
+    >
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
@@ -432,7 +420,7 @@ const BlogPostEditor = ({ post, onSave, onCancel }: BlogPostEditorProps) => {
           </Card>
         </div>
       </div>
-    </div>
+    </AdminFormLayout>
   );
 };
 

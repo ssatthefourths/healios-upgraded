@@ -48,9 +48,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Search, Pencil, Trash2, Copy, GripVertical, Eye } from "lucide-react";
-import type { Tables } from "@/integrations/supabase/types";
-
-type Product = Tables<"products">;
+import { Product } from "@/types/admin";
 
 interface ProductListProps {
   onEdit: (product: Product) => void;
