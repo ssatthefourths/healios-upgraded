@@ -21,7 +21,7 @@ No test runner is configured. Lint before committing.
 
 ## Architecture
 
-**Stack:** React 18 + Vite (SWC) + TypeScript. Deployed to Cloudflare Pages (frontend) + Cloudflare Workers (API proxy). Backend via Supabase (PostgreSQL, auth, edge functions) + Stripe (payments).
+**Stack:** React 18 + Vite (SWC) + TypeScript. Deployed to Cloudflare Pages (frontend) + Cloudflare Workers (API proxy). Backend via Cloudflare D1 (SQLite, Workers runtime) + Cloudflare Workers (auth, API, webhooks) + Stripe (payments).
 
 **Routing:** React Router v6 in `src/App.tsx`. Core routes (Home, Category, ProductDetail, Checkout, Auth, Account) are eagerly loaded. Admin and auxiliary pages are lazy-loaded. Admin routes are protected by `<AdminRoute />`.
 
@@ -30,7 +30,7 @@ No test runner is configured. Lint before committing.
 - Server state: TanStack React Query (5min stale, 10min cache, no refetch-on-focus)
 - Forms: React Hook Form + Zod validation
 
-**API Layer:** `VITE_CF_WORKER_URL` points to the Cloudflare Worker at `worker-api/`. The worker proxies requests and holds secrets (Stripe keys, Resend API key, JWT secret). Supabase edge functions live in `supabase/functions/` (Deno runtime).
+**API Layer:** `VITE_CF_WORKER_URL` points to the Cloudflare Worker at `worker-api/`. The worker handles all backend logic and holds secrets (Stripe keys, Resend API key, JWT secret).
 
 **Styling:** Tailwind CSS with CSS variable design tokens (`--fs-*` for fluid typography via `clamp()`, `--space-*`, `--radius`). Dark mode via `class` strategy. shadcn/ui (Radix-based) for UI primitives in `src/components/ui/`. Fonts: DM Sans (sans), Playfair Display (serif).
 
@@ -48,11 +48,10 @@ No test runner is configured. Lint before committing.
 | `src/contexts/` | Auth, Cart, Currency global state |
 | `src/hooks/` | Custom React hooks |
 | `src/services/` | API service layer (products, orders, reviews, users, wishlist) |
-| `src/integrations/supabase/` | Supabase client + generated types |
+| `src/integrations/supabase/` | Cloudflare D1 client bridge — re-exports `cloudflare` as `supabase` to keep 75+ import paths unchanged. Do not modify. |
 | `src/lib/` | Utilities, analytics, feature flags, logger |
-| `supabase/functions/` | Deno edge functions (23+) |
-| `worker-api/src/index.ts` | Cloudflare Worker API proxy |
-| `supabase/migrations/` | Database schema and RLS policies |
+| `worker-api/src/` | Worker route handlers (products, orders, auth, checkout, stripe-webhook, etc.) |
+| `worker-api/src/index.ts` | Cloudflare Worker router + `Env` interface |
 | `handoffs/` | Session handoff notes and plans — check here for recent context |
 
 ## Critical Rules
@@ -62,17 +61,15 @@ No test runner is configured. Lint before committing.
 - Check stock at checkout, not just at cart add
 
 **Payments (Stripe):**
-- Always verify webhook signatures before processing order confirmation (`supabase/functions/stripe-webhook`)
+- Always verify webhook HMAC signatures before processing order confirmation (`worker-api/src/stripe-webhook.ts`)
 - Use idempotency keys for server-side payment creation
 - Never store raw payment details in the database
-
-**Supabase:** RLS is enabled on user data tables. Never expose `service_role` key to the client.
 
 **Data compliance:** SA customers — POPIA-compliant, SA data residency preferred.
 
 ## Do Not Touch
 
-- `supabase/functions/stripe-webhook` — payment verification logic is critical; any change must preserve signature validation
+- `worker-api/src/stripe-webhook.ts` — payment verification logic is critical; any change must preserve HMAC signature validation
 - Order records once `payment_confirmed` — financial records are immutable
 - `src/pages/Checkout.tsx` — high-complexity (57KB); preserve existing checkout/payment flow unless explicitly justified in `/handoffs/REFACTOR_JUSTIFICATION.md`
 
@@ -108,30 +105,24 @@ Consent is managed in `src/lib/consentMode.ts`. Key points:
 
 ---
 
-## Session Log — 2026-03-18
+## Session Log
 
-### Completed
-1. **Committed 5 UI phases** (Atelier design system): Playfair Display serif, DM Sans, fluid CSS tokens, GSAP `useGsapReveal` scroll reveals on FiftyFiftySection / ProductCarousel / PersonalizedRecommendations, Navigation megamenu blank-box fix
-2. **Cookie consent rewrite** (UK PECR + GDPR compliant):
-   - First-party `healios-consent` browser cookie now written on accept/decline
-   - Granular categories: Analytics (GA4 + Clarity) vs Marketing (Meta Pixel)
-   - Banner: Accept All / Manage Preferences / Decline All
-   - Preferences modal with Switch toggles (shadcn Dialog)
-   - Footer "Cookie Settings" re-entry link
-3. **Hotfix**: `hasAnalyticsConsent` was not in scope for internal calls inside `analytics.ts` — fixed by adding explicit `import` alongside re-export
+### 2026-04-13
+- Updated `CLAUDE.md` (root + `docs/`) to reflect Cloudflare D1 + Workers architecture — removed all stale Supabase/PayFast/Vercel references
+- Set Cloudflare Worker secrets via `wrangler secret put`
 
-### Still To Do (pick up here next session)
+### Still To Do
 
-- [ ] **Stripe Worker secrets** — configure in Cloudflare Worker via `wrangler secret put`:
-  - `STRIPE_KEY` (live secret key)
-  - `STRIPE_WEBHOOK_SECRET` (from Stripe dashboard after registering endpoint)
-  - `JWT_SECRET`
-  - `RESEND_API_KEY`
-- [ ] **Register Stripe webhook** — add endpoint `https://healios-api.ss-f01.workers.dev/stripe-webhook` in Stripe dashboard, get the signing secret
+- [ ] **Register Stripe webhook** — add endpoint `https://healios-api.ss-f01.workers.dev/stripe-webhook` in Stripe dashboard, get the signing secret, then set `STRIPE_WEBHOOK_SECRET`
 - [ ] **Verify ZAR currency** on Stripe — confirm the Stripe account supports ZAR payments
 - [ ] **Analytics env vars** — confirm these are set in Cloudflare Pages environment variables (without them analytics scripts never load):
   - `VITE_GA_ID` (Google Analytics 4 measurement ID)
   - `VITE_META_PIXEL_ID`
   - `VITE_CLARITY_ID` (currently hardcoded fallback `vsma9av1yg` in clarity.ts)
-- [ ] **Privacy Policy page** (`/privacy-policy`) — should list all cookies set: `healios-consent`, `_ga`, `_gid`, `_fbp`, `_clck` with retention periods (UK PECR requires this)
-- [ ] **Commit `CLAUDE.md`** to the repo so it persists across sessions
+
+### 2026-03-18
+1. **Committed 5 UI phases** (Atelier design system): Playfair Display serif, DM Sans, fluid CSS tokens, GSAP `useGsapReveal` scroll reveals on FiftyFiftySection / ProductCarousel / PersonalizedRecommendations, Navigation megamenu blank-box fix
+2. **Cookie consent rewrite** (UK PECR + GDPR compliant): first-party `healios-consent` cookie, granular Analytics/Marketing categories, banner + preferences modal
+3. **Hotfix**: `hasAnalyticsConsent` import fix in `analytics.ts`
+4. **Privacy Policy** — PECR/POPIA cookie inventory added (`/privacy-policy`)
+5. **Admin dashboard** — modernized UI, table alignment fixes
