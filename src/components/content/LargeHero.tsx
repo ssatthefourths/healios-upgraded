@@ -5,15 +5,15 @@ import OptimizedImage from "@/components/ui/optimized-image";
 import { useGsapReveal } from "@/hooks/useGsapReveal";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
-const REGION_CONTENT: Record<string, { overline: string; delivery: string }> = {
-  GBP: { overline: "The UK's Premium Wellness Brand", delivery: "Orders over £40" },
-  ZAR: { overline: "South Africa's Premium Wellness Brand", delivery: "Orders over R600" },
-  USD: { overline: "Premium Wellness, Delivered to the US", delivery: "Orders over $35" },
-  EUR: { overline: "Premium Wellness, Delivered to Europe", delivery: "International delivery" },
-  CAD: { overline: "Premium Wellness, Delivered to Canada", delivery: "Orders over C$45" },
-  AUD: { overline: "Premium Wellness, Delivered to Australia", delivery: "Orders over A$50" },
+const REGION_CONTENT: Record<string, { delivery: string }> = {
+  GBP: { delivery: "Orders over £40" },
+  ZAR: { delivery: "Orders over R600" },
+  USD: { delivery: "Orders over $35" },
+  EUR: { delivery: "International delivery" },
+  CAD: { delivery: "Orders over C$45" },
+  AUD: { delivery: "Orders over A$50" },
 };
-const DEFAULT_REGION = { overline: "Premium Wellness. Worldwide.", delivery: "Worldwide delivery" };
+const DEFAULT_REGION = { delivery: "Worldwide delivery" };
 
 const LargeHero = () => {
   const contentReveal = useGsapReveal({ direction: "up", distance: 40, duration: 1.2, ease: "power3.out" });
@@ -44,19 +44,17 @@ const LargeHero = () => {
           {/* Thin rule accent */}
           <div className="w-8 h-px bg-white/50 mb-4" />
 
-          <span className="editorial-overline text-white/60 mb-3">{region.overline}</span>
-
           <h1 className="cinematic-title mb-[var(--space-sm)]">
             Wellness,<br />Elevated.
           </h1>
 
           <p className="text-sm md:text-base font-light opacity-80 max-w-sm mb-[var(--space-md)] leading-relaxed">
-            Science-backed gummy supplements that help you sleep deeper, think clearer, and feel your best — every single day.
+            Science-backed gummy supplements that help you sleep deeper, think clearer, and feel your best, every single day.
           </p>
 
           <div className="flex items-center gap-3 flex-wrap">
             <Link
-              to="/category/all"
+              to="/category/best-sellers"
               className="inline-flex items-center gap-2 bg-white text-foreground px-5 py-2.5 text-xs font-medium premium-btn rounded-[var(--radius)] tracking-wide uppercase"
             >
               <span>Shop Bestsellers</span>
@@ -83,9 +81,7 @@ const LargeHero = () => {
         <div className="flex items-center gap-[var(--space-lg)]">
           {[
             { label: "Free Delivery", sub: region.delivery },
-            { label: "100% Vegan", sub: "Every product" },
-            { label: "SA Made", sub: "Pharma-grade quality" },
-            { label: "30-Day Guarantee", sub: "Love it or refund" },
+            { label: "🇬🇧 UK Made", sub: "Premium quality" },
           ].map(({ label, sub }) => (
             <div key={label} className="hidden sm:block">
               <p className="text-xs font-medium text-foreground tracking-wide">{label}</p>

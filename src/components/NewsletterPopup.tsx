@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { X, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { trackNewsletterSignup } from "@/lib/analytics";
@@ -26,20 +25,9 @@ export default function NewsletterPopup() {
       
       if (wasShown || isSubscribed) return;
 
-      // If user is logged in, check if their email is already subscribed
+      // If user is logged in, skip popup (they can subscribe via footer)
       if (user?.email) {
-        const { data: existingSub } = await supabase
-          .from("newsletter_subscriptions")
-          .select("id")
-          .eq("email", user.email)
-          .eq("is_active", true)
-          .maybeSingle();
-
-        if (existingSub) {
-          // Mark as subscribed in localStorage to avoid future checks
-          localStorage.setItem(NEWSLETTER_SUBSCRIBED_KEY, "true");
-          return;
-        }
+        return;
       }
 
       // Show after delay
@@ -74,27 +62,18 @@ export default function NewsletterPopup() {
     e.preventDefault();
     if (!email.trim()) return;
 
+    const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from("newsletter_subscriptions")
-        .insert({ email: email.trim() });
-
-      if (error) {
-        if (error.code === "23505") {
-          // Already subscribed - don't track as new signup
-          toast.success("You're already subscribed!");
-        } else {
-          // Actual error - don't show success
-          throw error;
-        }
-      } else {
-        // Successful new subscription
-        toast.success("Welcome! Use code WELCOME10 for 10% off.");
-        trackNewsletterSignup("popup");
-        trackMetaLead("popup");
-      }
-      
+      const res = await fetch(`${API_URL}/newsletter/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      if (!res.ok) throw new Error('Subscription failed');
+      toast.success("Welcome! Use code WELCOME10 for 10% off.");
+      trackNewsletterSignup("popup");
+      trackMetaLead("popup");
       localStorage.setItem(NEWSLETTER_SUBSCRIBED_KEY, "true");
       handleClose();
     } catch (error) {

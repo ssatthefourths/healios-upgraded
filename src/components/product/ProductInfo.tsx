@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { 
   Breadcrumb, 
@@ -108,6 +109,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         isSubscription: purchaseType === 'subscription',
       });
     }
+    toast.success(`${product.name} added to bag`);
     setQuantity(1);
   };
 
@@ -175,7 +177,6 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           <div className="flex items-start gap-3">
             <div className="text-right">
               <p className="text-xl font-light text-foreground">{formatPrice(displayPrice)}</p>
-              <p className="text-xs text-muted-foreground">inc. VAT</p>
               {purchaseType === 'subscription' && (
                 <p className="text-xs text-muted-foreground line-through">{formatPrice(basePrice)}</p>
               )}

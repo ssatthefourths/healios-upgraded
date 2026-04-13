@@ -12,6 +12,13 @@ const json = (body: unknown, status = 200) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
+function generateOrderNumber(): string {
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const rand = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+  return `HLS-${date}-${rand}`;
+}
+
 // ─── Stripe Signature Verification ────────────────────────────────────────────
 
 async function verifyStripeSignature(
@@ -159,7 +166,7 @@ async function handleCheckoutComplete(session: any, env: Env) {
   }
 
   // Create order
-  const orderId = crypto.randomUUID();
+  const orderId = generateOrderNumber();
   await env.DB.prepare(`
     INSERT INTO orders (
       id, user_id, email, first_name, last_name, phone,
@@ -369,7 +376,7 @@ async function sendOrderConfirmationEmail(
   const html = `<!DOCTYPE html><html><body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#333;">
     <h1 style="font-size:24px;font-weight:400;">Order confirmed</h1>
     <p>Hi ${opts.firstName}, thank you for your order!</p>
-    <p style="color:#666;">Order reference: <strong>${opts.orderId.slice(0, 8).toUpperCase()}</strong></p>
+    <p style="color:#666;">Order reference: <strong>${opts.orderId}</strong></p>
     <table width="100%" style="border-collapse:collapse;margin:20px 0;">${itemsList}</table>
     <table width="100%" style="border-collapse:collapse;">
       <tr><td>Subtotal</td><td style="text-align:right;">£${opts.subtotal.toFixed(2)}</td></tr>
@@ -386,7 +393,7 @@ async function sendOrderConfirmationEmail(
     body: JSON.stringify({
       from: 'Healios <orders@thehealios.com>',
       to: opts.email,
-      subject: `Order confirmed — Healios #${opts.orderId.slice(0, 8).toUpperCase()}`,
+      subject: `Order confirmed — ${opts.orderId}`,
       html,
     }),
   });

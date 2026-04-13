@@ -21,7 +21,7 @@ interface NavigationProps {
 }
 
 const Navigation = ({ onScrollChange }: NavigationProps) => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { totalItems, cartItems, updateQuantity } = useCart();
   const { formatPrice } = useCurrency();
   const navigate = useNavigate();
@@ -607,6 +607,15 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
                 >
                   My Favorites
                 </button>
+                {user && (
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground transition-colors duration-200 text-lg font-light block py-2 text-left w-full"
+                    onClick={() => { setIsMobileMenuOpen(false); signOut(); }}
+                  >
+                    Log Out
+                  </button>
+                )}
               </div>
 
               {/* Currency Selector for mobile */}
@@ -735,6 +744,19 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
             
             {/* Content */}
             <div className="p-6">
+              {!user && (
+                <div className="mb-6 p-4 border border-border space-y-3">
+                  <p className="text-sm font-medium text-foreground">Sign in to save your favourites permanently</p>
+                  <p className="text-xs text-muted-foreground">Create an account or sign in to keep your favourites across devices.</p>
+                  <Link
+                    to={ROUTES.AUTH}
+                    onClick={() => setOffCanvasType(null)}
+                    className="inline-block w-full text-center py-2 px-4 bg-foreground text-background text-sm font-light hover:bg-foreground/90 transition-colors"
+                  >
+                    Sign In / Register
+                  </Link>
+                </div>
+              )}
               <p className="text-muted-foreground text-sm mb-6">
                 You haven't added any favorites yet. Browse our collection and click the heart icon to save items you love.
               </p>

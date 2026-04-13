@@ -233,7 +233,7 @@ const Auth = () => {
               "Since starting my daily routine with Healios, I wake up feeling energised and ready to take on the day. It has truly transformed how I feel."
             </blockquote>
             <p className="text-white/80 text-sm font-light">
-              — Sarah M., London
+              — Sarah M., Cape Town
             </p>
           </div>
            <Link to="/" className="inline-block hover:opacity-80 transition-opacity">

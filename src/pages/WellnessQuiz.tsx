@@ -245,6 +245,7 @@ const WellnessQuiz = () => {
   };
 
   const handleNext = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (currentStep < quizQuestions.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -335,7 +336,7 @@ const WellnessQuiz = () => {
               </div>
 
               {/* Navigation */}
-              <div className="flex justify-between">
+              <div className="flex justify-between sticky bottom-4 bg-background/90 backdrop-blur-sm py-3 px-1 -mx-1 rounded-lg">
                 <Button
                   variant="outline"
                   onClick={handleBack}

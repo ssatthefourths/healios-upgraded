@@ -62,24 +62,18 @@ const OrderConfirmation = ({ sessionId, customerEmail, isLoggedIn }: OrderConfir
   const handleNewsletterSignup = async () => {
     if (!newsletterEmail.trim()) return;
     
+    const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
     setIsSubscribing(true);
     try {
-      const { error } = await supabase
-        .from("newsletter_subscriptions")
-        .insert({ email: newsletterEmail.trim() });
-
-      if (error) {
-        if (error.code === "23505") {
-          toast.success("You're already subscribed!");
-        } else {
-          throw error;
-        }
-      } else {
-        toast.success("Welcome to our community!");
-        trackNewsletterSignup("checkout");
-        trackMetaLead("checkout");
-      }
-      
+      const res = await fetch(`${API_URL}/newsletter/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newsletterEmail.trim().toLowerCase() }),
+      });
+      if (!res.ok) throw new Error('Subscription failed');
+      toast.success("Welcome to our community!");
+      trackNewsletterSignup("checkout");
+      trackMetaLead("checkout");
       setIsNewsletterSubscribed(true);
       localStorage.setItem("healios_newsletter_subscribed", "true");
     } catch (error) {

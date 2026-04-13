@@ -16,6 +16,7 @@ import { handleWellness } from './wellness';
 import { handleTable } from './table-handler';
 import { handleAdminStats } from './admin-stats';
 import { handleAdminUsers } from './admin-users';
+import { handleNewsletter } from './newsletter';
 
 export interface Env {
   DB: D1Database;
@@ -100,6 +101,10 @@ export default {
 
       if (path === '/admin/user-management' && request.method === 'POST') {
         return await handleAdminUsers(request, env);
+      }
+
+      if (path === '/newsletter/subscribe') {
+        return await handleNewsletter(request, env);
       }
 
       const TABLE_PATHS = [

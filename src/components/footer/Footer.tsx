@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -25,23 +24,18 @@ const Footer = () => {
 
     setIsSubmitting(true);
 
+    const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
     try {
-      const { error } = await supabase
-        .from("newsletter_subscriptions")
-        .insert({ email: email.toLowerCase().trim() });
-
-      if (error) {
-        if (error.code === "23505") {
-          toast.info("You're already subscribed to our newsletter");
-        } else {
-          throw error;
-        }
-      } else {
-        toast.success("Thanks for subscribing!");
-        trackNewsletterSignup("footer");
-        trackMetaLead("footer");
-        setEmail("");
-      }
+      const res = await fetch(`${API_URL}/newsletter/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+      });
+      if (!res.ok) throw new Error('Subscription failed');
+      toast.success("Thanks for subscribing!");
+      trackNewsletterSignup("footer");
+      trackMetaLead("footer");
+      setEmail("");
     } catch (error) {
       logger.error("Newsletter subscription error", error);
       toast.error("Something went wrong. Please try again.");
@@ -151,7 +145,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto border-t border-border pt-[var(--space-sm)]">
         <div className="flex flex-col md:flex-row justify-between items-center gap-2">
           <p className="text-sm font-light text-foreground mb-1 md:mb-0">
-            © {new Date().getFullYear()} {BRAND.name} · Built by The Fourths Digital Agency
+            © {new Date().getFullYear()} {BRAND.name} · Built by <a href="https://www.thefourths.com" target="_blank" rel="noopener noreferrer" className="hover:text-muted-foreground transition-colors">The Fourths Digital Agency</a>
           </p>
           <div className="flex space-x-6">
             <Link to={ROUTES.SHIPPING} className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors">

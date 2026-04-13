@@ -91,7 +91,7 @@ const Checkout = () => {
     address: "",
     city: "",
     postalCode: "",
-    country: "United Kingdom"
+    country: ""
   });
   const [hasSeparateBilling, setHasSeparateBilling] = useState(false);
   const [billingDetails, setBillingDetails] = useState({
@@ -102,7 +102,7 @@ const Checkout = () => {
     address: "",
     city: "",
     postalCode: "",
-    country: "United Kingdom"
+    country: ""
   });
   const [shippingOption, setShippingOption] = useState("standard");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -219,7 +219,7 @@ const Checkout = () => {
           address: address.address || '',
           city: address.city || '',
           postalCode: address.postal_code || '',
-          country: address.country || 'United Kingdom',
+          country: address.country || '',
         });
       }
       
@@ -312,7 +312,7 @@ const Checkout = () => {
         address: "",
         city: "",
         postalCode: "",
-        country: "United Kingdom"
+        country: ""
       });
       return;
     }
@@ -337,7 +337,7 @@ const Checkout = () => {
         address: "",
         city: "",
         postalCode: "",
-        country: "United Kingdom"
+        country: ""
       }));
       return;
     }
@@ -367,8 +367,6 @@ const Checkout = () => {
   
   const shipping = getShippingCost();
   const total = subtotal + shipping - discountAmount - loyaltyDiscount - giftCardDiscount;
-  // UK VAT is 20%, prices are VAT-inclusive so VAT = total - (total / 1.2)
-  const vatAmount = total - (total / 1.2);
 
   const handleDiscountSubmit = async () => {
     if (!discountCode.trim()) {
@@ -1341,17 +1339,10 @@ const Checkout = () => {
                         {shipping === 0 ? "Free" : formatPrice(shipping)}
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm border-t border-muted-foreground/20 pt-3">
-                      <span className="text-muted-foreground">VAT (20% included)</span>
-                      <span className="text-foreground">{formatPrice(vatAmount)}</span>
-                    </div>
-                    <div className="flex justify-between text-lg font-medium">
+                    <div className="flex justify-between text-lg font-medium border-t border-muted-foreground/20 pt-3">
                       <span className="text-foreground">Total</span>
                       <span className="text-foreground">{formatPrice(total)}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground text-center pt-1">
-                      All prices include VAT
-                    </p>
                   </div>
 
                   <div className="text-center text-sm text-muted-foreground py-2">

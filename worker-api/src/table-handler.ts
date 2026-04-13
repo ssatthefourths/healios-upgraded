@@ -16,7 +16,7 @@ const USER_TABLES = new Set([
   'profiles', 'addresses', 'orders', 'order_items',
   'wishlist', 'loyalty_points', 'loyalty_transactions', 'subscriptions'
 ]);
-const ADMIN_TABLES = new Set(['newsletter_subscriptions', 'discount_codes', 'users']);
+const ADMIN_TABLES = new Set(['discount_codes', 'users']);
 
 export async function handleTable(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);

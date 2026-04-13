@@ -281,13 +281,21 @@ const Account = () => {
       />
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Shopping
-          </Link>
+          <div className="flex items-center justify-between mb-4">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Shopping
+            </Link>
+            <button
+              onClick={() => signOut()}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Log Out
+            </button>
+          </div>
           <h1 className="text-4xl font-light text-foreground mb-2">My Account</h1>
           <p className="text-muted-foreground">{user.email}</p>
         </div>

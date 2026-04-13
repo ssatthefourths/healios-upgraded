@@ -88,7 +88,7 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
           const isComingSoon = product.is_coming_soon;
           const isOutOfStock = !isComingSoon && product.stock_quantity === 0;
           return (
-          <Link key={product.id} to={`/product/${product.id}`} className="group block h-full">
+          <Link key={product.id} to={`/product/${product.slug || product.id}`} className="group block h-full">
             <Card 
               className="border-none shadow-none bg-transparent cursor-pointer h-full"
             >

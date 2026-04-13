@@ -8,9 +8,9 @@ import { ArrowRight } from "lucide-react";
 
 const values = [
   { label: "Premium Quality", desc: "Manufactured to the highest pharmaceutical-grade standards" },
-  { label: "100% Vegan", desc: "No animal-derived ingredients, ever" },
+  { label: "🇬🇧 UK Made", desc: "Formulated and produced in the United Kingdom" },
   { label: "Science-Backed", desc: "Every formula peer-reviewed" },
-  { label: "Clean Label", desc: "No artificial colours or sweeteners" },
+  { label: "Transparent Ingredients", desc: "Clear labelling, no hidden fillers" },
 ];
 
 const BrandDefinition = () => {
@@ -34,8 +34,8 @@ const BrandDefinition = () => {
         <div className="mb-[var(--space-xl)]">
           <h2 className="font-serif font-normal text-foreground leading-[1.1] tracking-tight"
             style={{ fontSize: "clamp(2rem, 5vw, 4.5rem)", fontStyle: "italic" }}>
-            Wellness that works
-            <span className="text-muted-foreground"> — because your health</span>
+            Wellness that works,
+            <span className="text-muted-foreground"> because your health</span>
             <br className="hidden md:block" />
             <span className="text-muted-foreground"> deserves more than a compromise.</span>
           </h2>
