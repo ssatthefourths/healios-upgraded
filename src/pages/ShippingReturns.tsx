@@ -85,11 +85,11 @@ const ShippingReturns = () => {
               <div className="bg-muted/20 p-6 rounded-lg">
                 <h3 className="font-light text-foreground mb-4">Return Conditions</h3>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• Products must be unopened and in their original, sealed packaging.</li>
-                  <li>• Items must be returned within 30 days of the delivery date.</li>
-                  <li>• Proof of purchase (order confirmation email or receipt) is required.</li>
-                  <li>• Opened or used products cannot be returned for hygiene and safety reasons.</li>
-                  <li>• Sale items and promotional bundles are eligible for returns under the same conditions.</li>
+                  <li>Products must be unopened and in their original, sealed packaging.</li>
+                  <li>Items must be returned within 30 days of the delivery date.</li>
+                  <li>Proof of purchase (order confirmation email or receipt) is required.</li>
+                  <li>Opened or used products cannot be returned for hygiene and safety reasons.</li>
+                  <li>Sale items and promotional bundles are eligible for returns under the same conditions.</li>
                 </ul>
               </div>
 

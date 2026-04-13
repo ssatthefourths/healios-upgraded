@@ -328,7 +328,7 @@ const Account = () => {
                       <div>
                         <p className="text-sm text-muted-foreground">Member Since</p>
                         <p className="text-foreground">
-                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                          {user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : 'N/A'}
                         </p>
                       </div>
                     </div>

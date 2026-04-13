@@ -42,9 +42,14 @@ const ProductCarousel = () => {
     },
   });
 
-  const productIds = useMemo(() => products?.map(p => p.id) || [], [products]);
+  const { formatPrice, currency } = useCurrency();
+  const isZAR = currency.code === 'ZAR';
+  const visibleProducts = useMemo(
+    () => (products || []).filter(p => isZAR || !p.name.toLowerCase().includes('halo glow')),
+    [products, isZAR]
+  );
+  const productIds = useMemo(() => visibleProducts.map(p => p.id), [visibleProducts]);
   const { ratings } = useProductRatings(productIds);
-  const { formatPrice } = useCurrency();
   const staggerReveal = useGsapReveal({ direction: "up", distance: 30, stagger: 0.1, duration: 0.8 });
 
   if (isLoading) {
@@ -86,8 +91,8 @@ const ProductCarousel = () => {
         className="w-full"
       >
         <CarouselContent className="">
-          {products.map((product) => {
-            const isComingSoon = product.is_coming_soon;
+          {visibleProducts.map((product) => {
+            const isComingSoon = !!product.is_coming_soon;
             const isOutOfStock = !isComingSoon && product.stock_quantity === 0;
             return (
             <CarouselItem

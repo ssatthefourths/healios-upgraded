@@ -77,6 +77,15 @@ const OneThirdTwoThirdsSection = () => {
               </div>
             </div>
           </Link>
+          <div className="flex justify-end mt-3">
+            <Link
+              to="/category/all"
+              className="inline-flex items-center gap-1.5 text-xs font-light text-muted-foreground hover:text-foreground transition-colors duration-300 tracking-wide"
+            >
+              Browse more categories
+              <ArrowRight size={11} />
+            </Link>
+          </div>
         </div>
 
       </div>

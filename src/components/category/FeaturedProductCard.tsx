@@ -53,7 +53,7 @@ const FeaturedProductCard = ({ product, pairedProducts, reversed = false }: Feat
       })()
     : '';
 
-  const isComingSoon = product.is_coming_soon ?? false;
+  const isComingSoon = !!product.is_coming_soon;
   const isOutOfStock = !isComingSoon && product.stock_quantity === 0;
 
   return (

@@ -129,9 +129,9 @@ const ProductGuide = () => (
             <Sun className="h-5 w-5" /> Morning
           </h3>
           <ul className="space-y-2 text-muted-foreground text-sm">
-            <li>• Vitamin D3: best absorbed with breakfast</li>
-            <li>• Iron + Vitamin C: take on empty stomach or with food</li>
-            <li>• Ashwagandha: for daytime energy and focus</li>
+            <li>Vitamin D3: best absorbed with breakfast</li>
+            <li>Iron + Vitamin C: take on empty stomach or with food</li>
+            <li>Ashwagandha: for daytime energy and focus</li>
           </ul>
         </div>
         <div className="space-y-4 p-6 bg-muted/30 rounded-lg">
@@ -139,9 +139,9 @@ const ProductGuide = () => (
             <Moon className="h-5 w-5" /> Evening
           </h3>
           <ul className="space-y-2 text-muted-foreground text-sm">
-            <li>• Magnesium Complex: 30-60 mins before bed</li>
-            <li>• Ashwagandha: alternatively for relaxation</li>
-            <li>• Probiotic: with or without food</li>
+            <li>Magnesium Complex: 30-60 mins before bed</li>
+            <li>Ashwagandha: alternatively for relaxation</li>
+            <li>Probiotic: with or without food</li>
           </ul>
         </div>
       </div>

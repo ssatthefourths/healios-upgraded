@@ -75,7 +75,7 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
     if (!userId) return new Response(JSON.stringify({ error: 'Invalid session' }), { status: 401, headers: corsHeaders });
 
     const user = await env.DB.prepare(
-      'SELECT id, email FROM users WHERE id = ?'
+      'SELECT id, email, created_at FROM users WHERE id = ?'
     ).bind(userId).first<any>();
 
     const profile = await env.DB.prepare(
@@ -86,8 +86,8 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
       'SELECT role FROM user_roles WHERE user_id = ?'
     ).bind(userId).first<any>();
 
-    return new Response(JSON.stringify({ 
-      user: { ...user, ...profile, role: roleData?.role || 'user' } 
+    return new Response(JSON.stringify({
+      user: { ...user, ...profile, role: roleData?.role || 'user' }
     }), { headers: corsHeaders });
   }
 

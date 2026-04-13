@@ -1,12 +1,16 @@
 import haloGlowCollagen from "@/assets/halo-glow-collagen.png";
+import adaptogensHero from "@/assets/adaptogens-hero.jpg";
 import wellnessHeroImage from "@/assets/womens-wellness-hero.jpg";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import OptimizedImage from "@/components/ui/optimized-image";
 import { useGsapReveal } from "@/hooks/useGsapReveal";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const FiftyFiftySection = () => {
   const staggerReveal = useGsapReveal({ direction: "up", distance: 50, stagger: 0.15, duration: 1, ease: "power3.out" });
+  const { currency } = useCurrency();
+  const isZAR = currency.code === 'ZAR';
 
   return (
     <section className="w-full px-page">
@@ -52,33 +56,55 @@ const FiftyFiftySection = () => {
           </div>
         </Link>
 
-        {/* Right — Halo Glow product (slightly shorter on desktop for visual tension) */}
+        {/* Right — product feature (Halo Glow for ZAR, Adaptogens for other currencies) */}
         <div className="flex flex-col gap-4">
-          <Link to="/category/beauty" className="block group relative flex-1">
-            <div className="w-full aspect-[4/5] overflow-hidden rounded-[var(--radius-card)] relative shadow-[var(--shadow-ambient)] group-hover:shadow-[var(--shadow-ambient-hover)] transition-shadow duration-700">
-              <OptimizedImage
-                src={haloGlowCollagen}
-                alt="Halo Glow Collagen Powder"
-                priority={true}
-                aspectRatio="square"
-                className="group-hover:scale-[1.04] transition-transform duration-700 ease-smooth w-full h-full object-cover"
-              />
-              {/* Soft gradient at bottom */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-
-              {/* Bottom label */}
-              <div className="absolute bottom-0 left-0 right-0 p-[var(--space-md)] text-white">
-                <span className="editorial-overline text-white/60 mb-2">Beauty</span>
-                <h3 className="text-base md:text-lg font-light leading-snug tracking-tight">
-                  Halo Glow<br />Collagen Powder
-                </h3>
-                <div className="flex items-center gap-1.5 mt-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
-                  <span className="text-xs font-light tracking-wide">Shop now</span>
-                  <ArrowRight size={11} />
+          {isZAR ? (
+            <Link to="/category/beauty" className="block group relative flex-1">
+              <div className="w-full aspect-[4/5] overflow-hidden rounded-[var(--radius-card)] relative shadow-[var(--shadow-ambient)] group-hover:shadow-[var(--shadow-ambient-hover)] transition-shadow duration-700">
+                <OptimizedImage
+                  src={haloGlowCollagen}
+                  alt="Halo Glow Collagen Powder"
+                  priority={true}
+                  aspectRatio="square"
+                  className="group-hover:scale-[1.04] transition-transform duration-700 ease-smooth w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 p-[var(--space-md)] text-white">
+                  <span className="editorial-overline text-white/60 mb-2">Beauty</span>
+                  <h3 className="text-base md:text-lg font-light leading-snug tracking-tight">
+                    Halo Glow<br />Collagen Powder
+                  </h3>
+                  <div className="flex items-center gap-1.5 mt-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
+                    <span className="text-xs font-light tracking-wide">Shop now</span>
+                    <ArrowRight size={11} />
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
+            </Link>
+          ) : (
+            <Link to="/category/adaptogens" className="block group relative flex-1">
+              <div className="w-full aspect-[4/5] overflow-hidden rounded-[var(--radius-card)] relative shadow-[var(--shadow-ambient)] group-hover:shadow-[var(--shadow-ambient-hover)] transition-shadow duration-700">
+                <OptimizedImage
+                  src={adaptogensHero}
+                  alt="Adaptogens Collection"
+                  priority={true}
+                  aspectRatio="square"
+                  className="group-hover:scale-[1.04] transition-transform duration-700 ease-smooth w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 p-[var(--space-md)] text-white">
+                  <span className="editorial-overline text-white/60 mb-2">Adaptogens</span>
+                  <h3 className="text-base md:text-lg font-light leading-snug tracking-tight">
+                    Stress & Energy<br />Support
+                  </h3>
+                  <div className="flex items-center gap-1.5 mt-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
+                    <span className="text-xs font-light tracking-wide">Shop now</span>
+                    <ArrowRight size={11} />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          )}
 
           {/* Trust micro-strip beneath right image */}
           <div className="flex items-center gap-[var(--space-md)] px-1">

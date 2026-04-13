@@ -51,7 +51,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
   const { formatPrice } = useCurrency();
   const { trackAddToCart } = useProductAnalytics();
 
-  const isComingSoon = product.is_coming_soon ?? false;
+  const isComingSoon = !!product.is_coming_soon;
   const stockQuantity = product.stock_quantity ?? 100;
   const lowStockThreshold = product.low_stock_threshold ?? 10;
   const trackInventory = product.track_inventory ?? true;

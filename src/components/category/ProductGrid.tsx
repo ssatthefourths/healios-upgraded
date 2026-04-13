@@ -85,7 +85,7 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
     <section className="w-full px-md mb-[var(--space-xl)]">
       <div ref={staggerReveal} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[var(--space-md)] lg:gap-[var(--space-lg)]">
         {products.map((product) => {
-          const isComingSoon = product.is_coming_soon;
+          const isComingSoon = !!product.is_coming_soon;
           const isOutOfStock = !isComingSoon && product.stock_quantity === 0;
           return (
           <Link key={product.id} to={`/product/${product.slug || product.id}`} className="group block h-full">

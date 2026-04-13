@@ -1273,7 +1273,7 @@ const Checkout = () => {
                     </Label>
                   </div>
                   <div className="text-sm text-muted-foreground sm:text-right pl-7 sm:pl-0">
-                    Free • 3-5 business days
+                    Free — 3-5 business days
                   </div>
                 </div>
 
@@ -1285,7 +1285,7 @@ const Checkout = () => {
                     </Label>
                   </div>
                   <div className="text-sm text-muted-foreground sm:text-right pl-7 sm:pl-0">
-                    {formatPrice(5.99)} • 1-2 business days
+                    {formatPrice(5.99)} — 1-2 business days
                   </div>
                 </div>
 
@@ -1297,7 +1297,7 @@ const Checkout = () => {
                     </Label>
                   </div>
                   <div className="text-sm text-muted-foreground sm:text-right pl-7 sm:pl-0">
-                    {formatPrice(9.99)} • Next business day
+                    {formatPrice(9.99)} — Next business day
                   </div>
                 </div>
               </RadioGroup>
@@ -1363,7 +1363,7 @@ const Checkout = () => {
                         Redirecting to payment...
                       </>
                     ) : (
-                      `Pay with Stripe • ${formatPrice(total)}`
+                      `Pay ${formatPrice(total)}`
                     )}
                   </Button>
                   
