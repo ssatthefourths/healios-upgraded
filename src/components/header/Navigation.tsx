@@ -372,18 +372,15 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
                      .find(item => item.name === activeDropdown)
                      ?.submenuItems.map((subItem, index) => (
                       <li key={index}>
-                        <Link 
+                        <Link
                           to={subItem.href}
-                          className={`text-lg transition-all duration-300 block py-2 relative group flex items-center gap-2 ${
-                            hoveredSubItem?.name === subItem.name 
-                              ? "text-nav-hover translate-x-1 font-normal" 
+                          className={`text-lg transition-all duration-300 block py-2 relative group ${
+                            hoveredSubItem?.name === subItem.name
+                              ? "text-nav-hover translate-x-1 font-normal"
                               : "text-nav-foreground/60 font-light hover:text-nav-hover hover:translate-x-1"
                           }`}
                           onMouseEnter={() => setHoveredSubItem(subItem)}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full bg-primary transition-opacity duration-300 ${
-                            hoveredSubItem?.name === subItem.name ? "opacity-100" : "opacity-0"
-                          }`}></span>
                           {subItem.name}
                         </Link>
                       </li>
