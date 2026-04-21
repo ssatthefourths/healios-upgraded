@@ -232,11 +232,14 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
     params[`line_items[${idx}][price_data][unit_amount]`] = Math.round(shippingInCurrency * 100);
   }
 
-  // Apply discount coupon if provided
+  // Apply discount coupon if provided.
+  // discountAmount arrives from the client already in the display currency
+  // (same currency as subtotal/validate-discount), so convert to minor units
+  // (cents/pence) without re-applying currencyRate.
   if (discountAmount && discountAmount > 0) {
     try {
       const coupon = await stripePost('/coupons', {
-        amount_off: Math.round(discountAmount * currencyRate * 100),
+        amount_off: Math.round(discountAmount * 100),
         currency: stripeCurrency,
         duration: 'once',
         name: body.discountCode || 'Discount',

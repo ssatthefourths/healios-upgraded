@@ -844,6 +844,16 @@ const Checkout = () => {
                       <span className="text-accent">-{formatPrice(giftCardDiscount)}</span>
                     </div>
                   )}
+                  {shipping > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Shipping</span>
+                      <span className="text-foreground">{formatPrice(shipping)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-base font-medium border-t border-muted-foreground/20 pt-3">
+                    <span className="text-foreground">Total</span>
+                    <span className="text-foreground">{formatPrice(total)}</span>
+                  </div>
                 </div>
               </div>
             </div>
