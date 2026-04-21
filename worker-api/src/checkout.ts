@@ -233,13 +233,14 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
   }
 
   // Apply discount coupon if provided.
-  // discountAmount arrives from the client already in the display currency
-  // (same currency as subtotal/validate-discount), so convert to minor units
-  // (cents/pence) without re-applying currencyRate.
+  // discountAmount arrives in GBP (base currency) from /validate-discount.
+  // Stripe line items are sent in the display currency, so the coupon must
+  // match: convert GBP → display currency via currencyRate, then → minor
+  // units (cents/pence) via *100.
   if (discountAmount && discountAmount > 0) {
     try {
       const coupon = await stripePost('/coupons', {
-        amount_off: Math.round(discountAmount * 100),
+        amount_off: Math.round(discountAmount * currencyRate * 100),
         currency: stripeCurrency,
         duration: 'once',
         name: body.discountCode || 'Discount',
