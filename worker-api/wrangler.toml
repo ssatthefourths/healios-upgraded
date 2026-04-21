@@ -15,11 +15,11 @@ binding = "SESSIONS"
 id = "a36c2cd6a06c44e4acbbe8ce6c593a3f"
 
 # R2 Bucket for Assets
-# 1. Run: npx wrangler r2 bucket create healios-assets
-# 2. Uncomment lines below
-# [[r2_buckets]]
-# binding = "BUCKET"
-# bucket_name = "healios-assets"
+# Before first deploy after uncommenting:
+#   npx wrangler r2 bucket create healios-assets
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "healios-assets"
 
 # Cloudflare Workers AI (wellness chatbot)
 [ai]
@@ -27,6 +27,8 @@ binding = "AI"
 
 [vars]
 ENVIRONMENT = "production"
+# Optional: override the public URL used for uploaded assets (e.g. custom domain)
+# ASSETS_PUBLIC_URL = "https://healios-assets.thehealios.com"
 # Secrets — set via wrangler CLI, never commit values:
 #   wrangler secret put JWT_SECRET
 #   wrangler secret put STRIPE_KEY              ← Stripe secret key (sk_live_... or sk_test_...)

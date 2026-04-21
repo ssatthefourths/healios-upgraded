@@ -28,6 +28,8 @@ interface CartItem {
   quantity: number;
   category: string;
   isSubscription?: boolean;
+  isBundle?: boolean;
+  bundleItems?: { product_id: string; quantity: number }[];
 }
 
 interface CheckoutRequest {
@@ -108,18 +110,51 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
   const currencyCode = liveRates[requestedCurrency] !== undefined ? requestedCurrency : 'GBP';
   const currencyRate = liveRates[currencyCode]; // GBP = 1, ZAR = live rate, etc.
 
-  // Server-side price validation against D1 (products priced in GBP)
-  const productIds = cartItems.map(i => i.id);
-  const placeholders = productIds.map(() => '?').join(',');
-  const { results: dbProducts } = await env.DB.prepare(
-    `SELECT id, price, name, image, category, is_published, stock_quantity, track_inventory FROM products WHERE id IN (${placeholders})`
-  ).bind(...productIds).all();
+  // Split cart into products vs bundles
+  const productCartItems = cartItems.filter(i => !i.isBundle);
+  const bundleCartItems = cartItems.filter(i => i.isBundle);
 
-  const productMap = new Map((dbProducts || []).map((p: any) => [p.id, p]));
+  // Fetch product data for product items
+  let productMap = new Map<string, any>();
+  if (productCartItems.length > 0) {
+    const productIds = productCartItems.map(i => i.id);
+    const placeholders = productIds.map(() => '?').join(',');
+    const { results: dbProducts } = await env.DB.prepare(
+      `SELECT id, price, name, image, category, is_published, stock_quantity, track_inventory FROM products WHERE id IN (${placeholders})`
+    ).bind(...productIds).all();
+    productMap = new Map((dbProducts || []).map((p: any) => [p.id, p]));
+  }
+
+  // Fetch bundle data for bundle items
+  let bundleMap = new Map<string, any>();
+  if (bundleCartItems.length > 0) {
+    const bundleIds = bundleCartItems.map(i => i.id);
+    const placeholders = bundleIds.map(() => '?').join(',');
+    const { results: dbBundles } = await env.DB.prepare(
+      `SELECT id, price, name, image, is_published FROM bundles WHERE id IN (${placeholders})`
+    ).bind(...bundleIds).all();
+    bundleMap = new Map((dbBundles || []).map((b: any) => [b.id, b]));
+  }
+
   const validatedItems: CartItem[] = [];
   const errors: string[] = [];
 
   for (const item of cartItems) {
+    if (item.isBundle) {
+      const bundle = bundleMap.get(item.id) as any;
+      if (!bundle) { errors.push(`Bundle not found: ${item.id}`); continue; }
+      if (!bundle.is_published) { errors.push(`${bundle.name} is unavailable`); continue; }
+      const gbpPrice = Number(bundle.price);
+      const displayPrice = gbpPrice * currencyRate;
+      validatedItems.push({
+        ...item,
+        price: displayPrice,
+        name: `Bundle: ${bundle.name}`,
+        image: bundle.image,
+        category: 'Bundles',
+      });
+      continue;
+    }
     const product = productMap.get(item.id) as any;
     if (!product) { errors.push(`Product not found: ${item.id}`); continue; }
     if (!product.is_published) { errors.push(`${product.name} is unavailable`); continue; }
@@ -127,7 +162,6 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
       errors.push(`Insufficient stock for ${product.name}`);
       continue;
     }
-    // Price in GBP (base), apply subscription discount, then convert to target currency
     const gbpPrice = item.isSubscription ? Number(product.price) * 0.85 : Number(product.price);
     const displayPrice = gbpPrice * currencyRate;
     validatedItems.push({ ...item, price: displayPrice, name: product.name, image: product.image, category: product.category });
@@ -167,7 +201,7 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
     'metadata[shipping_country]': shippingAddress?.country || '',
     'metadata[shipping_method]': shippingMethod || '',
     'metadata[shipping_cost]': String(shippingCost * currencyRate),
-    'metadata[cart_items]': JSON.stringify(validatedItems.map(i => ({ id: i.id, name: i.name, image: i.image, category: i.category, quantity: i.quantity, price: i.price, isSubscription: i.isSubscription }))),
+    'metadata[cart_items]': JSON.stringify(validatedItems.map(i => ({ id: i.id, name: i.name, image: i.image, category: i.category, quantity: i.quantity, price: i.price, isSubscription: i.isSubscription, isBundle: i.isBundle, bundleItems: i.bundleItems }))),
     'metadata[discount_code]': body.discountCode || '',
     'metadata[currency]': currencyCode,
   };

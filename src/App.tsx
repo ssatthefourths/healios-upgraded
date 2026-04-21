@@ -22,6 +22,7 @@ import AdminRoute from "./components/AdminRoute";
 import Index from "./pages/Index";
 import Category from "./pages/Category";
 import ProductDetail from "./pages/ProductDetail";
+const BundleDetail = lazy(() => import("./pages/BundleDetail"));
 import Checkout from "./pages/Checkout";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
@@ -55,6 +56,8 @@ const InventoryAdmin = lazy(() => import("./pages/admin/InventoryAdmin"));
 const DiscountsAdmin = lazy(() => import("./pages/admin/DiscountsAdmin"));
 const ReviewsAdmin = lazy(() => import("./pages/admin/ReviewsAdmin"));
 const ProductsAdmin = lazy(() => import("./pages/admin/ProductsAdmin"));
+const BundlesAdmin = lazy(() => import("./pages/admin/BundlesAdmin"));
+const BundleEditor = lazy(() => import("./pages/admin/BundleEditor"));
 const AnalyticsAdmin = lazy(() => import("./pages/admin/AnalyticsAdmin"));
 const CohortAnalysis = lazy(() => import("./pages/admin/CohortAnalysis"));
 const RFMAnalysis = lazy(() => import("./pages/admin/RFMAnalysis"));
@@ -111,6 +114,7 @@ const App = () => (
                       <Route path="/shop" element={<Navigate to="/category/shop" replace />} />
                       <Route path="/category/:category" element={<Category />} />
                       <Route path="/product/:productId" element={<ProductDetail />} />
+                      <Route path="/bundle/:slug" element={<BundleDetail />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/account" element={<Account />} />
@@ -150,6 +154,8 @@ const App = () => (
                         <Route path="/admin/discounts" element={<DiscountsAdmin />} />
                         <Route path="/admin/reviews" element={<ReviewsAdmin />} />
                         <Route path="/admin/products" element={<ProductsAdmin />} />
+                        <Route path="/admin/bundles" element={<BundlesAdmin />} />
+                        <Route path="/admin/bundles/:id" element={<BundleEditor />} />
                         <Route path="/admin/analytics" element={<AnalyticsAdmin />} />
                         <Route path="/admin/cohorts" element={<CohortAnalysis />} />
                         <Route path="/admin/rfm" element={<RFMAnalysis />} />

@@ -17,6 +17,8 @@ import { handleTable } from './table-handler';
 import { handleAdminStats } from './admin-stats';
 import { handleAdminUsers } from './admin-users';
 import { handleAdminOrders } from './admin-orders';
+import { handleBundles } from './bundles';
+import { handleUpload } from './upload';
 import { handleNewsletter } from './newsletter';
 import { handleGiftCards } from './gift-cards';
 
@@ -103,6 +105,14 @@ export default {
 
       if (path.startsWith('/admin/orders')) {
         return await handleAdminOrders(request, env);
+      }
+
+      if (path.startsWith('/admin/bundles') || path.startsWith('/bundles')) {
+        return await handleBundles(request, env);
+      }
+
+      if (path === '/admin/upload') {
+        return await handleUpload(request, env);
       }
 
       if (path === '/admin/user-management' && request.method === 'POST') {

@@ -228,8 +228,26 @@ async function handleCheckoutComplete(session: any, env: Env) {
     ).run();
   }
 
-  // Decrement stock
+  // Decrement stock. For bundles, decrement each constituent product.
   for (const item of cartItems) {
+    if (item.isBundle) {
+      // Load bundle items (preferring DB over metadata in case the cart was stale)
+      const { results: bundleItems } = await env.DB.prepare(
+        'SELECT product_id, quantity FROM bundle_items WHERE bundle_id = ?'
+      ).bind(item.id).all();
+      const items = (bundleItems && bundleItems.length > 0)
+        ? bundleItems
+        : (item.bundleItems || []);
+      for (const bi of items as any[]) {
+        const decrementBy = (bi.quantity || 1) * item.quantity;
+        await env.DB.prepare(
+          `UPDATE products
+           SET stock_quantity = MAX(0, stock_quantity - ?)
+           WHERE id = ? AND track_inventory = 1`
+        ).bind(decrementBy, bi.product_id).run();
+      }
+      continue;
+    }
     await env.DB.prepare(
       `UPDATE products
        SET stock_quantity = MAX(0, stock_quantity - ?)
@@ -273,6 +291,12 @@ async function handleCheckoutComplete(session: any, env: Env) {
   const resendKey = (env as any).RESEND_API_KEY;
   if (resendKey && meta.customer_email) {
     try {
+      const siteUrl = 'https://www.thehealios.com';
+      const orderUrl = meta.user_id
+        ? `${siteUrl}/account?tab=orders`
+        : accessToken
+          ? `${siteUrl}/order/${accessToken}`
+          : `${siteUrl}/`;
       await sendOrderConfirmationEmail(resendKey, {
         orderId,
         email: meta.customer_email,
@@ -283,6 +307,7 @@ async function handleCheckoutComplete(session: any, env: Env) {
         shippingCost,
         total,
         shippingMethod: meta.shipping_method || 'standard',
+        orderUrl,
       });
     } catch (e: any) {
       console.error('Confirmation email failed:', e.message);
@@ -364,6 +389,7 @@ async function sendOrderConfirmationEmail(
     shippingCost: number;
     total: number;
     shippingMethod: string;
+    orderUrl?: string;
   }
 ) {
   const itemsList = opts.items
@@ -372,6 +398,11 @@ async function sendOrderConfirmationEmail(
       <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">£${(i.price * i.quantity).toFixed(2)}</td>
     </tr>`)
     .join('');
+
+  const viewOrderButton = opts.orderUrl ? `
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${opts.orderUrl}" style="display:inline-block;background:#000;color:#fff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:500;letter-spacing:0.02em;">View your order</a>
+    </div>` : '';
 
   const html = `<!DOCTYPE html><html><body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#333;">
     <h1 style="font-size:24px;font-weight:400;">Order confirmed</h1>
@@ -383,6 +414,7 @@ async function sendOrderConfirmationEmail(
       <tr><td>Shipping (${opts.shippingMethod})</td><td style="text-align:right;">${opts.shippingCost === 0 ? 'Free' : '£' + opts.shippingCost.toFixed(2)}</td></tr>
       <tr><td><strong>Total</strong></td><td style="text-align:right;"><strong>£${opts.total.toFixed(2)}</strong></td></tr>
     </table>
+    ${viewOrderButton}
     <hr style="border:none;border-top:1px solid #eee;margin:30px 0;"/>
     <p style="color:#999;font-size:12px;text-align:center;">The Healios | hello@thehealios.com</p>
   </body></html>`;

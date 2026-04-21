@@ -3,6 +3,11 @@ import { toast } from 'sonner';
 
 const CART_STORAGE_KEY = 'healios_cart';
 
+export interface BundleCartItem {
+  product_id: string;
+  quantity: number;
+}
+
 export interface CartItem {
   id: string;
   name: string;
@@ -13,6 +18,8 @@ export interface CartItem {
   isSubscription?: boolean;
   isPreOrder?: boolean;
   preOrderLeadWeeks?: number;
+  isBundle?: boolean;
+  bundleItems?: BundleCartItem[];
 }
 
 interface CartContextType {

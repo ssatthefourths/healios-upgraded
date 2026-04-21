@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import Header from "@/components/header/Header";
-import Footer from "@/components/footer/Footer";
+import AdminHeader from "./AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import SessionTimeoutWarning from "./SessionTimeoutWarning";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
@@ -66,7 +65,7 @@ const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => {
         onLogout={logout}
       />
 
-      <Header />
+      <AdminHeader />
 
       <div className="flex flex-1">
         {/* Sidebar - hidden on mobile */}
@@ -90,8 +89,6 @@ const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => {
           </div>
         </main>
       </div>
-
-      <Footer />
     </div>
   );
 };

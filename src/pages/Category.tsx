@@ -13,6 +13,9 @@ import SEOHead from "../components/seo/SEOHead";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { trackViewItemList } from "@/lib/analytics";
+import BundleGrid from "../components/category/BundleGrid";
+
+const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
 
 // Category meta descriptions for SEO
 const categoryMeta: Record<string, { title: string; description: string }> = {
@@ -240,6 +243,17 @@ const Category = () => {
   const traitFilter = traitFilterSlugs[categorySlug] || null;
 
   const isBestSellers = categorySlug === 'best-sellers';
+  const isBundlesPage = categorySlug === 'bundles' || categorySlug === 'stacks';
+
+  const { data: bundles, isLoading: bundlesLoading } = useQuery({
+    queryKey: ['bundles-category'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/bundles`);
+      if (!res.ok) return [];
+      return await res.json();
+    },
+    enabled: isBundlesPage,
+  });
   
   // Define Product type for type safety
   type Product = {
@@ -407,13 +421,18 @@ const Category = () => {
       <main id="main-content">
         {isNewIn ? (
           <FeaturedArrivalsSection />
+        ) : isBundlesPage ? (
+          <PageContainer maxWidth="wide">
+            <CategoryHeader category={categoryDisplayName} />
+            <BundleGrid bundles={bundles || []} isLoading={bundlesLoading} />
+          </PageContainer>
         ) : (
           <PageContainer maxWidth="wide">
-            <CategoryHeader 
-              category={categoryDisplayName} 
+            <CategoryHeader
+              category={categoryDisplayName}
             />
-            
-            <FilterSortBar 
+
+            <FilterSortBar
               filtersOpen={filtersOpen}
               setFiltersOpen={setFiltersOpen}
               itemCount={products?.length || 0}
@@ -427,10 +446,10 @@ const Category = () => {
                 setSortBy('featured');
               }}
             />
-            
-            <ProductGrid 
-              products={products || []} 
-              isLoading={isLoading} 
+
+            <ProductGrid
+              products={products || []}
+              isLoading={isLoading}
             />
 
             <CategoryEducation categoryName={categoryFilter || categorySlug} />

@@ -1,13 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { 
+import {
   LayoutDashboard,
-  ShoppingCart, 
-  ShoppingBag, 
-  Package, 
-  Mail, 
-  Star, 
-  Tag, 
+  ShoppingCart,
+  ShoppingBag,
+  Package,
+  Mail,
+  Star,
+  Tag,
   Heart,
   BarChart3,
   Target,
@@ -18,7 +18,8 @@ import {
   AlertCircle,
   Shield,
   UserCog,
-  UserX
+  UserX,
+  Gift
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +78,7 @@ const AdminSidebar = ({ collapsed = false, onCollapse }: AdminSidebarProps) => {
     { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { title: "Orders", href: "/admin/orders", icon: ShoppingCart, badge: pendingOrders, badgeType: "warning" },
     { title: "Products", href: "/admin/products", icon: ShoppingBag },
+    { title: "Bundles", href: "/admin/bundles", icon: Gift },
     { title: "Inventory", href: "/admin/inventory", icon: Package, badge: lowStock, badgeType: "warning" },
     { title: "Reviews", href: "/admin/reviews", icon: Star, badge: pendingReviews, badgeType: "info" },
     { title: "Newsletter", href: "/admin/newsletter", icon: Mail },
