@@ -150,12 +150,24 @@ async function handleCheckoutComplete(session: any, env: Env) {
   let cartItems: any[] = [];
   try { cartItems = JSON.parse(meta.cart_items || '[]'); } catch {}
 
-  const shippingCost = parseFloat(meta.shipping_cost || '0');
-  const subtotal = cartItems.reduce((sum: number, item: any) => {
+  // Stripe is the source of truth for money. session.amount_* are in the
+  // checkout's display currency (e.g. ZAR) in minor units (cents). Divide
+  // by 100 to store as REAL currency values — these are what the admin
+  // dashboard and the customer's Account → Orders page display.
+  const amountSubtotal = Number(session.amount_subtotal ?? 0) / 100;
+  const amountTotal = Number(session.amount_total ?? 0) / 100;
+  const amountDiscount = Number(session.total_details?.amount_discount ?? 0) / 100;
+  const amountShipping = Number(session.total_details?.amount_shipping ?? 0) / 100;
+
+  // Metadata shipping_cost was captured in display currency too — prefer
+  // Stripe's reported shipping total. Fallback to metadata if absent.
+  const shippingCost = amountShipping || parseFloat(meta.shipping_cost || '0');
+  const subtotal = amountSubtotal || cartItems.reduce((sum: number, item: any) => {
     const price = item.isSubscription ? item.price * 0.85 : item.price;
     return sum + price * item.quantity;
   }, 0);
-  const total = subtotal + shippingCost;
+  const total = session.amount_total !== undefined ? amountTotal : (subtotal + shippingCost);
+  const discountAmount = amountDiscount;
 
   // Guest order access token
   let accessToken: string | null = null;
@@ -192,7 +204,7 @@ async function handleCheckoutComplete(session: any, env: Env) {
     meta.billing_country || null,
     subtotal,
     shippingCost,
-    0,
+    discountAmount,
     meta.discount_code || null,
     total,
     meta.shipping_method || null,
