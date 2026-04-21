@@ -21,22 +21,30 @@ function generateOrderNumber(): string {
 
 // ─── Stripe Signature Verification ────────────────────────────────────────────
 
+type VerifyResult =
+  | { ok: true }
+  | { ok: false; reason: 'malformed-signature-header' | 'timestamp-too-old' | 'signature-secret-mismatch'; details?: string };
+
 async function verifyStripeSignature(
   payload: string,
   signature: string,
   secret: string
-): Promise<boolean> {
+): Promise<VerifyResult> {
   const parts = signature.split(',');
   const tPart = parts.find(p => p.startsWith('t='));
   const v1Part = parts.find(p => p.startsWith('v1='));
-  if (!tPart || !v1Part) return false;
+  if (!tPart || !v1Part) {
+    return { ok: false, reason: 'malformed-signature-header' };
+  }
 
   const timestamp = tPart.substring(2);
   const v1 = v1Part.substring(3);
 
-  // Reject stale webhooks (> 5 minutes old)
+  const skewSeconds = Math.abs(Date.now() / 1000 - Number(timestamp));
   const tolerance = 300;
-  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > tolerance) return false;
+  if (skewSeconds > tolerance) {
+    return { ok: false, reason: 'timestamp-too-old', details: `skew=${Math.round(skewSeconds)}s` };
+  }
 
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -58,12 +66,22 @@ async function verifyStripeSignature(
     .join('');
 
   // Timing-safe comparison
-  if (computed.length !== v1.length) return false;
-  let diff = 0;
-  for (let i = 0; i < computed.length; i++) {
+  let diff = computed.length ^ v1.length;
+  const len = Math.min(computed.length, v1.length);
+  for (let i = 0; i < len; i++) {
     diff |= computed.charCodeAt(i) ^ v1.charCodeAt(i);
   }
-  return diff === 0;
+  if (diff !== 0) {
+    // Non-secret diagnostics: first 8 chars of both HMACs + secret LENGTH
+    // (never the secret itself). If computed vs received diverge while both
+    // look well-formed, the secret value is wrong.
+    return {
+      ok: false,
+      reason: 'signature-secret-mismatch',
+      details: `computed=${computed.slice(0, 8)} received=${v1.slice(0, 8)} secretLen=${secret.length}`,
+    };
+  }
+  return { ok: true };
 }
 
 // ─── Main Handler ──────────────────────────────────────────────────────────────
@@ -82,10 +100,10 @@ export async function handleStripeWebhook(request: Request, env: Env): Promise<R
 
   const payload = await request.text();
 
-  const valid = await verifyStripeSignature(payload, signature, webhookSecret);
-  if (!valid) {
-    console.error('Stripe webhook signature verification failed');
-    return json({ error: 'Invalid signature' }, 400);
+  const result = await verifyStripeSignature(payload, signature, webhookSecret);
+  if (!result.ok) {
+    console.error(`Stripe webhook signature rejected: ${result.reason}`, result.details || '');
+    return json({ error: result.reason, details: result.details }, 400);
   }
 
   let event: any;
