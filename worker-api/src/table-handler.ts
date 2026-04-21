@@ -54,6 +54,16 @@ export async function handleTable(request: Request, env: Env): Promise<Response>
     eq: '=', neq: '!=', gt: '>', gte: '>=', lt: '<', lte: '<='
   };
 
+  // Identifier guard — SQLite identifiers are alphanumeric + underscore.
+  // D1's prepare() parameterises values but NOT column/table names, so any
+  // identifier interpolated into SQL must pass this check. Rejects injection
+  // attempts like `user_id; DROP TABLE` or `name OR 1=1`.
+  const IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+  const isIdent = (s: string) => IDENT_RE.test(s);
+  if (!isIdent(tableName)) {
+    return new Response(JSON.stringify({ error: 'Invalid table name' }), { status: 400, headers: cors });
+  }
+
   if (method === 'GET') {
     const filters: { col: string; op: string; val: string }[] = [];
     let orderCol = '';
@@ -82,7 +92,38 @@ export async function handleTable(request: Request, env: Env): Promise<Response>
     let sql = `SELECT * FROM ${tableName}`;
 
     if (filters.length) {
+      // Reject any filter that references an invalid column name
+      for (const f of filters) {
+        if (!isIdent(f.col)) {
+          return new Response(JSON.stringify({ error: `Invalid column: ${f.col}` }), { status: 400, headers: cors });
+        }
+      }
       const conds = filters.map(({ col, op, val }) => {
+        // Negated operators: "not" op with value "<innerOp>.<innerVal>"
+        // e.g. .not(col, 'is', null) → key=col, value='not.is.null' → op='not', val='is.null'
+        if (op === 'not') {
+          const innerDot = val.indexOf('.');
+          const innerOp = innerDot === -1 ? val : val.slice(0, innerDot);
+          const innerVal = innerDot === -1 ? '' : val.slice(innerDot + 1);
+          if (innerOp === 'is' && innerVal === 'null') {
+            return `${col} IS NOT NULL`;
+          }
+          if (innerOp === 'in') {
+            const vals = innerVal.split(',').map(v => v.trim()).filter(Boolean);
+            if (vals.length === 0) return '1=1';
+            vals.forEach(v => bindings.push(v));
+            return `${col} NOT IN (${vals.map(() => '?').join(',')})`;
+          }
+          if (innerOp in OP_MAP) {
+            bindings.push(innerVal);
+            const negated: Record<string, string> = {
+              eq: '!=', neq: '=', gt: '<=', gte: '<', lt: '>=', lte: '>',
+            };
+            return `${col} ${negated[innerOp] ?? '!='} ?`;
+          }
+          // Unknown negation — fall through to a safe no-op
+          return '1=1';
+        }
         if (op === 'ilike') {
           bindings.push(`%${val.replace(/^%|%$/g, '')}%`);
           return `${col} LIKE ?`;
@@ -99,7 +140,12 @@ export async function handleTable(request: Request, env: Env): Promise<Response>
       sql += ` WHERE ${conds.join(' AND ')}`;
     }
 
-    if (orderCol) sql += ` ORDER BY ${orderCol} ${orderDir}`;
+    if (orderCol) {
+      if (!isIdent(orderCol)) {
+        return new Response(JSON.stringify({ error: 'Invalid order column' }), { status: 400, headers: cors });
+      }
+      sql += ` ORDER BY ${orderCol} ${orderDir}`;
+    }
     sql += ` LIMIT ${limitN} OFFSET ${offsetN}`;
 
     try {
@@ -121,6 +167,11 @@ export async function handleTable(request: Request, env: Env): Promise<Response>
       if (!body.id) body.id = crypto.randomUUID();
       if (USER_TABLES.has(tableName) && userId && !body.user_id) body.user_id = userId;
       const cols = Object.keys(body);
+      for (const c of cols) {
+        if (!isIdent(c)) {
+          return new Response(JSON.stringify({ error: `Invalid column: ${c}` }), { status: 400, headers: cors });
+        }
+      }
       const sql = `INSERT INTO ${tableName} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`;
       await env.DB.prepare(sql).bind(...Object.values(body).map(serializeForD1)).run();
       return new Response(JSON.stringify(body), { status: 201, headers: cors });
@@ -139,7 +190,18 @@ export async function handleTable(request: Request, env: Env): Promise<Response>
       if (!filters.length) {
         return new Response(JSON.stringify({ error: 'No filter for update' }), { status: 400, headers: cors });
       }
-      const setClause = Object.keys(body).map(k => `${k} = ?`).join(', ');
+      const bodyCols = Object.keys(body);
+      for (const c of bodyCols) {
+        if (!isIdent(c)) {
+          return new Response(JSON.stringify({ error: `Invalid column: ${c}` }), { status: 400, headers: cors });
+        }
+      }
+      for (const f of filters) {
+        if (!isIdent(f.col)) {
+          return new Response(JSON.stringify({ error: `Invalid filter column: ${f.col}` }), { status: 400, headers: cors });
+        }
+      }
+      const setClause = bodyCols.map(k => `${k} = ?`).join(', ');
       const whereClause = filters.map(f => `${f.col} = ?`).join(' AND ');
       const sql = `UPDATE ${tableName} SET ${setClause} WHERE ${whereClause}`;
       await env.DB.prepare(sql).bind(...Object.values(body).map(serializeForD1), ...filters.map(f => f.val)).run();
@@ -157,6 +219,11 @@ export async function handleTable(request: Request, env: Env): Promise<Response>
       }
       if (!filters.length) {
         return new Response(JSON.stringify({ error: 'No filter for delete' }), { status: 400, headers: cors });
+      }
+      for (const f of filters) {
+        if (!isIdent(f.col)) {
+          return new Response(JSON.stringify({ error: `Invalid filter column: ${f.col}` }), { status: 400, headers: cors });
+        }
       }
       const whereClause = filters.map(f => `${f.col} = ?`).join(' AND ');
       const sql = `DELETE FROM ${tableName} WHERE ${whereClause}`;

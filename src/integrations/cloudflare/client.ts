@@ -38,6 +38,22 @@ class QueryBuilder {
   lte(column: string, value: any) { this.query.filters.push({ column, operator: 'lte', value }); return this; }
   ilike(column: string, pattern: string) { this.query.filters.push({ column, operator: 'ilike', value: pattern }); return this; }
   in(column: string, values: any[]) { this.query.filters.push({ column, operator: 'in', value: values }); return this; }
+  not(column: string, operator: string, value: any) {
+    // .not(col, 'is', null)   → WHERE col IS NOT NULL
+    // .not(col, 'in', '(a,b)')→ WHERE col NOT IN (a,b)
+    // .not(col, 'eq', v)      → WHERE col != v
+    if (operator === 'is' && value === null) {
+      this.query.filters.push({ column, operator: 'not.is', value: 'null' });
+    } else if (operator === 'in') {
+      const arr = Array.isArray(value)
+        ? value
+        : String(value).replace(/^\(|\)$/g, '').split(',').map(s => s.trim()).filter(Boolean);
+      this.query.filters.push({ column, operator: 'not.in', value: arr });
+    } else {
+      this.query.filters.push({ column, operator: `not.${operator}`, value });
+    }
+    return this;
+  }
   or(filters: string) { this.query.orFilters.push(filters); return this; }
   order(column: string, { ascending = true } = {}) { this.query.order.push({ column, ascending }); return this; }
   limit(count: number) { this.query.limit = count; return this; }
