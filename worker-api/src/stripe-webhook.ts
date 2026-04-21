@@ -129,7 +129,7 @@ export async function handleStripeWebhook(request: Request, env: Env): Promise<R
 
   // Idempotency check
   const existing = await env.DB.prepare(
-    'SELECT id FROM processed_webhook_events WHERE stripe_event_id = ? LIMIT 1'
+    'SELECT stripe_event_id FROM processed_webhook_events WHERE stripe_event_id = ? LIMIT 1'
   ).bind(event.id).first();
 
   if (existing) {
