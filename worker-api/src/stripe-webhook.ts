@@ -25,20 +25,44 @@ type VerifyResult =
   | { ok: true }
   | { ok: false; reason: 'malformed-signature-header' | 'timestamp-too-old' | 'signature-secret-mismatch'; details?: string };
 
+/**
+ * Sign {timestamp}.{bodyBytes} with the given secret using HMAC-SHA256.
+ * bodyBytes is a raw Uint8Array to avoid any UTF-8 round-trip.
+ * Secret is used as raw bytes — Stripe doesn't strip the `whsec_` prefix.
+ */
+async function hmacHex(timestamp: string, bodyBytes: Uint8Array, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  // signedPayload = timestamp_bytes + "." + body_bytes
+  const tsBytes = encoder.encode(timestamp + '.');
+  const buf = new Uint8Array(tsBytes.length + bodyBytes.length);
+  buf.set(tsBytes, 0);
+  buf.set(bodyBytes, tsBytes.length);
+  const sig = await crypto.subtle.sign('HMAC', key, buf);
+  return Array.from(new Uint8Array(sig))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 async function verifyStripeSignature(
-  payload: string,
+  bodyBytes: Uint8Array,
   signature: string,
-  secret: string
+  secret: string,
 ): Promise<VerifyResult> {
   const parts = signature.split(',');
   const tPart = parts.find(p => p.startsWith('t='));
-  const v1Part = parts.find(p => p.startsWith('v1='));
-  if (!tPart || !v1Part) {
+  const v1Parts = parts.filter(p => p.startsWith('v1='));
+  if (!tPart || v1Parts.length === 0) {
     return { ok: false, reason: 'malformed-signature-header' };
   }
 
   const timestamp = tPart.substring(2);
-  const v1 = v1Part.substring(3);
 
   const skewSeconds = Math.abs(Date.now() / 1000 - Number(timestamp));
   const tolerance = 300;
@@ -46,42 +70,26 @@ async function verifyStripeSignature(
     return { ok: false, reason: 'timestamp-too-old', details: `skew=${Math.round(skewSeconds)}s` };
   }
 
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
+  const computed = await hmacHex(timestamp, bodyBytes, secret);
 
-  const sig = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    encoder.encode(`${timestamp}.${payload}`)
-  );
-
-  const computed = Array.from(new Uint8Array(sig))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-
-  // Timing-safe comparison
-  let diff = computed.length ^ v1.length;
-  const len = Math.min(computed.length, v1.length);
-  for (let i = 0; i < len; i++) {
-    diff |= computed.charCodeAt(i) ^ v1.charCodeAt(i);
+  // There can be multiple v1= values (Stripe supports rolling secrets).
+  // Accept the signature if ANY of them matches.
+  for (const v1Part of v1Parts) {
+    const v1 = v1Part.substring(3);
+    if (computed.length !== v1.length) continue;
+    let diff = 0;
+    for (let i = 0; i < computed.length; i++) {
+      diff |= computed.charCodeAt(i) ^ v1.charCodeAt(i);
+    }
+    if (diff === 0) return { ok: true };
   }
-  if (diff !== 0) {
-    // Non-secret diagnostics: first 8 chars of both HMACs + secret LENGTH
-    // (never the secret itself). If computed vs received diverge while both
-    // look well-formed, the secret value is wrong.
-    return {
-      ok: false,
-      reason: 'signature-secret-mismatch',
-      details: `computed=${computed.slice(0, 8)} received=${v1.slice(0, 8)} secretLen=${secret.length}`,
-    };
-  }
-  return { ok: true };
+
+  const received = v1Parts[0].substring(3);
+  return {
+    ok: false,
+    reason: 'signature-secret-mismatch',
+    details: `computed=${computed.slice(0, 8)} received=${received.slice(0, 8)} secretLen=${secret.length} bodyLen=${bodyBytes.length}`,
+  };
 }
 
 // ─── Main Handler ──────────────────────────────────────────────────────────────
@@ -98,14 +106,18 @@ export async function handleStripeWebhook(request: Request, env: Env): Promise<R
   const signature = request.headers.get('stripe-signature');
   if (!signature) return json({ error: 'Missing stripe-signature' }, 400);
 
-  const payload = await request.text();
+  // Read raw body bytes for signature verification, then decode for JSON.
+  // Going bytes-first avoids any UTF-8 round-trip issue that could alter
+  // what we HMAC vs what Stripe signed.
+  const bodyBytes = new Uint8Array(await request.arrayBuffer());
 
-  const result = await verifyStripeSignature(payload, signature, webhookSecret);
+  const result = await verifyStripeSignature(bodyBytes, signature, webhookSecret);
   if (!result.ok) {
     console.error(`Stripe webhook signature rejected: ${result.reason}`, result.details || '');
     return json({ error: result.reason, details: result.details }, 400);
   }
 
+  const payload = new TextDecoder().decode(bodyBytes);
   let event: any;
   try {
     event = JSON.parse(payload);
