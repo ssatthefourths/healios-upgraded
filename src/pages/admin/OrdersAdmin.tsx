@@ -43,15 +43,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { 
-  Package, 
-  Loader2, 
-  Search, 
-  ChevronDown, 
-  ChevronUp,
-  Mail,
+import {
+  Package,
+  Loader2,
+  Search,
+  ChevronDown,
   Truck,
   CheckCircle,
   XCircle,
@@ -60,17 +57,15 @@ import {
   TrendingUp,
   TrendingDown,
   DollarSign,
-  ShoppingBag,
   AlertCircle,
-  Calendar,
-  Eye,
-  X,
-  MoreHorizontal
+  MoreHorizontal,
+  Download,
 } from "lucide-react";
-import { format, formatDistanceToNow, startOfDay, startOfWeek, subDays, subWeeks, isAfter } from "date-fns";
-import type { Database } from "@/integrations/supabase/types";
 
-type OrderStatus = Database["public"]["Enums"]["order_status"];
+const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
+import { format, formatDistanceToNow, startOfDay, startOfWeek, subDays, subWeeks, isAfter } from "date-fns";
+
+type OrderStatus = 'pending' | 'payment_confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
 
 interface OrderItem {
   id: string;
@@ -129,30 +124,17 @@ const OrdersAdmin = () => {
     fetchOrders();
   }, []);
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('cf_session');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   const fetchOrders = async () => {
     try {
-      const { data: ordersData, error: ordersError } = await supabase
-        .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (ordersError) throw ordersError;
-
-      const ordersWithItems = await Promise.all(
-        (ordersData || []).map(async (order) => {
-          const { data: itemsData } = await supabase
-            .from("order_items")
-            .select("*")
-            .eq("order_id", order.id);
-          
-          return {
-            ...order,
-            order_items: (itemsData || []) as OrderItem[],
-          };
-        })
-      );
-
-      setOrders(ordersWithItems as Order[]);
+      const res = await fetch(`${API_URL}/admin/orders`, { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = await res.json();
+      setOrders(data as Order[]);
     } catch {
       toast.error("Failed to load orders");
     } finally {
@@ -162,48 +144,17 @@ const OrdersAdmin = () => {
 
   const updateOrderStatus = async (order: Order, newStatus: OrderStatus) => {
     setUpdatingOrderId(order.id);
-    const previousStatus = order.status;
-    
+
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: newStatus })
-        .eq("id", order.id);
+      const res = await fetch(`${API_URL}/admin/orders/${order.id}`, {
+        method: 'PUT',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error('Failed to update order');
 
-      if (error) throw error;
-
-      // Restore stock if cancelling an order that wasn't already cancelled/refunded
-      if (newStatus === "cancelled" && !["cancelled", "refunded"].includes(previousStatus)) {
-        if (order.order_items && order.order_items.length > 0) {
-          for (const item of order.order_items) {
-            await supabase.rpc("increment_stock", {
-              p_product_id: item.product_id,
-              p_quantity: item.quantity
-            });
-          }
-          toast.success("Stock restored for cancelled order");
-        }
-      }
-
-      // Trigger order status webhook for integrations
-      try {
-        await supabase.functions.invoke('order-status-webhook', {
-          body: {
-            order_id: order.id,
-            previous_status: previousStatus,
-            new_status: newStatus,
-            trigger_source: 'admin_dashboard'
-          }
-        });
-      } catch {
-        // Webhook failure is non-critical, order update still succeeded
-      }
-
-      toast.success(`Order updated to ${newStatus}`);
-
-      setOrders(orders.map(o => 
-        o.id === order.id ? { ...o, status: newStatus } : o
-      ));
+      toast.success(newStatus === 'cancelled' ? 'Order cancelled — stock restored' : `Order updated to ${newStatus}`);
+      setOrders(orders.map(o => o.id === order.id ? { ...o, status: newStatus } : o));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to update order";
       toast.error(message);
@@ -212,10 +163,8 @@ const OrdersAdmin = () => {
     }
   };
 
-  // Bulk update function
   const handleBulkUpdate = async (newStatus: OrderStatus) => {
     if (selectedOrderIds.size === 0) return;
-    
     setBulkUpdating(true);
     const orderIds = Array.from(selectedOrderIds);
     let successCount = 0;
@@ -223,40 +172,19 @@ const OrdersAdmin = () => {
 
     for (const orderId of orderIds) {
       try {
-        const order = orders.find(o => o.id === orderId);
-        if (!order) continue;
-
-        const { error } = await supabase
-          .from("orders")
-          .update({ status: newStatus })
-          .eq("id", orderId);
-
-        if (error) throw error;
-
-        // Trigger webhook for each order (non-blocking)
-        supabase.functions.invoke('order-status-webhook', {
-          body: {
-            order_id: orderId,
-            previous_status: order.status,
-            new_status: newStatus,
-            trigger_source: 'bulk_update'
-          }
-        }).catch(() => {
-          // Webhook failures are non-critical
+        const res = await fetch(`${API_URL}/admin/orders/${orderId}`, {
+          method: 'PUT',
+          headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus }),
         });
-
+        if (!res.ok) throw new Error('Failed');
         successCount++;
       } catch {
         failCount++;
       }
     }
 
-    // Update local state
-    setOrders(orders.map(o => 
-      selectedOrderIds.has(o.id) ? { ...o, status: newStatus } : o
-    ));
-
-    // Clear selection
+    setOrders(orders.map(o => selectedOrderIds.has(o.id) ? { ...o, status: newStatus } : o));
     setSelectedOrderIds(new Set());
     setBulkUpdating(false);
 
@@ -288,6 +216,24 @@ const OrdersAdmin = () => {
   };
 
   const formatCurrency = (amount: number) => `£${Number(amount).toFixed(2)}`;
+
+  const exportToCSV = () => {
+    if (filteredOrders.length === 0) { toast.error("No orders to export"); return; }
+    const escape = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const rows = [
+      ['Order ID', 'Date', 'First Name', 'Last Name', 'Email', 'Phone', 'Shipping Address', 'City', 'Postal Code', 'Country', 'Items', 'Subtotal', 'Shipping', 'Discount', 'Total', 'Status'].map(escape).join(','),
+      ...filteredOrders.map(o => {
+        const items = (o.order_items || []).map((i: OrderItem) => `${i.product_name} x${i.quantity}`).join(' | ');
+        return [o.id, format(new Date(o.created_at), 'yyyy-MM-dd HH:mm'), o.first_name, o.last_name, o.email, o.phone || '', o.shipping_address, o.shipping_city, o.shipping_postal_code, o.shipping_country, items, o.subtotal, o.shipping_cost, o.discount_amount, o.total, o.status].map(escape).join(',');
+      })
+    ].join('\n');
+    const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `healios-orders-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.click();
+    toast.success(`Exported ${filteredOrders.length} orders`);
+  };
 
   // Calculate KPI metrics
   const metrics = useMemo(() => {
@@ -440,9 +386,9 @@ const OrdersAdmin = () => {
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="mb-4">
-        <div className="relative max-w-md">
+      {/* Search + Export */}
+      <div className="mb-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search orders, customers, emails..."
@@ -451,6 +397,10 @@ const OrdersAdmin = () => {
             className="pl-10"
           />
         </div>
+        <Button variant="outline" onClick={exportToCSV} className="gap-2 shrink-0">
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
       {/* Bulk Actions */}

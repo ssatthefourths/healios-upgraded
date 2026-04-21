@@ -87,6 +87,12 @@ export async function handleTable(request: Request, env: Env): Promise<Response>
           bindings.push(`%${val.replace(/^%|%$/g, '')}%`);
           return `${col} LIKE ?`;
         }
+        if (op === 'in') {
+          const vals = val.split(',').map(v => v.trim()).filter(Boolean);
+          if (vals.length === 0) return '1=0';
+          vals.forEach(v => bindings.push(v));
+          return `${col} IN (${vals.map(() => '?').join(',')})`;
+        }
         bindings.push(val);
         return `${col} ${OP_MAP[op] ?? '='} ?`;
       });

@@ -36,7 +36,6 @@ export async function handleWellnessChat(request: Request, env: Env): Promise<Re
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
-  // Auth: verify session token from KV
   const authHeader = request.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -48,12 +47,9 @@ export async function handleWellnessChat(request: Request, env: Env): Promise<Re
     return new Response(JSON.stringify({ error: 'Invalid or expired session' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
-  // Rate limiting using KV
   const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('x-forwarded-for') || 'unknown';
-  const rateLimitKey = `ratelimit:chat:${ip}`;
-  const now = Math.floor(Date.now() / 1000);
-  const hourWindow = Math.floor(now / 3600);
-  const fullKey = `${rateLimitKey}:${hourWindow}`;
+  const hourWindow = Math.floor(Date.now() / 1000 / 3600);
+  const fullKey = `ratelimit:chat:${ip}:${hourWindow}`;
 
   const currentCount = parseInt((await env.SESSIONS.get(fullKey)) || '0', 10);
   if (currentCount >= MAX_REQUESTS_PER_HOUR) {
@@ -68,11 +64,6 @@ export async function handleWellnessChat(request: Request, env: Env): Promise<Re
     return new Response(JSON.stringify({ error: 'Invalid request format' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
-  if (!env.LOVABLE_API_KEY) {
-    return new Response(JSON.stringify({ error: 'AI service is not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  }
-
-  // Fetch products from D1 for context
   const products = await env.DB.prepare(
     'SELECT id, name, category, description, price, benefits, who_is_it_for, is_kids_product, is_adults_only FROM products WHERE is_published = 1 ORDER BY name'
   ).all();
@@ -99,27 +90,12 @@ ${productContext}
 
 Remember: You're here to help customers find the right supplements, not to diagnose or treat medical conditions.`;
 
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.LOVABLE_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [{ role: 'system', content: systemPrompt }, ...messages],
-      stream: true,
-    }),
+  const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+    messages: [{ role: 'system', content: systemPrompt }, ...messages],
+    stream: true,
   });
 
-  if (!response.ok) {
-    const status = response.status;
-    if (status === 429) return new Response(JSON.stringify({ error: "We're experiencing high demand. Please try again in a moment." }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    if (status === 402) return new Response(JSON.stringify({ error: 'AI service temporarily unavailable.' }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    return new Response(JSON.stringify({ error: `AI gateway error: ${status}` }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  }
-
-  return new Response(response.body, {
+  return new Response(response as ReadableStream, {
     headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
   });
 }

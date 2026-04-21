@@ -32,10 +32,9 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { 
-  Shield, 
-  Loader2, 
-  Search, 
+import {
+  Loader2,
+  Search,
   Download,
   Mail,
   Users,
@@ -45,10 +44,10 @@ import {
   Calendar,
   X,
   Target,
-  BarChart3
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
-import { useRFMSegments, SEGMENT_COLORS } from "@/hooks/useRFMSegments";
+import { useRFMSegments } from "@/hooks/useRFMSegments";
 
 interface Subscriber {
   id: string;
@@ -395,6 +394,7 @@ const NewsletterAdmin = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loadingSubscribers, setLoadingSubscribers] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -567,6 +567,25 @@ const NewsletterAdmin = () => {
       toast.error("Failed to update subscriber");
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const deleteSubscriber = async (subscriber: Subscriber) => {
+    if (!window.confirm(`Permanently delete ${subscriber.email} from the newsletter list?`)) return;
+    setDeletingId(subscriber.id);
+    try {
+      const { error } = await supabase
+        .from("newsletter_subscriptions")
+        .delete()
+        .eq("id", subscriber.id);
+      if (error) throw error;
+      setSubscribers(subscribers.filter(s => s.id !== subscriber.id));
+      toast.success(`${subscriber.email} removed from newsletter`);
+    } catch (error) {
+      console.error("Error deleting subscriber:", error);
+      toast.error("Failed to delete subscriber");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -1041,6 +1060,7 @@ const NewsletterAdmin = () => {
                     <TableHead className="p-4">Email</TableHead>
                     <TableHead className="p-4">Subscribed</TableHead>
                     <TableHead className="p-4">Status</TableHead>
+                    <TableHead className="p-4 w-16"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1063,6 +1083,20 @@ const NewsletterAdmin = () => {
                             {subscriber.is_active ? "Active" : "Inactive"}
                           </span>
                         </div>
+                      </TableCell>
+                      <TableCell className="p-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteSubscriber(subscriber)}
+                          disabled={deletingId === subscriber.id}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 p-1 h-auto"
+                        >
+                          {deletingId === subscriber.id
+                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                            : <Trash2 className="h-4 w-4" />
+                          }
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

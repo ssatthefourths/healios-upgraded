@@ -719,14 +719,10 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="bundle_products">Bundle Product IDs</Label>
-                      <Input
-                        id="bundle_products"
-                        value={(formData.bundle_products || []).join(", ")}
-                        onChange={(e) =>
-                          handleChange("bundle_products", e.target.value.split(",").map((k) => k.trim()).filter(Boolean))
-                        }
-                        placeholder="Comma-separated product IDs"
+                      <PairsWellWithEditor
+                        currentProductId={formData.id}
+                        selectedProducts={formData.bundle_products || []}
+                        onChange={(ids) => handleChange("bundle_products", ids)}
                       />
                     </div>
                   </>

@@ -50,7 +50,8 @@ class QueryBuilder {
       const url = new URL(`${API_URL}/${this.table}`);
 
       this.query.filters.forEach(f => {
-        url.searchParams.append(f.column, `${f.operator}.${f.value}`);
+        const val = Array.isArray(f.value) ? f.value.join(',') : f.value;
+        url.searchParams.append(f.column, `${f.operator}.${val}`);
       });
 
       if (this.query.orFilters.length > 0) {

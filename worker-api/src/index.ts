@@ -16,6 +16,7 @@ import { handleWellness } from './wellness';
 import { handleTable } from './table-handler';
 import { handleAdminStats } from './admin-stats';
 import { handleAdminUsers } from './admin-users';
+import { handleAdminOrders } from './admin-orders';
 import { handleNewsletter } from './newsletter';
 import { handleGiftCards } from './gift-cards';
 
@@ -24,7 +25,7 @@ export interface Env {
   SESSIONS: KVNamespace;
   BUCKET: R2Bucket;
   JWT_SECRET: string;
-  LOVABLE_API_KEY: string;
+  AI: Ai;
   STRIPE_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
   RESEND_API_KEY: string;
@@ -98,6 +99,10 @@ export default {
 
       if (path === '/admin/stats' && request.method === 'GET') {
         return await handleAdminStats(request, env);
+      }
+
+      if (path.startsWith('/admin/orders')) {
+        return await handleAdminOrders(request, env);
       }
 
       if (path === '/admin/user-management' && request.method === 'POST') {
