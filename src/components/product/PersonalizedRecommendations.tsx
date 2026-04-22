@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { useGsapReveal } from "@/hooks/useGsapReveal";
 import { useCart } from "@/contexts/CartContext";
 import { ShoppingBag } from "lucide-react";
-import { toast } from "sonner";
 import { getProductPath } from "@/lib/productPath";
 
 interface PersonalizedRecommendationsProps {
@@ -107,7 +106,6 @@ const PersonalizedRecommendations = ({
                         image: product.image,
                         category: product.category,
                       });
-                      toast.success(`${product.name} added to bag`);
                     }}
                     className="absolute top-[var(--space-sm)] right-[var(--space-sm)] w-8 h-8 md:w-10 md:h-10 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 opacity-0 group-hover:opacity-100 shadow-sm z-20"
                     aria-label="Add to bag"

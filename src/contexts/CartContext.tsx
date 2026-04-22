@@ -22,6 +22,12 @@ export interface CartItem {
   bundleItems?: BundleCartItem[];
 }
 
+interface LastAddedEvent {
+  item: CartItem;
+  // Monotonic counter so the header popover can tell "2x same item" from a no-op.
+  sequence: number;
+}
+
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: Omit<CartItem, 'quantity'>) => void;
@@ -30,6 +36,8 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   subtotal: number;
+  lastAdded: LastAddedEvent | null;
+  dismissLastAdded: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -59,15 +67,16 @@ const saveCartToStorage = (items: CartItem[]) => {
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => loadCartFromStorage());
+  const [lastAdded, setLastAdded] = useState<LastAddedEvent | null>(null);
 
   // Sync cart to sessionStorage whenever it changes
   useEffect(() => {
     saveCartToStorage(cartItems);
   }, [cartItems]);
 
-  // Toast suppressed here — callers (ProductInfo, ProductGrid, etc.) emit a
-  // single "<Name> added to bag" toast so there's exactly one notification
-  // per interaction, per ticket 10.
+  // Single source of truth for add-to-cart notification: the header CartPopover
+  // reads `lastAdded` and shows a popover anchored under the cart icon. No
+  // call-site toasts — per ticket 10.
   const addToCart = useCallback((item: Omit<CartItem, 'quantity'>) => {
     setCartItems(prev => {
       const existingItem = prev.find(i =>
@@ -82,7 +91,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
       return [...prev, { ...item, quantity: 1 }];
     });
+    setLastAdded(prev => ({
+      item: { ...item, quantity: 1 },
+      sequence: (prev?.sequence ?? 0) + 1,
+    }));
   }, []);
+
+  const dismissLastAdded = useCallback(() => setLastAdded(null), []);
 
   const removeFromCart = useCallback((id: string, isSubscription?: boolean) => {
     setCartItems(prev => prev.filter(item => 
@@ -123,6 +138,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       clearCart,
       totalItems,
       subtotal,
+      lastAdded,
+      dismissLastAdded,
     }}>
       {children}
     </CartContext.Provider>

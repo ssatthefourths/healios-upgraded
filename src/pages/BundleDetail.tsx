@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { toast } from "sonner";
 import { Loader2, Package, ArrowRight, ShoppingBag } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
@@ -104,7 +103,6 @@ const BundleDetail = () => {
       isBundle: true,
       bundleItems: bundle.items.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
     } as any);
-    toast.success(`${bundle.name} added to bag`);
   };
 
   const breadcrumbItems = [

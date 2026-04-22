@@ -12,7 +12,6 @@ import OptimizedImage from "@/components/ui/optimized-image";
 import { Bell, ShoppingBag } from "lucide-react";
 import { useGsapReveal } from "@/hooks/useGsapReveal";
 import { useCart } from "@/contexts/CartContext";
-import { toast } from "sonner";
 import { getProductPath } from "@/lib/productPath";
 
 interface Product {
@@ -131,7 +130,6 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
                             image: product.image,
                             category: product.category,
                           });
-                          toast.success(`${product.name} added to bag`);
                         }}
                         className="w-10 h-10 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 opacity-0 group-hover:opacity-100 shadow-sm"
                         aria-label="Add to bag"

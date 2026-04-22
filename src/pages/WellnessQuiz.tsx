@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useCart } from "@/contexts/CartContext";
-import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Sparkles, ShoppingBag } from "lucide-react";
 
 interface QuizQuestion {
@@ -279,7 +278,6 @@ const WellnessQuiz = () => {
         category: "Supplements",
       });
     });
-    toast.success("All recommended products added to cart!");
   };
 
   const totalPrice = recommendations?.reduce((sum, p) => sum + (p?.price || 0), 0) || 0;
