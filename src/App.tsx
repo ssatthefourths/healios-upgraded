@@ -70,6 +70,7 @@ const CheckoutSecurityAdmin = lazy(() => import("./pages/admin/CheckoutSecurityA
 const ReferralSecurityAdmin = lazy(() => import("./pages/admin/ReferralSecurityAdmin"));
 const UsersAdmin = lazy(() => import("./pages/admin/UsersAdmin"));
 const SiteConfigAdmin = lazy(() => import("./pages/admin/SiteConfigAdmin"));
+const SearchPhrasesAdmin = lazy(() => import("./pages/admin/SearchPhrasesAdmin"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -170,6 +171,7 @@ const App = () => (
                         <Route path="/admin/referral-security" element={<ReferralSecurityAdmin />} />
                         <Route path="/admin/users" element={<UsersAdmin />} />
                         <Route path="/admin/site-config" element={<SiteConfigAdmin />} />
+                        <Route path="/admin/search-phrases" element={<SearchPhrasesAdmin />} />
                       </Route>
                       
                       {/* 404 */}

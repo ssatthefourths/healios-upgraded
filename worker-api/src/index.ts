@@ -23,6 +23,7 @@ import { handleNewsletter } from './newsletter';
 import { handleGiftCards } from './gift-cards';
 import { handleSearch } from './search';
 import { handleSiteConfig } from './site-config';
+import { handleSearchPhrases } from './search-phrases';
 
 export interface Env {
   DB: D1Database;
@@ -87,6 +88,10 @@ export default {
 
       if (path === '/public/site-config' || path === '/admin/site-config') {
         return await handleSiteConfig(request, env);
+      }
+
+      if (path.startsWith('/admin/search-phrases')) {
+        return await handleSearchPhrases(request, env);
       }
 
       if (path === '/currency') {

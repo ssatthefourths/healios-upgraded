@@ -20,7 +20,8 @@ import {
   UserCog,
   UserX,
   Gift,
-  Settings2
+  Settings2,
+  Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +89,7 @@ const AdminSidebar = ({ collapsed = false, onCollapse }: AdminSidebarProps) => {
     { title: "Blog", href: "/admin/blog", icon: FileText },
     { title: "Users", href: "/admin/users", icon: UserCog },
     { title: "Site Settings", href: "/admin/site-config", icon: Settings2 },
+    { title: "Search Phrases", href: "/admin/search-phrases", icon: Search },
   ];
 
   const analyticsItems: NavItem[] = [
