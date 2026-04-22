@@ -26,7 +26,6 @@ interface OrderSummary {
   subtotal: number;
   discount_amount: number;
   total: number;
-  currency: string | null;
   status: string;
   created_at: string;
 }

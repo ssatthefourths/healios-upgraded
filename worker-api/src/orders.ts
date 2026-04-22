@@ -24,7 +24,7 @@ async function handleGetOrderByToken(token: string, env: Env): Promise<Response>
     `SELECT id, email, first_name, last_name,
             shipping_address, shipping_city, shipping_postal_code, shipping_country,
             shipping_method, shipping_cost, subtotal, discount_amount, total,
-            currency, status, created_at, token_expires_at
+            status, created_at, token_expires_at
      FROM orders
      WHERE access_token = ?`
   ).bind(token).first<any>();
