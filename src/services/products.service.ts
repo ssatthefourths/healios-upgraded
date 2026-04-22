@@ -5,18 +5,15 @@ import { logger } from '@/lib/logger';
 type Product = Tables<'products'>;
 type ProductReview = Tables<'product_reviews'>;
 
+const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
+
 export const productsService = {
   async getById(idOrSlug: string): Promise<Product | null> {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
-        .eq('is_published', true)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
+      const res = await fetch(`${API_URL}/products/${encodeURIComponent(idOrSlug)}`);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`Failed to fetch product: ${res.status}`);
+      return await res.json() as Product;
     } catch (error) {
       logger.error('Failed to fetch product', error);
       throw error;

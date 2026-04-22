@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 import logger from '@/lib/logger';
 
 type Product = Tables<'products'>;
+
+const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
 
 export const useProduct = (productId: string | undefined) => {
   const [product, setProduct] = useState<Product | null>(null);
@@ -20,24 +21,27 @@ export const useProduct = (productId: string | undefined) => {
       setLoading(true);
       setError(null);
 
-      // Try to find by id first, then by slug
-      const { data, error: fetchError } = await supabase
-        .from('products')
-        .select('*')
-        .or(`id.eq.${productId},slug.eq.${productId}`)
-        .eq('is_published', true)
-        .maybeSingle();
-
-      if (fetchError) {
-        setError('Failed to load product');
-        logger.error('Error fetching product', fetchError, { productId });
-      } else if (!data) {
-        setError('Product not found');
-      } else {
+      try {
+        const res = await fetch(`${API_URL}/products/${encodeURIComponent(productId)}`);
+        if (res.status === 404) {
+          setError('Product not found');
+          setLoading(false);
+          return;
+        }
+        if (!res.ok) {
+          setError('Failed to load product');
+          logger.error('Error fetching product', { status: res.status, productId });
+          setLoading(false);
+          return;
+        }
+        const data = await res.json() as Product;
         setProduct(data);
+      } catch (err) {
+        setError('Failed to load product');
+        logger.error('Error fetching product', err, { productId });
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     fetchProduct();

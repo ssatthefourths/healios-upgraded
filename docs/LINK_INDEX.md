@@ -214,3 +214,46 @@ Footer social + trust icons (CSV tickets 12/13/14) — not yet implemented.
 2. **Category URLs on PDP breadcrumbs:** always `categoryDisplayToSlug(product.category)` from `src/lib/categorySlug.ts` before pushing into `/category/…`.
 3. **Route constants:** import from `src/constants/routes.ts` rather than string literals, except where a dynamic segment makes that awkward.
 4. **Any PR that adds a clickable product card MUST update this doc.**
+
+---
+
+## Worker endpoint smoke-test runbook
+
+Run after **any** change to [worker-api/src/products.ts](../worker-api/src/products.ts) against the deployed worker. All eight must pass before declaring the change landed.
+
+```bash
+BASE='https://healios-api.ss-f01.workers.dev'
+
+# 1. Detail endpoint by slug
+curl -s "$BASE/products/halo-glow" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const r=JSON.parse(d);console.log(r.name==='Healios Halo Glow'?'PASS 1':'FAIL 1');})"
+
+# 2. Detail endpoint by id
+curl -s "$BASE/products/halo-glow-collagen" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const r=JSON.parse(d);console.log(r.name==='Healios Halo Glow'?'PASS 2':'FAIL 2');})"
+
+# 3. List endpoint — useProduct-style or=  (was the Magnesium bug)
+curl -s "$BASE/products?or=id.eq.halo-glow%2Cslug.eq.halo-glow&is_published=eq.true&limit=1" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const r=JSON.parse(d);console.log(r[0]?.slug==='halo-glow'?'PASS 3':'FAIL 3');})"
+
+# 4. List endpoint — Ashwagandha search-style or=  (was returning all products)
+curl -s "$BASE/products?or=name.ilike.%25ashwa%25%2Ccategory.ilike.%25ashwa%25%2Cdescription.ilike.%25ashwa%25&is_published=eq.true&limit=6" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const r=JSON.parse(d);console.log(r.length===1 && r[0].id==='ashwagandha-gummies'?'PASS 4':'FAIL 4 ('+r.length+' rows)');})"
+
+# 5. List endpoint — in.
+curl -s "$BASE/products?id=in.vitamin-d3-gummies%2Cashwagandha-gummies%2Cmagnesium-gummies" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const r=JSON.parse(d);console.log(r.length===3?'PASS 5':'FAIL 5 ('+r.length+' rows)');})"
+
+# 6. List endpoint — single-id eq. (regression)
+curl -s "$BASE/products?id=eq.halo-glow-collagen" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const r=JSON.parse(d);console.log(r.length===1 && r[0].id==='halo-glow-collagen'?'PASS 6':'FAIL 6');})"
+
+# 7. List endpoint — category eq. (regression)
+curl -s "$BASE/products?category=eq.Beauty" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const r=JSON.parse(d);console.log(r.length===3?'PASS 7':'FAIL 7 ('+r.length+' rows)');})"
+
+# 8. Bestsellers carousel ordering
+curl -s "$BASE/products?order=sort_order.asc&limit=6" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const r=JSON.parse(d);const distinct=new Set(r.map(x=>x.id));console.log(r.length===6 && distinct.size===6?'PASS 8':'FAIL 8');})"
+```
+
+### Browser smoke test (post-deploy)
+
+1. Open `https://www.thehealios.com/` in a **private window** (avoid cached bundle).
+2. Click each Bestsellers card → confirm the PDP H1 matches the clicked product's name.
+3. Type "ashwa" in header search → only Ashwagandha row appears → click → Ashwagandha PDP.
+4. Direct-navigate to `/product/halo-glow` → Halo Glow PDP.
+5. Direct-navigate to `/product/halo-glow-collagen` (the id form) → still Halo Glow PDP.
+

@@ -141,6 +141,42 @@ export async function handleProducts(request: Request, env: Env): Promise<Respon
     if (idFilter)    applyFilter('id', idFilter);
     if (category)    applyFilter('category', category);
 
+    // ?or=col1.op1.val1,col2.op2.val2,...  →  AND (col1 OP1 ? OR col2 OP2 ? OR ...)
+    const orParam = url.searchParams.get('or');
+    if (orParam) {
+      const OR_COLS = new Set(['id', 'slug', 'name', 'category', 'description']);
+      const OP_SQL: Record<string, string> = {
+        eq: '=', neq: '!=', gt: '>', gte: '>=', lt: '<', lte: '<=',
+        like: 'LIKE', ilike: 'LIKE',
+      };
+      const clauses: string[] = [];
+      const parts = orParam.split(',').map(s => s.trim()).filter(Boolean);
+      for (const raw of parts) {
+        const m = raw.match(/^([a-z_]+)\.(eq|neq|gt|gte|lt|lte|like|ilike)\.(.*)$/i);
+        if (!m) {
+          return new Response(
+            JSON.stringify({ error: `Invalid or= clause: ${raw}` }),
+            { status: 400, headers: corsHeaders }
+          );
+        }
+        const col = m[1].toLowerCase();
+        const op = m[2].toLowerCase();
+        const val = m[3];
+        if (!OR_COLS.has(col)) {
+          return new Response(
+            JSON.stringify({ error: `Column not allowed in or=: ${col}` }),
+            { status: 400, headers: corsHeaders }
+          );
+        }
+        const sqlOp = OP_SQL[op];
+        clauses.push(`${col} ${sqlOp} ?`);
+        params.push(op === 'ilike' || op === 'like' ? val : val);
+      }
+      if (clauses.length > 0) {
+        query += ` AND (${clauses.join(' OR ')})`;
+      }
+    }
+
     let orderClause = 'sort_order ASC';
     if (orderParam) {
       const parts = orderParam.split('.');
