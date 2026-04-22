@@ -10,6 +10,7 @@ import { useProductSearch } from "@/hooks/useProductSearch";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import ShoppingBag from "./ShoppingBag";
 import CurrencySelector from "./CurrencySelector";
+import { getProductPath } from "@/lib/productPath";
 // Product images for navigation dropdowns
 const magnesiumImage = "/products/magnesium-gummies.png";
 const ashwagandhaImage = "/products/ashwagandha-gummies.png";
@@ -493,7 +494,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
                     {results.map((product) => (
                       <Link
                         key={product.id}
-                        to={`/product/${product.slug || product.id}`}
+                        to={getProductPath(product)}
                         className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
                         onClick={() => {
                           setIsSearchOpen(false);

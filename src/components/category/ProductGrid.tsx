@@ -13,6 +13,7 @@ import { Bell, ShoppingBag } from "lucide-react";
 import { useGsapReveal } from "@/hooks/useGsapReveal";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
+import { getProductPath } from "@/lib/productPath";
 
 interface Product {
   id: string;
@@ -88,7 +89,7 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
           const isComingSoon = !!product.is_coming_soon;
           const isOutOfStock = !isComingSoon && product.stock_quantity === 0;
           return (
-          <Link key={product.id} to={`/product/${product.slug || product.id}`} className="group block h-full">
+          <Link key={product.id} to={getProductPath(product)} className="group block h-full">
             <Card 
               className="border-none shadow-none bg-transparent cursor-pointer h-full"
             >

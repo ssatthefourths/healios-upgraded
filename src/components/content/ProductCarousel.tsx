@@ -14,9 +14,11 @@ import { useProductRatings } from "@/hooks/useProductRatings";
 import OptimizedImage from "@/components/ui/optimized-image";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useGsapReveal } from "@/hooks/useGsapReveal";
+import { getProductPath } from "@/lib/productPath";
 
 interface Product {
   id: string;
+  slug: string | null;
   name: string;
   category: string;
   description: string | null;
@@ -32,7 +34,7 @@ const ProductCarousel = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, category, description, price, image, stock_quantity, is_coming_soon')
+        .select('id, slug, name, category, description, price, image, stock_quantity, is_coming_soon')
         .eq('is_published', true)
         .order('sort_order', { ascending: true })
         .limit(6);
@@ -99,7 +101,7 @@ const ProductCarousel = () => {
               key={product.id}
               className="basis-1/2 md:basis-1/3 lg:basis-1/4 pr-2 md:pr-4"
             >
-              <Link to={`/product/${product.id}`} className="group block h-full">
+              <Link to={getProductPath(product)} className="group block h-full">
                 <Card className="border-none shadow-none bg-transparent h-full">
                   <CardContent className="p-0 h-full flex flex-col">
                     <div className="aspect-square mb-[var(--space-sm)] overflow-hidden bg-muted rounded-[var(--radius-card)] shadow-[var(--shadow-ambient)] group-hover:shadow-[var(--shadow-ambient-hover)] relative transition-all duration-500">

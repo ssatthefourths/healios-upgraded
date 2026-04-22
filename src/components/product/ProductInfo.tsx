@@ -20,6 +20,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { useProductAnalytics } from "@/hooks/useProductAnalytics";
 import { trackAddToCart as trackGA4AddToCart } from "@/lib/analytics";
 import { trackMetaAddToCart } from "@/lib/metaPixel";
+import { categoryDisplayToSlug } from "@/lib/categorySlug";
 
 interface ProductInfoProps {
   product: {
@@ -156,7 +157,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to={`/category/${product.category}`}>{categoryLabel}</Link>
+                <Link to={`/category/${categoryDisplayToSlug(product.category)}`}>{categoryLabel}</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

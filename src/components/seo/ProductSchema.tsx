@@ -6,6 +6,7 @@
 interface ProductSchemaProps {
   product: {
     id: string;
+    slug?: string | null;
     name: string;
     description?: string | null;
     price: number;
@@ -47,7 +48,7 @@ const ProductSchema = ({ product, rating }: ProductSchemaProps) => {
     "category": product.category,
     "offers": {
       "@type": "Offer",
-      "url": `https://www.thehealios.com/product/${product.id}`,
+      "url": `https://www.thehealios.com/product/${product.slug || product.id}`,
       "priceCurrency": "GBP",
       "price": product.price.toFixed(2),
       "availability": getAvailability(),

@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Package } from "lucide-react";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { getProductPath } from "@/lib/productPath";
 
 interface BundleContentsProps {
   bundleProducts: string[];
@@ -64,7 +65,7 @@ const BundleContents = ({ bundleProducts, bundleDiscount }: BundleContentsProps)
         {products.map((product) => (
           <Link 
             key={product.id} 
-            to={`/product/${product.slug || product.id}`}
+            to={getProductPath(product)}
             className="group block"
           >
             <div className="border border-border rounded-lg p-4 transition-colors hover:border-primary/50 hover:bg-muted/30">

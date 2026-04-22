@@ -7,9 +7,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Heart, X, ShoppingBag } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { getProductPath } from '@/lib/productPath';
 
 interface Product {
   id: string;
+  slug: string | null;
   name: string;
   price: number;
   image: string;
@@ -33,7 +35,7 @@ const WishlistSection = () => {
 
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, price, image, category')
+        .select('id, slug, name, price, image, category')
         .in('id', wishlistItems);
 
       if (error) {
@@ -103,7 +105,7 @@ const WishlistSection = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
         {products.map((product) => (
           <div key={product.id} className="group relative">
-            <Link to={`/product/${product.id}`}>
+            <Link to={getProductPath(product)}>
               <div className="aspect-square bg-secondary rounded-lg overflow-hidden mb-3">
                 <img
                   src={product.image}

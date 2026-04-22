@@ -10,6 +10,7 @@ import { useGsapReveal } from "@/hooks/useGsapReveal";
 import { useCart } from "@/contexts/CartContext";
 import { ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
+import { getProductPath } from "@/lib/productPath";
 
 interface PersonalizedRecommendationsProps {
   currentProductId?: string;
@@ -79,14 +80,11 @@ const PersonalizedRecommendations = ({
         <div ref={staggerReveal} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-[var(--space-sm)] md:gap-[var(--space-md)]">
           {products.map((product) => {
             const rating = ratings[product.id];
-            const productUrl = product.slug
-              ? `/product/${product.slug}`
-              : `/product/${product.id}`;
 
             return (
               <Link
                 key={product.id}
-                to={productUrl}
+                to={getProductPath(product)}
                 className="group block space-y-[var(--space-xs)]"
               >
                 {/* Product Image */}

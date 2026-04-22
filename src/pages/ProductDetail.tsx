@@ -19,6 +19,7 @@ import { useProductAnalytics } from "@/hooks/useProductAnalytics";
 import { useProductRatings } from "@/hooks/useProductRatings";
 import { trackViewItem } from "@/lib/analytics";
 import { trackMetaViewContent } from "@/lib/metaPixel";
+import { categoryDisplayToSlug } from "@/lib/categorySlug";
 import { 
   Breadcrumb, 
   BreadcrumbItem, 
@@ -103,12 +104,13 @@ const ProductDetail = () => {
   }
 
   const categoryLabel = product.category.charAt(0).toUpperCase() + product.category.slice(1).replace(/-/g, ' ');
+  const categorySlugForUrl = categoryDisplayToSlug(product.category);
 
   // Breadcrumb items for schema
   const breadcrumbItems = [
     { name: "Home", url: "https://www.thehealios.com/" },
-    { name: categoryLabel, url: `https://www.thehealios.com/category/${product.category}` },
-    { name: product.name, url: `https://www.thehealios.com/product/${product.id}` }
+    { name: categoryLabel, url: `https://www.thehealios.com/category/${categorySlugForUrl}` },
+    { name: product.name, url: `https://www.thehealios.com/product/${product.slug || product.id}` }
   ];
 
   // Parse product FAQs for schema (stored as JSON in database)
@@ -166,7 +168,7 @@ const ProductDetail = () => {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link to={`/category/${product.category}`}>{categoryLabel}</Link>
+                    <Link to={`/category/${categorySlugForUrl}`}>{categoryLabel}</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { trackNewsletterSignup, trackPurchase as trackGA4Purchase } from "@/lib/analytics";
 import { trackMetaPurchase, trackMetaLead } from "@/lib/metaPixel";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { getProductPath } from "@/lib/productPath";
 
 interface OrderItem {
   id: string;
@@ -37,6 +38,7 @@ interface Order {
 
 interface RecommendedProduct {
   id: string;
+  slug: string | null;
   name: string;
   image: string;
   price: number;
@@ -153,7 +155,7 @@ const OrderConfirmation = ({ sessionId, customerEmail, isLoggedIn }: OrderConfir
           // Fetch recommendations (products not in this order)
           let recommendationsQuery = supabase
             .from('products')
-            .select('id, name, image, price, category')
+            .select('id, slug, name, image, price, category')
             .eq('is_published', true)
             .gt('stock_quantity', 0);
 
@@ -377,7 +379,7 @@ const OrderConfirmation = ({ sessionId, customerEmail, isLoggedIn }: OrderConfir
             {recommendations.map((product) => (
               <Link 
                 key={product.id} 
-                to={`/product/${product.id}`}
+                to={getProductPath(product)}
                 className="group p-4 bg-muted/20 hover:bg-muted/30 transition-colors"
               >
                 <div className="aspect-square bg-muted overflow-hidden mb-3">

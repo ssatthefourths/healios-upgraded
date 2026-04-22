@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { getProductPath } from "@/lib/productPath";
 
 type Product = Tables<'products'>;
 
@@ -56,7 +57,7 @@ const PairsWellWith = ({ productIds, currentProductId }: PairsWellWithProps) => 
           {pairedProducts.map((product) => (
             <Link
               key={product.id}
-              to={`/product/${product.slug || product.id}`}
+              to={getProductPath(product)}
               className="group"
             >
               <div className="aspect-square overflow-hidden bg-muted mb-3">

@@ -89,12 +89,23 @@ export async function handleProducts(request: Request, env: Env): Promise<Respon
   if (path === '/products' && method === 'GET') {
     const isAdmin = !!(await getAdminUserId(request, env));
 
-    const stripOp = (v: string | null) =>
-      v ? v.replace(/^(eq|neq|gt|gte|lt|lte|like|ilike)\./i, '') : null;
+    // Parse a filter value that may be prefixed with a PostgREST-style operator.
+    // Returns { op, val } where op is 'eq' for bare values, 'in' / 'not.in' for list membership, etc.
+    type Filter = { op: string; val: string };
+    const parseFilter = (raw: string | null): Filter | null => {
+      if (!raw) return null;
+      const notInMatch = raw.match(/^not\.in\.\((.*)\)$/i) || raw.match(/^not\.in\.(.*)$/i);
+      if (notInMatch) return { op: 'not.in', val: notInMatch[1] };
+      const inMatch = raw.match(/^in\.\((.*)\)$/i) || raw.match(/^in\.(.*)$/i);
+      if (inMatch) return { op: 'in', val: inMatch[1] };
+      const opMatch = raw.match(/^(eq|neq|gt|gte|lt|lte|like|ilike)\.(.*)$/i);
+      if (opMatch) return { op: opMatch[1].toLowerCase(), val: opMatch[2] };
+      return { op: 'eq', val: raw };
+    };
 
-    const idFilter    = stripOp(url.searchParams.get('id'));
-    const category    = stripOp(url.searchParams.get('category'));
-    const isPublished = stripOp(url.searchParams.get('is_published'));
+    const idFilter    = parseFilter(url.searchParams.get('id'));
+    const category    = parseFilter(url.searchParams.get('category'));
+    const isPublished = parseFilter(url.searchParams.get('is_published'));
     const rawLimit    = url.searchParams.get('limit') || '200';
     const limit       = Math.min(parseInt(rawLimit, 10) || 200, 500);
     const orderParam  = url.searchParams.get('order');
@@ -103,22 +114,32 @@ export async function handleProducts(request: Request, env: Env): Promise<Respon
     const params: any[] = [];
 
     // published filter — admins see everything by default
-    if (isPublished === '0' || isPublished === 'false') {
+    const publishedVal = isPublished?.val;
+    if (publishedVal === '0' || publishedVal === 'false') {
       query += ' AND is_published = 0';
-    } else if (isPublished === '1' || isPublished === 'true' || !isAdmin) {
+    } else if (publishedVal === '1' || publishedVal === 'true' || !isAdmin) {
       query += ' AND is_published = 1';
     }
     // (admin + no is_published param → no filter, see all)
 
-    if (idFilter) {
-      query += ' AND id = ?';
-      params.push(idFilter);
-    }
+    const applyFilter = (col: 'id' | 'category', f: Filter) => {
+      if (f.op === 'in' || f.op === 'not.in') {
+        const vals = f.val.split(',').map(v => v.trim()).filter(Boolean);
+        if (vals.length === 0) {
+          query += f.op === 'in' ? ' AND 1=0' : ' AND 1=1';
+          return;
+        }
+        const placeholders = vals.map(() => '?').join(',');
+        query += ` AND ${col} ${f.op === 'in' ? 'IN' : 'NOT IN'} (${placeholders})`;
+        vals.forEach(v => params.push(v));
+        return;
+      }
+      query += ` AND ${col} = ?`;
+      params.push(f.val);
+    };
 
-    if (category) {
-      query += ' AND category = ?';
-      params.push(category);
-    }
+    if (idFilter)    applyFilter('id', idFilter);
+    if (category)    applyFilter('category', category);
 
     let orderClause = 'sort_order ASC';
     if (orderParam) {

@@ -5,6 +5,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { ShoppingBag } from "lucide-react";
 import NotifyMeButton from "@/components/product/NotifyMeButton";
+import { getProductPath } from "@/lib/productPath";
 
 interface PairedProduct {
   id: string;
@@ -60,7 +61,7 @@ const FeaturedProductCard = ({ product, pairedProducts, reversed = false }: Feat
     <div className={`grid grid-cols-1 md:grid-cols-2 gap-md md:gap-xl items-center ${reversed ? 'md:direction-rtl' : ''}`}>
       {/* Product Image */}
       <Link 
-        to={`/product/${product.slug || product.id}`}
+        to={getProductPath(product)}
         className={`relative aspect-square bg-muted rounded-card overflow-hidden group ${reversed ? 'md:order-2' : ''}`}
       >
         <OptimizedImage 
@@ -84,7 +85,7 @@ const FeaturedProductCard = ({ product, pairedProducts, reversed = false }: Feat
       <div className={`space-y-md ${reversed ? 'md:order-1 md:text-right' : ''}`}>
         <div className="space-y-xs">
           <p className="text-xs text-muted-foreground uppercase tracking-widest">{product.category}</p>
-          <Link to={`/product/${product.slug || product.id}`}>
+          <Link to={getProductPath(product)}>
             <h3 className="text-2xl md:text-3xl font-light tracking-tight hover:text-primary transition-colors duration-300">
               {product.name}
             </h3>
@@ -103,7 +104,7 @@ const FeaturedProductCard = ({ product, pairedProducts, reversed = false }: Feat
               className={`gap-2`}
               size="lg"
             >
-              <Link to={`/product/${product.slug || product.id}`}>
+              <Link to={getProductPath(product)}>
                 Pre-order — Save 15%
               </Link>
             </Button>
@@ -147,7 +148,7 @@ const FeaturedProductCard = ({ product, pairedProducts, reversed = false }: Feat
               {pairedProducts.slice(0, 2).map((paired) => (
                 <Link 
                   key={paired.id}
-                  to={`/product/${paired.slug || paired.id}`}
+                  to={getProductPath(paired)}
                   className="flex items-center gap-2 group"
                 >
                   <div className="w-10 h-10 bg-muted/30 rounded overflow-hidden flex-shrink-0">
