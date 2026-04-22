@@ -573,6 +573,8 @@ const Checkout = () => {
             quantity: item.quantity,
             category: item.category,
             isSubscription: item.isSubscription || false,
+            isBundle: item.isBundle || false,
+            bundleItems: item.bundleItems,
           })),
           customerEmail: customerDetails.email,
           customerDetails: {
