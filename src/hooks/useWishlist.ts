@@ -4,26 +4,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import logger from '@/lib/logger';
 
-// Track wishlist analytics
-const trackWishlistEvent = async (productId: string, eventType: 'wishlist_add' | 'wishlist_remove', userId?: string) => {
-  try {
-    let sessionId = sessionStorage.getItem("analytics_session_id");
-    if (!sessionId) {
-      sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      sessionStorage.setItem("analytics_session_id", sessionId);
-    }
-    
-    await supabase.from("product_analytics").insert({
-      product_id: productId,
-      event_type: eventType,
-      user_id: userId || null,
-      session_id: sessionId,
-      metadata: {},
-    });
-  } catch (error) {
-    logger.error("Failed to track wishlist event", error);
-  }
-};
+// Wishlist analytics no-op. Page-level analytics is handled by Cloudflare
+// Web Analytics. Per-product events can move to a dedicated worker endpoint
+// when the product team needs those stats.
+const trackWishlistEvent = async (
+  _productId: string,
+  _eventType: 'wishlist_add' | 'wishlist_remove',
+  _userId?: string
+) => {};
 
 export const useWishlist = () => {
   const [wishlistItems, setWishlistItems] = useState<string[]>([]);
