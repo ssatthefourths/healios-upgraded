@@ -37,6 +37,25 @@ export interface Env {
   RESEND_API_KEY: string;
 }
 
+// Security headers applied to every worker response. CSP is deferred to H2 —
+// it needs careful per-page tuning against Stripe / fonts / analytics.
+const SECURITY_HEADERS: Record<string, string> = {
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+};
+
+function withSecurityHeaders(res: Response): Response {
+  // Clone headers so we can mutate them, then unconditionally set our security
+  // headers — handlers must not be able to accidentally downgrade these.
+  const headers = new Headers(res.headers);
+  for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
+    headers.set(k, v);
+  }
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -50,12 +69,24 @@ export default {
     };
 
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+      return withSecurityHeaders(new Response(null, { headers: corsHeaders }));
     }
 
+    const response = await handleRequest(request, env, ctx, path, corsHeaders);
+    return withSecurityHeaders(response);
+  },
+};
+
+async function handleRequest(
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+  path: string,
+  corsHeaders: Record<string, string>,
+): Promise<Response> {
     try {
       if (path.startsWith('/auth')) {
-        return await handleAuth(request, env);
+        return await handleAuth(request, env, ctx);
       }
 
       if (path.startsWith('/products')) {
@@ -174,5 +205,4 @@ export default {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
-  },
-};
+}
