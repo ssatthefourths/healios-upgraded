@@ -108,6 +108,8 @@ const Checkout = () => {
   const [shippingOption, setShippingOption] = useState("standard");
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [invalidFields, setInvalidFields] = useState<Set<string>>(new Set());
+  const [submitAnnouncement, setSubmitAnnouncement] = useState('');
   const [completedOrderId, setCompletedOrderId] = useState<string | null>(null);
   const [saveShippingAddress, setSaveShippingAddress] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
@@ -459,9 +461,19 @@ const Checkout = () => {
     return true;
   };
 
+  const clearInvalid = (key: string) => {
+    setInvalidFields(prev => {
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  };
+
   const handleCustomerDetailsChange = (field: string, value: string) => {
     const sanitized = sanitizeInput(value);
     setCustomerDetails(prev => ({ ...prev, [field]: sanitized }));
+    clearInvalid(`customer.${field}`);
   };
 
   const handleShippingAddressChange = (field: string, value: string) => {
@@ -472,62 +484,93 @@ const Checkout = () => {
       if (field === 'country') setPostcodeError(null);
       return updated;
     });
+    clearInvalid(`shipping.${field}`);
   };
 
   const handleBillingDetailsChange = (field: string, value: string) => {
     const sanitized = sanitizeInput(value);
     setBillingDetails(prev => ({ ...prev, [field]: sanitized }));
+    clearInvalid(`billing.${field}`);
   };
 
+
+  // DOM id per field key — used to focus + scroll the first invalid field on submit.
+  const FIELD_DOM_IDS: Record<string, string> = {
+    'customer.email': 'email',
+    'customer.firstName': 'firstName',
+    'customer.lastName': 'lastName',
+    'customer.phone': 'phone',
+    'shipping.address': 'shippingAddress',
+    'shipping.city': 'shippingCity',
+    'shipping.postalCode': 'shippingPostalCode',
+    'shipping.country': 'shippingCountry',
+    'billing.address': 'billingAddress',
+    'billing.city': 'billingCity',
+    'billing.postalCode': 'billingPostalCode',
+    'billing.country': 'billingCountry',
+  };
 
   const validateForm = () => {
-    // Validate required customer details
-    if (!customerDetails.email || !customerDetails.firstName || !customerDetails.lastName) {
-      toast.error("Please fill in all required customer details");
-      return false;
+    const invalid = new Set<string>();
+
+    if (!customerDetails.email) invalid.add('customer.email');
+    else if (!isValidEmail(customerDetails.email)) invalid.add('customer.email');
+    if (!customerDetails.firstName) invalid.add('customer.firstName');
+    if (!customerDetails.lastName) invalid.add('customer.lastName');
+    if (customerDetails.phone && !isValidUKPhone(customerDetails.phone)) invalid.add('customer.phone');
+
+    if (!shippingAddress.address) invalid.add('shipping.address');
+    if (!shippingAddress.city) invalid.add('shipping.city');
+    if (!shippingAddress.postalCode) invalid.add('shipping.postalCode');
+    if (!shippingAddress.country) invalid.add('shipping.country');
+    if (shippingAddress.postalCode && shippingAddress.country) {
+      const err = getPostalCodeError(shippingAddress.postalCode, shippingAddress.country);
+      if (err) invalid.add('shipping.postalCode');
     }
 
-    // Validate email format
-    if (!isValidEmail(customerDetails.email)) {
-      toast.error("Please enter a valid email address");
-      return false;
-    }
-
-    // Validate phone format (if provided)
-    if (customerDetails.phone && !isValidUKPhone(customerDetails.phone)) {
-      toast.error("Please enter a valid UK phone number");
-      return false;
-    }
-
-    // Validate shipping address required fields
-    if (!shippingAddress.address || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.country) {
-      toast.error("Please fill in all shipping address fields");
-      return false;
-    }
-
-    // Validate postal code for selected country
-    const postcodeError = getPostalCodeError(shippingAddress.postalCode, shippingAddress.country);
-    if (postcodeError) {
-      toast.error(postcodeError);
-      return false;
-    }
-
-    // Validate billing address if separate
     if (hasSeparateBilling) {
-      if (!billingDetails.address || !billingDetails.city || !billingDetails.postalCode || !billingDetails.country) {
-        toast.error("Please fill in all billing address fields");
-        return false;
-      }
-
-      const billingPostcodeError = getPostalCodeError(billingDetails.postalCode, billingDetails.country);
-      if (billingPostcodeError) {
-        toast.error("Billing: " + billingPostcodeError);
-        return false;
+      if (!billingDetails.address) invalid.add('billing.address');
+      if (!billingDetails.city) invalid.add('billing.city');
+      if (!billingDetails.postalCode) invalid.add('billing.postalCode');
+      if (!billingDetails.country) invalid.add('billing.country');
+      if (billingDetails.postalCode && billingDetails.country) {
+        const err = getPostalCodeError(billingDetails.postalCode, billingDetails.country);
+        if (err) invalid.add('billing.postalCode');
       }
     }
 
-    return true;
+    setInvalidFields(invalid);
+
+    if (invalid.size === 0) {
+      setSubmitAnnouncement('');
+      return true;
+    }
+
+    // Announce for screen readers + toast for everyone else.
+    const count = invalid.size;
+    const message = count === 1
+      ? 'Please fix the highlighted field to continue.'
+      : `Please fix the ${count} highlighted fields to continue.`;
+    setSubmitAnnouncement(message);
+    toast.error(message);
+
+    // Focus first invalid field (scroll it into view).
+    const first = Array.from(invalid)[0];
+    const domId = FIELD_DOM_IDS[first];
+    if (domId) {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(domId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          (el as HTMLElement).focus?.();
+        }
+      });
+    }
+    return false;
   };
+
+  const isInvalid = (key: string) => invalidFields.has(key);
+  const errorClass = (key: string) => (isInvalid(key) ? 'border-destructive' : '');
 
   const handleCompleteOrder = async () => {
     if (!validateForm()) return;
@@ -894,12 +937,13 @@ const Checkout = () => {
                       value={customerDetails.email}
                       onChange={(e) => handleCustomerDetailsChange("email", e.target.value)}
                       onBlur={() => validateEmail(customerDetails.email)}
-                      className={`mt-2 rounded-none ${emailError ? 'border-destructive' : ''}`}
+                      aria-invalid={isInvalid('customer.email') || !!emailError}
+                      className={`mt-2 rounded-none ${emailError || isInvalid('customer.email') ? 'border-destructive' : ''}`}
                       placeholder="Enter your email"
                     />
-                    {emailError && (
+                    {(emailError || isInvalid('customer.email')) && (
                       <p className="text-destructive text-sm mt-1 flex items-center gap-1">
-                        <span>⚠</span> {emailError}
+                        <span>⚠</span> {emailError || 'Please enter a valid email address'}
                       </p>
                     )}
                   </div>
@@ -915,9 +959,15 @@ const Checkout = () => {
                         type="text"
                         value={customerDetails.firstName}
                         onChange={(e) => handleCustomerDetailsChange("firstName", e.target.value)}
-                        className="mt-2 rounded-none"
+                        aria-invalid={isInvalid('customer.firstName')}
+                        className={`mt-2 rounded-none ${errorClass('customer.firstName')}`}
                         placeholder="First name"
                       />
+                      {isInvalid('customer.firstName') && (
+                        <p className="text-destructive text-sm mt-1 flex items-center gap-1">
+                          <span>⚠</span> First name is required
+                        </p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="lastName" className="text-sm font-light text-foreground">
@@ -929,9 +979,15 @@ const Checkout = () => {
                         type="text"
                         value={customerDetails.lastName}
                         onChange={(e) => handleCustomerDetailsChange("lastName", e.target.value)}
-                        className="mt-2 rounded-none"
+                        aria-invalid={isInvalid('customer.lastName')}
+                        className={`mt-2 rounded-none ${errorClass('customer.lastName')}`}
                         placeholder="Last name"
                       />
+                      {isInvalid('customer.lastName') && (
+                        <p className="text-destructive text-sm mt-1 flex items-center gap-1">
+                          <span>⚠</span> Last name is required
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -946,12 +1002,13 @@ const Checkout = () => {
                       value={customerDetails.phone}
                       onChange={(e) => handleCustomerDetailsChange("phone", e.target.value)}
                       onBlur={() => validatePhone(customerDetails.phone)}
-                      className={`mt-2 rounded-none ${phoneError ? 'border-destructive' : ''}`}
+                      aria-invalid={isInvalid('customer.phone') || !!phoneError}
+                      className={`mt-2 rounded-none ${phoneError || isInvalid('customer.phone') ? 'border-destructive' : ''}`}
                       placeholder="Enter your phone number"
                     />
-                    {phoneError && (
+                    {(phoneError || isInvalid('customer.phone')) && (
                       <p className="text-destructive text-sm mt-1 flex items-center gap-1">
-                        <span>⚠</span> {phoneError}
+                        <span>⚠</span> {phoneError || 'Please enter a valid phone number'}
                       </p>
                     )}
                   </div>
@@ -993,9 +1050,15 @@ const Checkout = () => {
                           type="text"
                           value={shippingAddress.address}
                           onChange={(e) => handleShippingAddressChange("address", e.target.value)}
-                          className="mt-2 rounded-none"
+                          aria-invalid={isInvalid('shipping.address')}
+                          className={`mt-2 rounded-none ${errorClass('shipping.address')}`}
                           placeholder="Street address"
                         />
+                        {isInvalid('shipping.address') && (
+                          <p className="text-destructive text-sm mt-1 flex items-center gap-1">
+                            <span>⚠</span> Street address is required
+                          </p>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1009,9 +1072,15 @@ const Checkout = () => {
                             type="text"
                             value={shippingAddress.city}
                             onChange={(e) => handleShippingAddressChange("city", e.target.value)}
-                            className="mt-2 rounded-none"
+                            aria-invalid={isInvalid('shipping.city')}
+                            className={`mt-2 rounded-none ${errorClass('shipping.city')}`}
                             placeholder="City"
                           />
+                          {isInvalid('shipping.city') && (
+                            <p className="text-destructive text-sm mt-1 flex items-center gap-1">
+                              <span>⚠</span> City is required
+                            </p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="shippingPostalCode" className="text-sm font-light text-foreground">
@@ -1024,12 +1093,13 @@ const Checkout = () => {
                             value={shippingAddress.postalCode}
                             onChange={(e) => handleShippingAddressChange("postalCode", e.target.value)}
                             onBlur={() => validatePostcode(shippingAddress.postalCode)}
-                            className={`mt-2 rounded-none ${postcodeError ? 'border-destructive' : ''}`}
+                            aria-invalid={isInvalid('shipping.postalCode') || !!postcodeError}
+                            className={`mt-2 rounded-none ${postcodeError || isInvalid('shipping.postalCode') ? 'border-destructive' : ''}`}
                             placeholder={getPostalCodeConfig(shippingAddress.country).placeholder}
                           />
-                          {postcodeError && (
+                          {(postcodeError || isInvalid('shipping.postalCode')) && (
                             <p className="text-destructive text-sm mt-1 flex items-center gap-1">
-                              <span>⚠</span> {postcodeError}
+                              <span>⚠</span> {postcodeError || 'Postal code is required'}
                             </p>
                           )}
                         </div>
@@ -1043,7 +1113,11 @@ const Checkout = () => {
                           value={shippingAddress.country}
                           onValueChange={(val) => handleShippingAddressChange("country", val)}
                         >
-                          <SelectTrigger id="shippingCountry" className="mt-2 rounded-none">
+                          <SelectTrigger
+                            id="shippingCountry"
+                            aria-invalid={isInvalid('shipping.country')}
+                            className={`mt-2 rounded-none ${errorClass('shipping.country')}`}
+                          >
                             <SelectValue placeholder="Select country" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1054,6 +1128,11 @@ const Checkout = () => {
                             )}
                           </SelectContent>
                         </Select>
+                        {isInvalid('shipping.country') && (
+                          <p className="text-destructive text-sm mt-1 flex items-center gap-1">
+                            <span>⚠</span> Country is required
+                          </p>
+                        )}
                       </div>
 
                       {/* Save Address Checkbox */}
@@ -1208,9 +1287,15 @@ const Checkout = () => {
                           type="text"
                           value={billingDetails.address}
                           onChange={(e) => handleBillingDetailsChange("address", e.target.value)}
-                          className="mt-2 rounded-none"
+                          aria-invalid={isInvalid('billing.address')}
+                          className={`mt-2 rounded-none ${errorClass('billing.address')}`}
                           placeholder="Street address"
                         />
+                        {isInvalid('billing.address') && (
+                          <p className="text-destructive text-sm mt-1 flex items-center gap-1">
+                            <span>⚠</span> Billing street address is required
+                          </p>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1224,9 +1309,15 @@ const Checkout = () => {
                             type="text"
                             value={billingDetails.city}
                             onChange={(e) => handleBillingDetailsChange("city", e.target.value)}
-                            className="mt-2 rounded-none"
+                            aria-invalid={isInvalid('billing.city')}
+                            className={`mt-2 rounded-none ${errorClass('billing.city')}`}
                             placeholder="City"
                           />
+                          {isInvalid('billing.city') && (
+                            <p className="text-destructive text-sm mt-1 flex items-center gap-1">
+                              <span>⚠</span> Billing city is required
+                            </p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="billingPostalCode" className="text-sm font-light text-foreground">
@@ -1238,9 +1329,15 @@ const Checkout = () => {
                             type="text"
                             value={billingDetails.postalCode}
                             onChange={(e) => handleBillingDetailsChange("postalCode", e.target.value)}
-                            className="mt-2 rounded-none"
+                            aria-invalid={isInvalid('billing.postalCode')}
+                            className={`mt-2 rounded-none ${errorClass('billing.postalCode')}`}
                             placeholder={getPostalCodeConfig(billingDetails.country).placeholder}
                           />
+                          {isInvalid('billing.postalCode') && (
+                            <p className="text-destructive text-sm mt-1 flex items-center gap-1">
+                              <span>⚠</span> Billing postal code is required
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -1252,7 +1349,11 @@ const Checkout = () => {
                           value={billingDetails.country}
                           onValueChange={(val) => handleBillingDetailsChange("country", val)}
                         >
-                          <SelectTrigger id="billingCountry" className="mt-2 rounded-none">
+                          <SelectTrigger
+                            id="billingCountry"
+                            aria-invalid={isInvalid('billing.country')}
+                            className={`mt-2 rounded-none ${errorClass('billing.country')}`}
+                          >
                             <SelectValue placeholder="Select country" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1263,6 +1364,11 @@ const Checkout = () => {
                             )}
                           </SelectContent>
                         </Select>
+                        {isInvalid('billing.country') && (
+                          <p className="text-destructive text-sm mt-1 flex items-center gap-1">
+                            <span>⚠</span> Billing country is required
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1380,7 +1486,12 @@ const Checkout = () => {
                       `Pay ${formatPrice(total)}`
                     )}
                   </Button>
-                  
+
+                  {/* Screen-reader announcement for form validation failures */}
+                  <div className="sr-only" role="alert" aria-live="polite">
+                    {submitAnnouncement}
+                  </div>
+
                   <p className="text-xs text-center text-muted-foreground">
                     You will be redirected to Stripe to complete your payment securely.
                   </p>
