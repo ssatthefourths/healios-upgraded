@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 import logger from '@/lib/logger';
+import { createElement } from 'react';
 
 // Wishlist analytics no-op. Page-level analytics is handled by Cloudflare
 // Web Analytics. Per-product events can move to a dedicated worker endpoint
@@ -54,10 +56,21 @@ export const useWishlist = () => {
     e?.stopPropagation();
 
     if (!user) {
+      const currentPath = `${window.location.pathname}${window.location.search}`;
+      const redirect = encodeURIComponent(currentPath);
       toast({
-        title: "Sign in required",
-        description: "Please sign in to save items to your wishlist.",
-        variant: "destructive",
+        title: "Sign in to save favourites",
+        description: "Your wishlist travels with your account.",
+        action: createElement(
+          ToastAction,
+          {
+            altText: 'Sign in',
+            onClick: () => {
+              window.location.assign(`/auth?redirect=${redirect}`);
+            },
+          },
+          'Sign in'
+        ),
       });
       return;
     }

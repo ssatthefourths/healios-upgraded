@@ -137,7 +137,7 @@ const ShoppingBag = ({ isOpen, onClose, cartItems, updateQuantity, onViewFavorit
                 <span className="text-sm font-light text-foreground">Subtotal</span>
                 <span className="text-sm font-medium text-foreground">{formatPrice(subtotal)}</span>
               </div>
-              <p className="text-[10px] text-muted-foreground italic font-light">
+              <p className="text-[13px] text-muted-foreground italic font-light">
                 Shipping calculated at checkout
               </p>
               
