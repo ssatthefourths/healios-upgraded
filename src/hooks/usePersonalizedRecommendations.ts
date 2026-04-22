@@ -1,6 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface RecommendedProduct {
   id: string;
@@ -14,37 +12,14 @@ interface RecommendedProduct {
   recommendation_reason: string;
 }
 
-// Get session ID for anonymous users
-const getSessionId = (): string | null => {
-  if (typeof window === "undefined") return null;
-  return sessionStorage.getItem("analytics_session_id");
-};
-
 export const usePersonalizedRecommendations = (
-  currentProductId?: string,
-  limit: number = 6
+  _currentProductId?: string,
+  _limit: number = 6
 ) => {
-  const { user } = useAuth();
-  const sessionId = getSessionId();
-
   return useQuery({
-    queryKey: ["personalized-recommendations", user?.id, sessionId, currentProductId, limit],
-    queryFn: async (): Promise<RecommendedProduct[]> => {
-      const { data, error } = await supabase.rpc("get_personalized_recommendations", {
-        p_user_id: user?.id || null,
-        p_session_id: sessionId,
-        p_current_product_id: currentProductId || null,
-        p_limit: limit,
-      });
-
-      if (error) {
-        console.error("Failed to fetch recommendations:", error);
-        throw error;
-      }
-
-      return (data as RecommendedProduct[]) || [];
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    queryKey: ["personalized-recommendations"],
+    queryFn: async (): Promise<RecommendedProduct[]> => [],
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 };
