@@ -1,4 +1,4 @@
-import { useCurrency, SUPPORTED_CURRENCIES, Currency } from "@/contexts/CurrencyContext";
+import { useCurrency, SUPPORTED_CURRENCIES } from "@/contexts/CurrencyContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,22 +12,24 @@ const CurrencySelector = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-1 p-2 text-nav-foreground hover:text-nav-hover transition-colors duration-200 text-sm font-light">
+      <DropdownMenuTrigger className="flex items-center gap-2 p-2 text-nav-foreground hover:text-nav-hover transition-colors duration-200 text-sm font-light">
+        <span className="text-base leading-none">{currency.flag}</span>
         <span>{currency.code}</span>
         <ChevronDown className="h-3 w-3" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        className="bg-background border border-border shadow-lg z-[100] min-w-[160px]"
+      <DropdownMenuContent
+        align="end"
+        className="bg-background border border-border shadow-lg z-[100] min-w-[180px]"
       >
         {SUPPORTED_CURRENCIES.map((curr) => (
           <DropdownMenuItem
             key={curr.code}
             onClick={() => setCurrency(curr)}
-            className={`cursor-pointer ${currency.code === curr.code ? 'bg-muted' : ''}`}
+            className={`flex items-center gap-2 cursor-pointer ${currency.code === curr.code ? 'bg-muted' : ''}`}
           >
-            <span className="w-8">{curr.symbol}</span>
-            <span>{curr.code}</span>
+            <span className="text-base leading-none">{curr.flag}</span>
+            <span className="w-10">{curr.code}</span>
+            <span className="w-6 text-muted-foreground">{curr.symbol}</span>
             <span className="ml-auto text-muted-foreground text-xs">{curr.name}</span>
           </DropdownMenuItem>
         ))}
