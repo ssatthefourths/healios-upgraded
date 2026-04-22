@@ -63,6 +63,10 @@ export default {
       }
 
       if (path.startsWith('/orders')) {
+        // Public read-only routes handled by handleOrders (e.g. /orders/by-token/:token).
+        if (request.method === 'GET' && path.startsWith('/orders/by-token/')) {
+          return await handleOrders(request, env);
+        }
         if (request.method === 'GET') return await handleTable(request, env);
         return await handleOrders(request, env);
       }

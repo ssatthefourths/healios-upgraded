@@ -46,6 +46,7 @@ const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Subscribe = lazy(() => import("./pages/Subscribe"));
 const GiftCards = lazy(() => import("./pages/GiftCards"));
 const GiftCardSuccess = lazy(() => import("./pages/GiftCardSuccess"));
+const GuestOrder = lazy(() => import("./pages/GuestOrder"));
 
 // Admin routes (lazy loaded - only accessed by admins)
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -115,6 +116,7 @@ const App = () => (
                       <Route path="/category/:category" element={<Category />} />
                       <Route path="/product/:productId" element={<ProductDetail />} />
                       <Route path="/bundle/:slug" element={<BundleDetail />} />
+                      <Route path="/order/:accessToken" element={<GuestOrder />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/account" element={<Account />} />
