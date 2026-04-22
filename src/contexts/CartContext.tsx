@@ -65,21 +65,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     saveCartToStorage(cartItems);
   }, [cartItems]);
 
+  // Toast suppressed here — callers (ProductInfo, ProductGrid, etc.) emit a
+  // single "<Name> added to bag" toast so there's exactly one notification
+  // per interaction, per ticket 10.
   const addToCart = useCallback((item: Omit<CartItem, 'quantity'>) => {
     setCartItems(prev => {
-      const existingItem = prev.find(i => 
+      const existingItem = prev.find(i =>
         i.id === item.id && i.isSubscription === item.isSubscription && i.isPreOrder === item.isPreOrder
       );
       if (existingItem) {
-        toast.success('Updated quantity in cart');
-        return prev.map(i => 
+        return prev.map(i =>
           i.id === item.id && i.isSubscription === item.isSubscription && i.isPreOrder === item.isPreOrder
-            ? { ...i, quantity: i.quantity + 1 } 
+            ? { ...i, quantity: i.quantity + 1 }
             : i
         );
       }
-      const label = item.isPreOrder ? 'Pre-order added to cart' : item.isSubscription ? 'Subscription added to cart' : 'Added to cart';
-      toast.success(label);
       return [...prev, { ...item, quantity: 1 }];
     });
   }, []);
