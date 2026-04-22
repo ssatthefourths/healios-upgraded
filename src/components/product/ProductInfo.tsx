@@ -45,7 +45,7 @@ const PRE_ORDER_LEAD_WEEKS = 3;
 
 const ProductInfo = ({ product }: ProductInfoProps) => {
   const [quantity, setQuantity] = useState(1);
-  const [purchaseType, setPurchaseType] = useState<PurchaseType>('one-time');
+  const [purchaseType, setPurchaseType] = useState<PurchaseType>('subscription');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
