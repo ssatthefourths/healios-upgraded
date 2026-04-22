@@ -1,5 +1,5 @@
 import { Env } from './index';
-import { hashPassword } from './auth';
+import { hashPassword, checkPasswordStrength } from './auth';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -101,7 +101,8 @@ export async function handleAdminUsers(request: Request, env: Env): Promise<Resp
   if (action === 'set_password') {
     const { new_password } = body;
     if (!target_user_id) return new Response(JSON.stringify({ error: 'target_user_id required' }), { status: 400, headers: cors });
-    if (!new_password || new_password.length < 8) return new Response(JSON.stringify({ error: 'Password must be at least 8 characters' }), { status: 400, headers: cors });
+    const strength = checkPasswordStrength(new_password);
+    if (!strength.ok) return new Response(JSON.stringify({ error: strength.reason }), { status: 400, headers: cors });
     const hash = await hashPassword(new_password);
     await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(hash, target_user_id).run();
     await logAudit(env, adminId, 'set_password', target_user_id);
@@ -143,10 +144,12 @@ export async function handleAdminUsers(request: Request, env: Env): Promise<Resp
   if (action === 'invite_user') {
     if (!target_email) return new Response(JSON.stringify({ error: 'target_email required' }), { status: 400, headers: cors });
     const id = crypto.randomUUID();
-    const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(crypto.randomUUID()));
-    const tempPassword = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    // Unguessable placeholder hash — user must go through the password-reset
+    // link in the invite email to set a real password. PBKDF2 of random input
+    // so the stored string is indistinguishable from a real hash.
+    const placeholderHash = await hashPassword(crypto.randomUUID() + crypto.randomUUID());
     try {
-      await env.DB.prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').bind(id, target_email, tempPassword).run();
+      await env.DB.prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').bind(id, target_email, placeholderHash).run();
       await env.DB.prepare('INSERT INTO profiles (id, first_name, last_name) VALUES (?, ?, ?)').bind(id, null, null).run();
       if (make_admin) {
         await env.DB.prepare('INSERT INTO user_roles (user_id, role) VALUES (?, ?)').bind(id, 'admin').run();
