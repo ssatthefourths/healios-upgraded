@@ -25,7 +25,9 @@ type AuthMode = 'signIn' | 'signUp' | 'forgotPassword';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const [mode, setMode] = useState<AuthMode>('signIn');
+  const [mode, setMode] = useState<AuthMode>(
+    searchParams.get('mode') === 'signUp' ? 'signUp' : 'signIn'
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');

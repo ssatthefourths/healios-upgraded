@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { isValidEmail } from '@/lib/validation';
 import { logger } from '@/lib/logger';
 import SEOHead from '@/components/seo/SEOHead';
@@ -36,6 +36,7 @@ interface SavedAddress {
 
 const Account = () => {
   const { user, signOut } = useAuth();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
@@ -263,11 +264,28 @@ const Account = () => {
   };
 
   if (!user) {
+    const redirectTarget = encodeURIComponent(`${location.pathname}${location.search}`);
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-3xl font-light mb-4">Please sign in to view your account</h1>
-        </div>
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center space-y-6">
+            <h1 className="text-2xl font-light text-foreground">Sign in to view your account</h1>
+            <p className="text-sm text-muted-foreground font-light">
+              Your order history, wishlist, and subscriptions live in your account. Sign in to pick up where you left off.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button asChild className="w-full h-12 rounded-none">
+                <Link to={`/auth?redirect=${redirectTarget}`}>Sign in</Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full h-12 rounded-none">
+                <Link to={`/auth?mode=signUp&redirect=${redirectTarget}`}>Create an account</Link>
+              </Button>
+              <Button asChild variant="ghost" className="w-full">
+                <Link to="/">Back to shopping</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
