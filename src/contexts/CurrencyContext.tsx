@@ -6,17 +6,16 @@ export interface Currency {
   code: string;
   symbol: string;
   name: string;
-  flag: string;
   rate: number; // Rate relative to GBP (base currency)
 }
 
 export const SUPPORTED_CURRENCIES: Currency[] = [
-  { code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧', rate: 1 },
-  { code: 'ZAR', symbol: 'R', name: 'South African Rand', flag: '🇿🇦', rate: 23.5 },
-  { code: 'USD', symbol: '$', name: 'US Dollar', flag: '🇺🇸', rate: 1.27 },
-  { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', rate: 1.17 },
-  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', flag: '🇨🇦', rate: 1.72 },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', flag: '🇦🇺', rate: 1.93 },
+  { code: 'GBP', symbol: '£', name: 'British Pound', rate: 1 },
+  { code: 'ZAR', symbol: 'R', name: 'South African Rand', rate: 23.5 },
+  { code: 'USD', symbol: '$', name: 'US Dollar', rate: 1.27 },
+  { code: 'EUR', symbol: '€', name: 'Euro', rate: 1.17 },
+  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', rate: 1.72 },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', rate: 1.93 },
 ];
 
 interface CurrencyContextType {
