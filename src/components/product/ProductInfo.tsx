@@ -230,7 +230,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           <AlertTriangle className="h-4 w-4" />
           <span className="text-sm font-medium">Coming Soon</span>
         </div>
-      ) : trackInventory && (
+      ) : !!trackInventory && (
         <div className="flex items-center gap-2">
           {isOutOfStock ? (
             <div className="flex items-center gap-2 text-destructive">

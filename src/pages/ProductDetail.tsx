@@ -187,9 +187,9 @@ const ProductDetail = () => {
               <ProductDescription product={product} />
               
               {/* Bundle Contents - shown for bundle products */}
-              {product.is_bundle && product.bundle_products && (
-                <BundleContents 
-                  bundleProducts={product.bundle_products} 
+              {!!product.is_bundle && product.bundle_products && (
+                <BundleContents
+                  bundleProducts={product.bundle_products}
                   bundleDiscount={product.bundle_discount_percent || undefined}
                 />
               )}

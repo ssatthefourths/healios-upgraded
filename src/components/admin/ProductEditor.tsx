@@ -705,7 +705,7 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
                     onCheckedChange={(checked) => handleChange("is_bundle", checked)}
                   />
                 </div>
-                {formData.is_bundle && (
+                {!!formData.is_bundle && (
                   <>
                     <div className="space-y-2">
                       <Label htmlFor="bundle_discount_percent">Bundle Discount (%)</Label>

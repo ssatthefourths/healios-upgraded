@@ -333,7 +333,7 @@ const AddressManager = ({ addresses, loading, onRefresh }: AddressManagerProps) 
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{addr.label}</span>
-                  {addr.is_default && (
+                  {!!addr.is_default && (
                     <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
                       <Star className="h-3 w-3 fill-current" /> Default
                     </span>

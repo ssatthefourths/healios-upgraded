@@ -298,7 +298,7 @@ const OrderConfirmation = ({ sessionId, customerEmail, isLoggedIn }: OrderConfir
                   )}
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-sm text-muted-foreground">Qty: {item.quantity}</span>
-                    {item.is_subscription && (
+                    {!!item.is_subscription && (
                       <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary">
                         Subscribe & Save
                       </span>
