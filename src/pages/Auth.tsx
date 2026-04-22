@@ -11,14 +11,21 @@ import { ArrowLeft, Check, X, AlertCircle } from 'lucide-react';
 import { trackClarityEvent } from '@/lib/clarity';
 
 const emailSchema = z.string().email('Please enter a valid email address');
-const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
+const passwordSchema = z.string().min(10, 'Password must be at least 10 characters');
 
-// Password requirements for signup
+// Kept in sync with worker-api/src/lib/password.ts `checkPasswordStrength`.
+// Server is authoritative — these are fast client-side hints, not a gate.
+const COMMON_BASES = ['healios', 'thehealios', 'password', 'welcome', 'admin', 'qwerty', 'letmein'];
+
 const passwordRequirements = [
-  { regex: /.{6,}/, label: 'At least 6 characters' },
-  { regex: /[A-Z]/, label: 'One uppercase letter' },
-  { regex: /[a-z]/, label: 'One lowercase letter' },
-  { regex: /[0-9]/, label: 'One number' },
+  { regex: /.{10,}/, label: 'At least 10 characters' },
+  {
+    test: (v: string) => {
+      const lower = v.toLowerCase();
+      return v.length > 0 && !COMMON_BASES.some(b => lower.includes(b));
+    },
+    label: 'Avoids common words (e.g. "healios", "password")',
+  },
 ];
 
 type AuthMode = 'signIn' | 'signUp' | 'forgotPassword';
@@ -84,7 +91,7 @@ const Auth = () => {
   const getPasswordRequirementsMet = useCallback((value: string) => {
     return passwordRequirements.map(req => ({
       ...req,
-      met: req.regex.test(value)
+      met: 'regex' in req ? req.regex.test(value) : req.test(value),
     }));
   }, []);
 

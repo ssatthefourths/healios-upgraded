@@ -19,7 +19,7 @@ const ResetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirm) { toast.error("Passwords don't match"); return; }
-    if (password.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (password.length < 10) { toast.error("Password must be at least 10 characters"); return; }
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/auth/reset-password`, {
@@ -51,7 +51,7 @@ const ResetPassword = () => {
       <div className="w-full max-w-sm space-y-6 p-8 border rounded-2xl bg-card shadow-sm">
         <div className="space-y-1">
           <h1 className="text-2xl font-light">Set new password</h1>
-          <p className="text-sm text-muted-foreground">Choose a password at least 8 characters long.</p>
+          <p className="text-sm text-muted-foreground">Choose a password at least 10 characters long. Avoid common words like "healios", "password", or "welcome".</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -61,7 +61,7 @@ const ResetPassword = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              minLength={8}
+              minLength={10}
               required
               autoFocus
             />
@@ -73,7 +73,7 @@ const ResetPassword = () => {
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              minLength={8}
+              minLength={10}
               required
             />
           </div>

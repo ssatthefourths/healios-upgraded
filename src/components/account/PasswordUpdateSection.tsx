@@ -50,10 +50,10 @@ const PasswordUpdateSection = () => {
 
     if (!newPassword) {
       newErrors.newPassword = 'New password is required';
-    } else if (newPassword.length < 8) {
-      newErrors.newPassword = 'Password must be at least 8 characters';
+    } else if (newPassword.length < 10) {
+      newErrors.newPassword = 'Password must be at least 10 characters';
     } else if (strength.score < 2) {
-      newErrors.newPassword = 'Password is too weak. Add uppercase, numbers, or symbols.';
+      newErrors.newPassword = 'Password is too weak. Try a longer passphrase or mix of words.';
     }
 
     if (!confirmPassword) {
