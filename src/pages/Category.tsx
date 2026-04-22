@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import CategoryHeader from "../components/category/CategoryHeader";
@@ -221,6 +221,7 @@ const checkPriceFilter = (price: number, ranges: string[]): boolean => {
 
 const Category = () => {
   const { category } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
   
@@ -450,6 +451,25 @@ const Category = () => {
             <ProductGrid
               products={products || []}
               isLoading={isLoading}
+              filterLabel={
+                traitFilter
+                  ? categoryDisplayName
+                  : (filters.priceRanges.length || filters.suitability.length || filters.categories.length)
+                    ? `${categoryDisplayName} with your current filters`
+                    : undefined
+              }
+              onClearFilters={
+                (traitFilter || filters.priceRanges.length || filters.suitability.length || filters.categories.length)
+                  ? () => {
+                      setFilters({ priceRanges: [], suitability: [], categories: [] });
+                      setSortBy('featured');
+                      if (traitFilter) {
+                        // Trait pages (/category/non-vegan etc.) can only be cleared by navigating away.
+                        navigate('/category/shop');
+                      }
+                    }
+                  : undefined
+              }
             />
 
             <CategoryEducation categoryName={categoryFilter || categorySlug} />

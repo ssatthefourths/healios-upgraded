@@ -19,7 +19,8 @@ import {
   Shield,
   UserCog,
   UserX,
-  Gift
+  Gift,
+  Settings2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,6 +87,7 @@ const AdminSidebar = ({ collapsed = false, onCollapse }: AdminSidebarProps) => {
     { title: "Wellness", href: "/admin/wellness", icon: Heart },
     { title: "Blog", href: "/admin/blog", icon: FileText },
     { title: "Users", href: "/admin/users", icon: UserCog },
+    { title: "Site Settings", href: "/admin/site-config", icon: Settings2 },
   ];
 
   const analyticsItems: NavItem[] = [

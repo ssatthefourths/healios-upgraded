@@ -22,6 +22,7 @@ import { handleUpload } from './upload';
 import { handleNewsletter } from './newsletter';
 import { handleGiftCards } from './gift-cards';
 import { handleSearch } from './search';
+import { handleSiteConfig } from './site-config';
 
 export interface Env {
   DB: D1Database;
@@ -82,6 +83,10 @@ export default {
 
       if (path === '/search/products') {
         return await handleSearch(request, env);
+      }
+
+      if (path === '/public/site-config' || path === '/admin/site-config') {
+        return await handleSiteConfig(request, env);
       }
 
       if (path === '/currency') {

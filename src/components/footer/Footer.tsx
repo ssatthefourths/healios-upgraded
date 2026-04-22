@@ -9,10 +9,33 @@ import { trackMetaLead } from "@/lib/metaPixel";
 import { BRAND } from "@/constants/brand";
 import { ROUTES } from "@/constants/routes";
 import logger from "@/lib/logger";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import IconBundle, { type IconBundleItem } from "@/components/footer/IconBundle";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  TikTokIcon,
+  GoogleIcon,
+  TrustpilotIcon,
+} from "@/components/footer/FooterIcons";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { config } = useSiteConfig();
+
+  const socialItems: IconBundleItem[] = [
+    { key: "facebook", label: "Facebook", href: config["social.facebook"] ?? "", Icon: FacebookIcon },
+    { key: "instagram", label: "Instagram", href: config["social.instagram"] ?? "", Icon: InstagramIcon },
+    { key: "tiktok", label: "TikTok", href: config["social.tiktok"] ?? "", Icon: TikTokIcon },
+  ].filter((i) => i.href.trim().length > 0);
+
+  const trustItems: IconBundleItem[] = [
+    { key: "google", label: "Google Business", href: config["trust.google_business"] ?? "", Icon: GoogleIcon },
+    { key: "trustpilot", label: "Trustpilot", href: config["trust.trustpilot"] ?? "", Icon: TrustpilotIcon },
+  ].filter((i) => i.href.trim().length > 0);
+
+  const showIconRow = socialItems.length > 0 || trustItems.length > 0;
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

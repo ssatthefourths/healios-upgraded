@@ -28,9 +28,14 @@ interface Product {
 interface ProductGridProps {
   products: Product[];
   isLoading: boolean;
+  /** Human-readable label for the filter(s) that produced this result set —
+   *  e.g. "Non-vegan in Beauty". Used in the empty-state message. */
+  filterLabel?: string;
+  /** If provided, renders a "Clear filters" button in the empty state. */
+  onClearFilters?: () => void;
 }
 
-const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
+const ProductGrid = ({ products, isLoading, filterLabel, onClearFilters }: ProductGridProps) => {
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
   const productIds = useMemo(() => products.map(p => p.id), [products]);
@@ -63,11 +68,32 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
   if (!products || products.length === 0) {
     return (
       <section className="w-full px-6 mb-16">
-        <div className="text-center py-16">
-          <p className="text-muted-foreground mb-4">No products found in this category.</p>
-          <Link to="/category/shop" className="text-foreground underline hover:no-underline">
-            Browse all products
-          </Link>
+        <div className="max-w-md mx-auto text-center py-16 space-y-4">
+          <h3 className="text-lg font-medium text-foreground">
+            {filterLabel ? `Nothing here for ${filterLabel}` : "No products found"}
+          </h3>
+          <p className="text-sm font-light text-muted-foreground">
+            {filterLabel
+              ? "Try widening your filters or browse everything we stock."
+              : "This category is empty right now. Check back soon or browse our full range."}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            {onClearFilters && (
+              <button
+                type="button"
+                onClick={onClearFilters}
+                className="px-5 py-2.5 border border-foreground text-foreground text-sm font-light rounded-none hover:bg-foreground hover:text-background transition-colors"
+              >
+                Clear filters
+              </button>
+            )}
+            <Link
+              to="/category/shop"
+              className="px-5 py-2.5 bg-foreground text-background text-sm font-light rounded-none hover:bg-foreground/90 transition-colors"
+            >
+              Browse all products
+            </Link>
+          </div>
         </div>
       </section>
     );
