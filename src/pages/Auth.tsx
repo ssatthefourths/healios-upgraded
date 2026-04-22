@@ -39,6 +39,15 @@ const Auth = () => {
   const { signUp, signIn, resetPassword, user } = useAuth();
   const navigate = useNavigate();
 
+  // Same-origin path validator — prevents open-redirect abuse.
+  // Accepts only paths that start with "/" and aren't protocol-relative ("//").
+  const safeRedirect = useCallback((): string => {
+    const raw = searchParams.get('redirect');
+    if (!raw) return '/account';
+    if (!raw.startsWith('/') || raw.startsWith('//')) return '/account';
+    return raw;
+  }, [searchParams]);
+
   // Check if user came from password reset link
   useEffect(() => {
     if (searchParams.get('reset') === 'true') {
@@ -49,9 +58,9 @@ const Auth = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate('/account');
+      navigate(safeRedirect());
     }
-  }, [user, navigate]);
+  }, [user, navigate, safeRedirect]);
 
   // Real-time email validation
   const validateEmailField = useCallback((value: string): string | null => {
@@ -171,7 +180,7 @@ const Auth = () => {
           }
         } else {
           toast.success('Account created successfully! Welcome to Healios.');
-          navigate('/account');
+          navigate(safeRedirect());
         }
       } else {
         const { error } = await signIn(email, password);
@@ -184,7 +193,7 @@ const Auth = () => {
           }
         } else {
           toast.success('Welcome back!');
-          navigate('/account');
+          navigate(safeRedirect());
         }
       }
     } catch (err) {
