@@ -4,6 +4,7 @@ import OrderConfirmation from "@/components/checkout/OrderConfirmation";
 import LoyaltyPointsRedeem from "@/components/checkout/LoyaltyPointsRedeem";
 import GiftCardRedeem from "@/components/checkout/GiftCardRedeem";
 import ReferralCodeInput from "@/components/checkout/ReferralCodeInput";
+import PaymentMethodBadges from "@/components/checkout/PaymentMethodBadges";
 import CheckoutHeader from "../components/header/CheckoutHeader";
 import Footer from "../components/footer/Footer";
 import PageContainer from "@/components/layout/PageContainer";
@@ -1360,6 +1361,7 @@ const Checkout = () => {
                       <Lock className="h-4 w-4" />
                       <span>Secure checkout powered by Stripe</span>
                     </div>
+                    <PaymentMethodBadges />
                   </div>
 
                   <Button
