@@ -21,7 +21,8 @@ import {
   UserX,
   Gift,
   Settings2,
-  Search
+  Search,
+  LineChart as LineChartIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -90,6 +91,7 @@ const AdminSidebar = ({ collapsed = false, onCollapse }: AdminSidebarProps) => {
     { title: "Users", href: "/admin/users", icon: UserCog },
     { title: "Site Settings", href: "/admin/site-config", icon: Settings2 },
     { title: "Search Phrases", href: "/admin/search-phrases", icon: Search },
+    { title: "Search Analytics", href: "/admin/search-analytics", icon: LineChartIcon },
   ];
 
   const analyticsItems: NavItem[] = [

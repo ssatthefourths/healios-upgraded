@@ -24,6 +24,7 @@ import { handleGiftCards } from './gift-cards';
 import { handleSearch } from './search';
 import { handleSiteConfig } from './site-config';
 import { handleSearchPhrases } from './search-phrases';
+import { handleSearchAnalytics } from './search-analytics';
 
 export interface Env {
   DB: D1Database;
@@ -92,6 +93,15 @@ export default {
 
       if (path.startsWith('/admin/search-phrases')) {
         return await handleSearchPhrases(request, env);
+      }
+
+      if (
+        path === '/search/log' ||
+        path === '/search/log-click' ||
+        path === '/admin/search-analytics' ||
+        path.startsWith('/admin/search-configs')
+      ) {
+        return await handleSearchAnalytics(request, env);
       }
 
       if (path === '/currency') {

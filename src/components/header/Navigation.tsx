@@ -12,6 +12,23 @@ import ShoppingBag from "./ShoppingBag";
 import CurrencySelector from "./CurrencySelector";
 import CartPopover from "./CartPopover";
 import { getProductPath } from "@/lib/productPath";
+import { getVisitorId } from "@/lib/visitorId";
+
+const SEARCH_API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
+
+/** Fire-and-forget click attribution. Never throws. */
+const logSearchClick = (query: string, clickedId: string) => {
+  try {
+    fetch(`${SEARCH_API_URL}/search/log-click`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, clicked_id: clickedId, visitor_id: getVisitorId() }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    // ignore
+  }
+};
 // Product images for navigation dropdowns
 const magnesiumImage = "/products/magnesium-gummies.png";
 const ashwagandhaImage = "/products/ashwagandha-gummies.png";
@@ -510,6 +527,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
                       } else if (e.key === 'Enter') {
                         const picked = results[activeResultIndex] ?? results[0];
                         if (picked) {
+                          logSearchClick(query, picked.id);
                           setIsSearchOpen(false);
                           clearSearch();
                           navigate(getProductPath(picked));
@@ -548,6 +566,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
                             isActive ? 'bg-muted/70' : 'hover:bg-muted/50'
                           }`}
                           onClick={() => {
+                            logSearchClick(query, product.id);
                             setIsSearchOpen(false);
                             clearSearch();
                           }}

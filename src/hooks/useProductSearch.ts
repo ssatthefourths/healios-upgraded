@@ -1,6 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { getVisitorId } from '@/lib/visitorId';
 
 const API_URL = import.meta.env.VITE_CF_WORKER_URL || 'https://healios-api.ss-f01.workers.dev';
+
+/** Fire-and-forget log of a search query. Never throws; never awaits. */
+const logSearch = (query: string, resultCount: number) => {
+  try {
+    fetch(`${API_URL}/search/log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, result_count: resultCount, visitor_id: getVisitorId() }),
+      keepalive: true,
+    }).catch(() => {
+      // Intentionally silent — analytics must never crash search UX.
+    });
+  } catch {
+    // Browser blocked fetch for some reason. Fine.
+  }
+};
 
 export interface SearchResult {
   id: string;
@@ -43,7 +60,12 @@ export const useProductSearch = () => {
         return;
       }
       const data = (await res.json()) as { results: SearchResult[] };
-      setResults(data.results ?? []);
+      const nextResults = data.results ?? [];
+      setResults(nextResults);
+      // Log the search (fire-and-forget). Skip if the server refused the
+      // query (empty results can mean rejected-by-sanitizer, still worth
+      // logging as "zero result" to surface in the admin miss report).
+      logSearch(trimmed, nextResults.length);
     } catch {
       // Network blip — empty results beats a stale list.
       setResults([]);

@@ -45,6 +45,9 @@ function normalisePhrase(raw: unknown): string | null {
 
 async function rebuildFtsPhrasesForProducts(env: Env, productIds: string[]): Promise<void> {
   if (productIds.length === 0) return;
+  // Only aggregate phrases from configs where is_active = 1. Phrases bound
+  // to disabled configs stop contributing to search the instant the config
+  // is toggled off.
   const stmts = productIds.map((pid) =>
     env.DB.prepare(
       `UPDATE products_fts
@@ -52,7 +55,9 @@ async function rebuildFtsPhrasesForProducts(env: Env, productIds: string[]): Pro
             (SELECT GROUP_CONCAT(sp.phrase, ' ')
                FROM search_phrases sp
                JOIN search_phrase_products spp ON spp.phrase_id = sp.id
-              WHERE spp.product_id = ?),
+               JOIN search_configs sc          ON sc.id         = sp.config_id
+              WHERE spp.product_id = ?
+                AND sc.is_active = 1),
             ''
           )
         WHERE product_id = ?`
@@ -61,21 +66,25 @@ async function rebuildFtsPhrasesForProducts(env: Env, productIds: string[]): Pro
   await env.DB.batch(stmts);
 }
 
-interface PhraseRow { id: number; phrase: string; product_ids: string[] }
+interface PhraseRow { id: number; phrase: string; product_ids: string[]; config_id: number }
 
-async function listAll(env: Env): Promise<PhraseRow[]> {
+async function listAll(env: Env, configId: number | null): Promise<PhraseRow[]> {
+  const where = configId != null ? 'WHERE sp.config_id = ?' : '';
+  const bindings = configId != null ? [configId] : [];
   const { results } = await env.DB.prepare(
-    `SELECT sp.id, sp.phrase,
+    `SELECT sp.id, sp.phrase, sp.config_id,
             COALESCE(GROUP_CONCAT(spp.product_id, ','), '') AS product_ids_csv
      FROM search_phrases sp
      LEFT JOIN search_phrase_products spp ON spp.phrase_id = sp.id
-     GROUP BY sp.id, sp.phrase
+     ${where}
+     GROUP BY sp.id, sp.phrase, sp.config_id
      ORDER BY sp.phrase COLLATE NOCASE`
-  ).all<{ id: number; phrase: string; product_ids_csv: string }>();
+  ).bind(...bindings).all<{ id: number; phrase: string; config_id: number; product_ids_csv: string }>();
 
   return (results ?? []).map((r) => ({
     id: r.id,
     phrase: r.phrase,
+    config_id: r.config_id,
     product_ids: r.product_ids_csv ? r.product_ids_csv.split(',').filter(Boolean) : [],
   }));
 }
@@ -99,7 +108,9 @@ export async function handleSearchPhrases(request: Request, env: Env): Promise<R
   const id = idMatch ? parseInt(idMatch[1], 10) : null;
 
   if (path === '/admin/search-phrases' && method === 'GET') {
-    const data = await listAll(env);
+    const configParam = url.searchParams.get('config_id');
+    const configId = configParam ? parseInt(configParam, 10) : null;
+    const data = await listAll(env, Number.isFinite(configId ?? NaN) ? configId : null);
     return new Response(JSON.stringify({ phrases: data }), { headers: CORS });
   }
 
@@ -118,8 +129,17 @@ export async function handleSearchPhrases(request: Request, env: Env): Promise<R
       return new Response(JSON.stringify({ error: 'too many product_ids' }), { status: 400, headers: CORS });
     }
 
+    // Accept optional config_id so the new phrase belongs to a specific config.
+    const rawConfigId = (body as { config_id?: unknown }).config_id;
+    const configId = typeof rawConfigId === 'number' && Number.isFinite(rawConfigId) ? rawConfigId : 1;
+
     // Insert phrase (or fetch existing row by unique phrase).
-    await env.DB.prepare('INSERT OR IGNORE INTO search_phrases (phrase) VALUES (?)').bind(phrase).run();
+    await env.DB.prepare(
+      'INSERT OR IGNORE INTO search_phrases (phrase, config_id) VALUES (?, ?)'
+    ).bind(phrase, configId).run();
+    // If it already existed with a different config, honour the caller's choice.
+    await env.DB.prepare('UPDATE search_phrases SET config_id = ? WHERE phrase = ?')
+      .bind(configId, phrase).run();
     const row = await env.DB.prepare('SELECT id FROM search_phrases WHERE phrase = ?').bind(phrase).first<{ id: number }>();
     if (!row) {
       return new Response(JSON.stringify({ error: 'Failed to persist phrase' }), { status: 500, headers: CORS });
@@ -179,6 +199,70 @@ export async function handleSearchPhrases(request: Request, env: Env): Promise<R
     await rebuildFtsPhrasesForProducts(env, affected);
 
     return new Response(JSON.stringify({ success: true }), { headers: CORS });
+  }
+
+  // Bulk: admin picks N queries from the analytics page + M products in one drawer.
+  // Create one phrase per query mapped to all selected products in target config.
+  if (path === '/admin/search-phrases/bulk' && method === 'POST') {
+    let body: unknown;
+    try { body = await request.json(); } catch { body = {}; }
+    const phrasesIn = (body as { phrases?: unknown }).phrases;
+    const productIds = (body as { product_ids?: unknown }).product_ids;
+    const rawConfigId = (body as { config_id?: unknown }).config_id;
+    const configId = typeof rawConfigId === 'number' && Number.isFinite(rawConfigId) ? rawConfigId : 1;
+
+    if (!Array.isArray(phrasesIn) || phrasesIn.length === 0) {
+      return new Response(JSON.stringify({ error: 'phrases[] required' }), { status: 400, headers: CORS });
+    }
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return new Response(JSON.stringify({ error: 'product_ids[] required' }), { status: 400, headers: CORS });
+    }
+
+    const cleanPhrases: string[] = [];
+    for (const p of phrasesIn) {
+      const norm = normalisePhrase(p);
+      if (norm) cleanPhrases.push(norm);
+    }
+    if (cleanPhrases.length === 0) {
+      return new Response(JSON.stringify({ error: 'no valid phrases' }), { status: 400, headers: CORS });
+    }
+
+    // Upsert each phrase, then map it to every selected product.
+    const stmts: ReturnType<typeof env.DB.prepare>[] = [];
+    for (const phrase of cleanPhrases) {
+      stmts.push(
+        env.DB.prepare(
+          'INSERT OR IGNORE INTO search_phrases (phrase, config_id) VALUES (?, ?)'
+        ).bind(phrase, configId)
+      );
+      stmts.push(
+        env.DB.prepare('UPDATE search_phrases SET config_id = ? WHERE phrase = ?').bind(configId, phrase)
+      );
+    }
+    await env.DB.batch(stmts);
+
+    // Fetch the phrase ids we now own, then insert the mappings.
+    const { results: phraseRows } = await env.DB.prepare(
+      `SELECT id, phrase FROM search_phrases WHERE phrase IN (${cleanPhrases.map(() => '?').join(',')})`
+    ).bind(...cleanPhrases).all<{ id: number; phrase: string }>();
+
+    const mapStmts: ReturnType<typeof env.DB.prepare>[] = [];
+    for (const row of phraseRows ?? []) {
+      for (const pid of productIds as string[]) {
+        mapStmts.push(
+          env.DB.prepare(
+            'INSERT OR IGNORE INTO search_phrase_products (phrase_id, product_id) VALUES (?, ?)'
+          ).bind(row.id, pid)
+        );
+      }
+    }
+    if (mapStmts.length > 0) await env.DB.batch(mapStmts);
+    await rebuildFtsPhrasesForProducts(env, productIds as string[]);
+
+    return new Response(
+      JSON.stringify({ success: true, created: cleanPhrases.length, mapped_products: (productIds as string[]).length }),
+      { status: 201, headers: CORS }
+    );
   }
 
   return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers: CORS });
