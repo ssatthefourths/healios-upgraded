@@ -571,16 +571,6 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
                       );
                     })}
                   </div>
-                  <Link
-                    to={`/category/all?search=${encodeURIComponent(query)}`}
-                    className="block text-center text-sm text-nav-foreground hover:text-nav-hover mt-4 py-2 border border-border rounded-full transition-colors"
-                    onClick={() => {
-                      setIsSearchOpen(false);
-                      clearSearch();
-                    }}
-                  >
-                    View all results
-                  </Link>
                 </div>
               )}
 
