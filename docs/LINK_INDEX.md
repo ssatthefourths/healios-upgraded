@@ -15,6 +15,7 @@ Routes are defined in [src/App.tsx](../src/App.tsx) and aliased in [src/constant
 | `/category/:category` | Category | no | no |
 | `/product/:productId` | ProductDetail | no | no |
 | `/bundle/:slug` | BundleDetail | yes | no |
+| `/order/:accessToken` | GuestOrder | yes | no |
 | `/checkout` | Checkout | no | no |
 | `/auth` | Auth | no | no |
 | `/account` | Account | no | no |
@@ -256,4 +257,19 @@ curl -s "$BASE/products?order=sort_order.asc&limit=6" | node -e "let d='';proces
 3. Type "ashwa" in header search → only Ashwagandha row appears → click → Ashwagandha PDP.
 4. Direct-navigate to `/product/halo-glow` → Halo Glow PDP.
 5. Direct-navigate to `/product/halo-glow-collagen` (the id form) → still Halo Glow PDP.
+
+---
+
+## Known-external console noise (not our bug, do not chase)
+
+The Stripe-hosted checkout page at `checkout.stripe.com` produces several console warnings/errors inside its own iframe. We have no control over them and payments complete successfully:
+
+- `<link rel=preload> uses an unsupported 'as' value` — Stripe's preload tag, not ours.
+- `Loading the font '<URL>' violates the following Content Security Policy directive: "font-src 'self' ..."` — Stripe's CSP.
+- `Uncaught (in promise) FetchError: Error fetching https://r.stripe.com/b: Failed to fetch` — Stripe's analytics endpoint.
+- `POST https://errors.stripe.com/api/211/store/?... 429 (Too Many Requests)` — Stripe's Sentry rate limiter.
+- `POST https://errors.stripe.com/api/211/envelope/?... 400 (Bad Request)` — Stripe's Sentry envelope.
+- `Executing inline script violates the following Content Security Policy directive 'script-src 'self''. The policy is report-only, so the violation has been logged but no further action has been taken.` — Stripe's report-only CSP.
+
+We set no CSP headers, no preload tags, and inject no scripts into Stripe's domain. If any of these appear while debugging a real checkout issue, they are not the cause — keep looking.
 
