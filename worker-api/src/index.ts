@@ -21,6 +21,7 @@ import { handleBundles } from './bundles';
 import { handleUpload } from './upload';
 import { handleNewsletter } from './newsletter';
 import { handleGiftCards } from './gift-cards';
+import { handleSearch } from './search';
 
 export interface Env {
   DB: D1Database;
@@ -77,6 +78,10 @@ export default {
 
       if (path === '/checkout-session') {
         return await handleCheckout(request, env);
+      }
+
+      if (path === '/search/products') {
+        return await handleSearch(request, env);
       }
 
       if (path === '/currency') {

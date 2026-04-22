@@ -28,6 +28,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
   const { formatPrice } = useCurrency();
   const navigate = useNavigate();
   const { query, setQuery, results, isLoading, clearSearch } = useProductSearch();
+  const [activeResultIndex, setActiveResultIndex] = useState(-1);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [hoveredSubItem, setHoveredSubItem] = useState<{name: string, href: string, image?: string, description?: string} | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -68,6 +69,11 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [isSearchOpen, offCanvasType]);
+
+  // Reset the keyboard-highlighted search result when the result set changes.
+  useEffect(() => {
+    setActiveResultIndex(results.length > 0 ? 0 : -1);
+  }, [results]);
 
   // Preload dropdown images for faster display
   useEffect(() => {
@@ -493,6 +499,23 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
                     autoFocus
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (results.length === 0) return;
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setActiveResultIndex(i => (i + 1) % results.length);
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setActiveResultIndex(i => (i <= 0 ? results.length - 1 : i - 1));
+                      } else if (e.key === 'Enter') {
+                        const picked = results[activeResultIndex] ?? results[0];
+                        if (picked) {
+                          setIsSearchOpen(false);
+                          clearSearch();
+                          navigate(getProductPath(picked));
+                        }
+                      }
+                    }}
                   />
                   {isLoading && (
                     <Loader2 className="w-5 h-5 text-nav-foreground animate-spin" />
@@ -514,28 +537,39 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
                 <div className="mb-8">
                   <h3 className="text-nav-foreground text-sm font-light mb-4">Results</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {results.map((product) => (
-                      <Link
-                        key={product.id}
-                        to={getProductPath(product)}
-                        className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
-                        onClick={() => {
-                          setIsSearchOpen(false);
-                          clearSearch();
-                        }}
-                      >
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-16 h-16 object-cover rounded-md bg-muted"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-nav-foreground text-sm font-medium truncate">{product.name}</p>
-                          <p className="text-nav-foreground/60 text-xs">{product.category}</p>
-                          <p className="text-nav-foreground text-sm mt-1">{formatPrice(product.price)}</p>
-                        </div>
-                      </Link>
-                    ))}
+                    {results.map((product, idx) => {
+                      const isActive = idx === activeResultIndex;
+                      return (
+                        <Link
+                          key={product.id}
+                          to={getProductPath(product)}
+                          onMouseEnter={() => setActiveResultIndex(idx)}
+                          className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
+                            isActive ? 'bg-muted/70' : 'hover:bg-muted/50'
+                          }`}
+                          onClick={() => {
+                            setIsSearchOpen(false);
+                            clearSearch();
+                          }}
+                        >
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-16 h-16 object-cover rounded-md bg-muted"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className="text-nav-foreground text-sm font-medium truncate [&_mark]:bg-primary/20 [&_mark]:text-inherit [&_mark]:rounded-sm [&_mark]:px-0.5"
+                              // Worker builds highlight from quoted tokens wrapped in <mark>;
+                              // no raw user input reaches innerHTML.
+                              dangerouslySetInnerHTML={{ __html: product.highlight || product.name }}
+                            />
+                            <p className="text-nav-foreground/60 text-xs">{product.category}</p>
+                            <p className="text-nav-foreground text-sm mt-1">{formatPrice(product.price)}</p>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                   <Link
                     to={`/category/all?search=${encodeURIComponent(query)}`}
