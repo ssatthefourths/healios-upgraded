@@ -1,6 +1,17 @@
 import { Env } from './index';
+import { hashPassword, verifyPassword, needsRehash, checkPasswordStrength } from './lib/password';
 
-export async function handleAuth(request: Request, env: Env): Promise<Response> {
+// Re-export so other modules (admin-users.ts) keep their existing import site
+// working while using the new PBKDF2 hasher.
+export { hashPassword, verifyPassword, checkPasswordStrength } from './lib/password';
+
+// A harmless PBKDF2-formatted placeholder used to flatten the timing of
+// `/auth/signin` across the three outcomes (no-user / legacy-hash-wrong /
+// pbkdf2-wrong) so an attacker cannot enumerate accounts by response time.
+// Its plaintext is a random 256-bit value no one will ever type.
+const DUMMY_STORED_HASH = 'pbkdf2$100000$AAAAAAAAAAAAAAAAAAAAAA==$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+
+export async function handleAuth(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
   const method = request.method;
@@ -13,9 +24,15 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
   // POST /auth/signup
   if (path === '/auth/signup' && method === 'POST') {
     const { email, password, firstName, lastName } = await request.json() as any;
-    
-    // Simple password hashing (in production, use something better or a library)
-    // For D1 Free tier, we'll use a simple implementation for now
+
+    if (!email || typeof email !== 'string') {
+      return new Response(JSON.stringify({ error: 'Signup failed' }), { status: 400, headers: corsHeaders });
+    }
+    const strength = checkPasswordStrength(password);
+    if (!strength.ok) {
+      return new Response(JSON.stringify({ error: strength.reason }), { status: 400, headers: corsHeaders });
+    }
+
     const id = crypto.randomUUID();
     const passwordHash = await hashPassword(password);
 
@@ -29,25 +46,44 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
       ).bind(id, firstName, lastName).run();
 
       const sessionToken = await createSession(id, env);
-      
+
       return new Response(JSON.stringify({ user: { id, email, first_name: firstName, last_name: lastName }, session: sessionToken }), {
         headers: corsHeaders,
       });
     } catch (err: any) {
-      return new Response(JSON.stringify({ error: 'User already exists or database error' }), { status: 400, headers: corsHeaders });
+      // Generic message so an attacker cannot enumerate which emails are already registered.
+      return new Response(JSON.stringify({ error: 'Signup failed' }), { status: 400, headers: corsHeaders });
     }
   }
 
   // POST /auth/signin
   if (path === '/auth/signin' && method === 'POST') {
     const { email, password } = await request.json() as any;
-    
+
     const user = await env.DB.prepare(
       'SELECT id, email, password_hash FROM users WHERE email = ?'
     ).bind(email).first<any>();
 
-    if (!user || !(await verifyPassword(password, user.password_hash))) {
+    // Always do a verify so latency is uniform whether or not the email exists.
+    // When no user, verify against a dummy hash the attacker can never match.
+    const storedHash = user?.password_hash ?? DUMMY_STORED_HASH;
+    const verified = await verifyPassword(password, storedHash);
+    if (!user || !verified) {
       return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401, headers: corsHeaders });
+    }
+
+    // Upgrade-on-next-login: if the stored hash is the legacy unsalted
+    // SHA-256 format, replace it with PBKDF2. Defer via ctx.waitUntil so the
+    // extra hashing + D1 UPDATE don't inflate the user-facing request and
+    // don't push the signin handler past the free-tier 10ms CPU ceiling.
+    if (needsRehash(user.password_hash)) {
+      ctx.waitUntil((async () => {
+        try {
+          const upgraded = await hashPassword(password);
+          await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?')
+            .bind(upgraded, user.id).run();
+        } catch { /* non-critical — next successful login will retry */ }
+      })());
     }
 
     const profile = await env.DB.prepare(
@@ -155,8 +191,12 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
   // POST /auth/reset-password
   if (path === '/auth/reset-password' && method === 'POST') {
     const { token, password } = await request.json() as any;
-    if (!token || !password || password.length < 8) {
-      return new Response(JSON.stringify({ error: 'Token and password (min 8 chars) required' }), { status: 400, headers: corsHeaders });
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired reset link' }), { status: 400, headers: corsHeaders });
+    }
+    const strength = checkPasswordStrength(password);
+    if (!strength.ok) {
+      return new Response(JSON.stringify({ error: strength.reason }), { status: 400, headers: corsHeaders });
     }
 
     const row = await env.DB.prepare(
@@ -184,8 +224,9 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
     const body = await request.json() as any;
 
     if (body.password) {
-      if (body.password.length < 8) {
-        return new Response(JSON.stringify({ error: 'Password must be at least 8 characters' }), { status: 400, headers: corsHeaders });
+      const strength = checkPasswordStrength(body.password);
+      if (!strength.ok) {
+        return new Response(JSON.stringify({ error: strength.reason }), { status: 400, headers: corsHeaders });
       }
       const hash = await hashPassword(body.password);
       await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(hash, userId).run();
@@ -204,18 +245,6 @@ export async function handleAuth(request: Request, env: Env): Promise<Response> 
   }
 
   return new Response('Auth endpoint not found', { status: 404, headers: corsHeaders });
-}
-
-// Helper functions (simplified for Worker environment)
-export async function hashPassword(password: string): Promise<string> {
-  const msgUint8 = new TextEncoder().encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return (await hashPassword(password)) === hash;
 }
 
 async function createSession(userId: string, env: Env): Promise<string> {
