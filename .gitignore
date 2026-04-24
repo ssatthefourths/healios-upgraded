@@ -16,6 +16,10 @@ dist-ssr
 .ai_state/
 handoffs/
 
+# Generated SQL and session artifacts
+scripts/out/
+session-reports/
+
 # Environment and Secrets
 .env
 .env.production
