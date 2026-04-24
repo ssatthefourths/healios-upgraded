@@ -32,27 +32,27 @@ const LargeHero = () => {
           className="w-full h-full object-cover"
         />
 
-        {/* Multi-layer gradient for depth */}
+        {/* Multi-layer gradient for depth — mirrored for right-anchored content */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
 
-        {/* Content positioned at bottom-left */}
+        {/* Content positioned at bottom-right on md+; full-width with natural left-align on mobile */}
         <div
           ref={contentReveal}
-          className="absolute bottom-[var(--space-lg)] left-[var(--space-lg)] right-[var(--space-lg)] md:right-auto md:max-w-xl text-white"
+          className="absolute bottom-[var(--space-lg)] left-[var(--space-lg)] right-[var(--space-lg)] md:left-auto md:max-w-xl md:text-right text-white"
         >
-          {/* Thin rule accent */}
-          <div className="w-8 h-px bg-white/50 mb-4" />
+          {/* Thin rule accent — flips to the right on md+ to match text alignment */}
+          <div className="w-8 h-px bg-white/50 mb-4 md:ml-auto" />
 
           <h1 className="cinematic-title mb-[var(--space-sm)]">
             Wellness,<br />Elevated.
           </h1>
 
-          <p className="text-sm md:text-base font-light opacity-80 max-w-sm mb-[var(--space-md)] leading-relaxed">
+          <p className="text-sm md:text-base font-light opacity-80 max-w-sm mb-[var(--space-md)] leading-relaxed md:ml-auto">
             Science-backed gummy supplements that help you sleep deeper, think clearer, and feel your best, every single day.
           </p>
 
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap md:justify-end">
             <Link
               to="/category/best-sellers"
               className="inline-flex items-center gap-2 bg-white text-foreground px-5 py-2.5 text-xs font-medium premium-btn rounded-[var(--radius)] tracking-wide uppercase"
@@ -76,19 +76,8 @@ const LargeHero = () => {
         </div>
       </div>
 
-      {/* Caption strip below hero */}
+      {/* Caption strip below hero — "All products" moved to the left, credibility nuggets to the right (ticket #13) */}
       <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-[var(--space-lg)]">
-          {[
-            { label: "Free Delivery", sub: region.delivery },
-            { label: "🇬🇧 UK Made", sub: "Premium quality" },
-          ].map(({ label, sub }) => (
-            <div key={label} className="hidden sm:block">
-              <p className="text-xs font-medium text-foreground tracking-wide">{label}</p>
-              <p className="text-xs font-light text-muted-foreground">{sub}</p>
-            </div>
-          ))}
-        </div>
         <Link
           to="/category/all"
           className="inline-flex items-center gap-1.5 text-xs font-light text-muted-foreground hover:text-foreground transition-colors duration-300 tracking-wide whitespace-nowrap"
@@ -96,6 +85,17 @@ const LargeHero = () => {
           <span>All products</span>
           <ArrowRight size={11} />
         </Link>
+        <div className="flex items-center gap-[var(--space-lg)]">
+          {[
+            { label: "Free Delivery", sub: region.delivery },
+            { label: "🇬🇧 UK Made", sub: "Premium quality" },
+          ].map(({ label, sub }) => (
+            <div key={label} className="hidden sm:block text-right">
+              <p className="text-xs font-medium text-foreground tracking-wide">{label}</p>
+              <p className="text-xs font-light text-muted-foreground">{sub}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
