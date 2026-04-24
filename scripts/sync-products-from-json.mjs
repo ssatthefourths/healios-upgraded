@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
-const JSON_PATH = resolve(REPO_ROOT, 'Healios Project Assets/Products/products.json');
+const JSON_PATH = resolve(REPO_ROOT, 'docs/healios-products-spec.json');
 const OUT_PATH = resolve(REPO_ROOT, 'scripts/out/sync-products.sql');
 
 const COMING_SOON_IDS = [

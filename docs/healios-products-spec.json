@@ -1,0 +1,273 @@
+{
+  "schema_version": "v1.0",
+  "generated_at": "2026-04-23",
+  "status": "draft — 5 of 14 live products. Remaining 9 handled via Coming Soon ticket.",
+  "products": [
+    {
+      "slug": "acv-ginger-gummies",
+      "name": "ACV & Ginger Gummies",
+      "url": "https://www.thehealios.com/product/acv-ginger",
+      "status": "live",
+      "category": "Digestive Health",
+      "format": "Gummy",
+      "pack_size": "60 Gummies",
+      "servings_per_pack": 30,
+      "serving_size": "2 gummies",
+      "price": {
+        "gbp": "15.99"
+      },
+      "image": {
+        "primary": "https://www.thehealios.com/products/acv-ginger-gummies.png",
+        "gallery": []
+      },
+      "description": {
+        "short": "Support gut health and metabolism with the power of Apple Cider Vinegar.",
+        "long": null
+      },
+      "ingredients": {
+        "active": "Apple Cider Vinegar (with Mother) 500mg; Ginger Extract 10mg (per 2 gummies)",
+        "other": "Glucose Syrup, Sugar, Water, Pre-mix (Ginger Extract, Mother Apple Cider Vinegar), Pectin, Citric Acid, Sodium Citrate, Anthocyanadins, Sodium Copper Chlorophyll, Coconut Oil, Carnauba Wax, Apple Flavour",
+        "full": "Glucose Syrup, Sugar, Water, Pre-mix (Ginger Extract, Mother Apple Cider Vinegar), Pectin, Citric Acid, Sodium Citrate, Anthocyanadins, Sodium Copper Chlorophyll, Coconut Oil, Carnauba Wax, Apple Flavour"
+      },
+      "allergens": "Manufactured in a facility that handles allergy-based materials",
+      "suitability": {
+        "vegan": true,
+        "vegan_note": null,
+        "vegetarian": true,
+        "adults": true,
+        "kids": false,
+        "pregnancy_safe": null,
+        "breastfeeding_safe": null
+      },
+      "contraindications": "Consult health practitioner if taking medication or under medical supervision",
+      "goals": {
+        "primary": null,
+        "secondary": null
+      },
+      "certifications": null,
+      "subscription": {
+        "eligible": null,
+        "discount_pct": null
+      },
+      "sku": "acv-ginger-gummies"
+    },
+    {
+      "slug": "vitamin-d3-gummies",
+      "name": "Vitamin D3 4000 IU Gummies",
+      "url": "https://www.thehealios.com/product/vitamin-d3",
+      "status": "live",
+      "category": "Vitamins & Minerals",
+      "format": "Gummy",
+      "pack_size": "60 Gummies",
+      "servings_per_pack": 60,
+      "serving_size": "1 gummy",
+      "price": {
+        "gbp": "14.99"
+      },
+      "image": {
+        "primary": "https://www.thehealios.com/products/vitamin-d3-gummies.png",
+        "gallery": []
+      },
+      "description": {
+        "short": "High-strength Vitamin D3 to support immune health and bone strength.",
+        "long": null
+      },
+      "ingredients": {
+        "active": "Vitamin D3 (Colecalciferol) 100μg / 4000IU per gummy (2000% NRV)",
+        "other": "Glucose Syrup, Sugar, Water, Pectin (Gelling Agent), Citric Acid, Sodium Citrate, Coconut Oil, Carnauba Wax, Natural Orange Flavour, Paprika Extract (Natural colouring)",
+        "full": "Glucose Syrup, Sugar, Water, Pectin (Gelling Agent), Citric Acid, Sodium Citrate, Colecalciferol, Coconut Oil, Carnauba Wax, Natural Orange Flavour, Paprika Extract (Natural colouring)"
+      },
+      "allergens": "Manufactured in a facility that handles allergy-based materials",
+      "suitability": {
+        "vegan": false,
+        "vegan_note": null,
+        "vegetarian": true,
+        "adults": true,
+        "kids": false,
+        "pregnancy_safe": null,
+        "breastfeeding_safe": null
+      },
+      "contraindications": "Consult health practitioner if taking medication or under medical supervision",
+      "goals": {
+        "primary": null,
+        "secondary": null
+      },
+      "certifications": null,
+      "subscription": {
+        "eligible": null,
+        "discount_pct": null
+      },
+      "sku": "vitamin-d3-gummies"
+    },
+    {
+      "slug": "probiotics-vitamins-gummies",
+      "name": "Probiotic + Vitamin Mix",
+      "url": "https://www.thehealios.com/product/probiotic-multi",
+      "status": "live",
+      "category": "Digestive Health",
+      "format": "Capsule",
+      "pack_size": "120 Capsules",
+      "servings_per_pack": "60-120 (1-2 caps/serving)",
+      "serving_size": "1-2 capsules, 1-2x daily (1-4 caps/day)",
+      "price": {
+        "gbp": "22.99"
+      },
+      "image": {
+        "primary": "https://www.thehealios.com/products/probiotics-vitamins-gummies.png",
+        "gallery": []
+      },
+      "description": {
+        "short": "A multi-strain probiotic blend to balance your gut microbiome.",
+        "long": null
+      },
+      "ingredients": {
+        "active": "Active Live Culture Blend 10 Billion CFU/cap (Bifidobacterium lactis, B. bifidum, B. longum, Lactobacillus acidophilus, L. casei rhamnosus, Streptococcus thermophilus); FOS 40mg/cap",
+        "other": "Brown Rice Flour (Bulking), Capsule Shell (Hydroxypropyl Methylcellulose, Gellan Gum), Chicory Inulin (FOS), Magnesium Stearate (Anti-caking)",
+        "full": "Bulking Agent: Brown Rice Flour; Capsule Shell: Hydroxypropyl Methylcellulose, Gellan Gum; Active Live Culture Blend (6 strains); Chicory Inulin (Fructooligosaccharides); Anti-Caking Agent: Magnesium Stearate"
+      },
+      "allergens": "Manufactured in a facility that handles allergy-based materials",
+      "suitability": {
+        "vegan": true,
+        "vegan_note": null,
+        "vegetarian": true,
+        "adults": true,
+        "kids": false,
+        "pregnancy_safe": null,
+        "breastfeeding_safe": null
+      },
+      "contraindications": "Do not swallow with hot drinks. Consult health practitioner if taking medication or under medical supervision",
+      "goals": {
+        "primary": null,
+        "secondary": null
+      },
+      "certifications": null,
+      "subscription": {
+        "eligible": null,
+        "discount_pct": null
+      },
+      "sku": "probiotics-vitamins-gummies"
+    },
+    {
+      "slug": "ashwagandha-gummies",
+      "name": "Ashwagandha Gummies",
+      "url": "https://www.thehealios.com/product/ashwagandha-gummies",
+      "status": "live",
+      "category": "Adaptogens",
+      "format": "Capsule",
+      "pack_size": "90 Capsules",
+      "servings_per_pack": "45-90 (1-2 caps/serving)",
+      "serving_size": "1-2 capsules with food and water",
+      "price": {
+        "gbp": "24.99"
+      },
+      "image": {
+        "primary": "https://www.thehealios.com/products/ashwagandha-gummies.png",
+        "gallery": []
+      },
+      "description": {
+        "short": "Natural stress relief and cognitive support in delicious gummy form.",
+        "long": null
+      },
+      "ingredients": {
+        "active": "KSM-66 Ashwagandha Root Extract 500mg/cap (equivalent to 6250mg Ashwagandha root, ~12.5:1 ratio)",
+        "other": "Rice Bran, Capsule Shell: Hydroxypropyl Methylcellulose",
+        "full": "KSM-66 Ashwagandha Root Extract, Rice Bran, Capsule Shell (Hydroxypropyl Methylcellulose)"
+      },
+      "allergens": "Manufactured in a facility that handles allergy-based materials",
+      "suitability": {
+        "vegan": true,
+        "vegan_note": null,
+        "vegetarian": true,
+        "adults": true,
+        "kids": false,
+        "pregnancy_safe": false,
+        "breastfeeding_safe": false
+      },
+      "contraindications": "Not recommended for children, pregnant or lactating women. Consult health practitioner if taking medication.",
+      "goals": {
+        "primary": null,
+        "secondary": null
+      },
+      "certifications": "KSM-66®",
+      "subscription": {
+        "eligible": null,
+        "discount_pct": null
+      },
+      "sku": "ashwagandha-gummies"
+    },
+    {
+      "slug": "magnesium-gummies",
+      "name": "Magnesium Gummies",
+      "url": "https://www.thehealios.com/product/magnesium-gummies",
+      "status": "live",
+      "category": "Vitamins & Minerals",
+      "format": "Capsule",
+      "pack_size": "120 Capsules",
+      "servings_per_pack": 40,
+      "serving_size": "3 capsules (1 cap, 1-3x daily)",
+      "price": {
+        "gbp": "19.99"
+      },
+      "image": {
+        "primary": "https://www.thehealios.com/products/magnesium-gummies.png",
+        "gallery": []
+      },
+      "description": {
+        "short": "Support muscle function and relaxation with our tasty magnesium gummies.",
+        "long": null
+      },
+      "ingredients": {
+        "active": "Magnesium 375mg (100% NRV) per 3 caps — as Bisglycinate 180mg + Malate 165mg + Taurate 30mg; Vitamin B6 1.4mg (100% NRV)",
+        "other": "Magnesium Malate, Magnesium Bisglycinate (buffered), Capsule Shell (HPMC), Magnesium Taurine Chelate (buffered), Microcrystalline Cellulose (Bulking), Magnesium Stearate, Silicon Dioxide (Anti-caking), Pyridoxine Hydrochloride (B6)",
+        "full": "Magnesium Malate, Magnesium Bisglycinate (buffered), Capsule Shell: Hydroxypropyl Methylcellulose, Magnesium Taurine Chelate (buffered), Bulking Agent (Microcrystalline Cellulose), Anti-caking Agents (Magnesium Stearate, Silicon Dioxide), Pyridoxine Hydrochloride (Vitamin B6)"
+      },
+      "allergens": "Manufactured in a facility that handles allergy-based materials",
+      "suitability": {
+        "vegan": null,
+        "vegan_note": "Not explicitly declared on supplier doc — verification pending",
+        "vegetarian": true,
+        "adults": true,
+        "kids": false,
+        "pregnancy_safe": false,
+        "breastfeeding_safe": false
+      },
+      "contraindications": "Not recommended for children, pregnant or lactating women. Consult health practitioner if taking medication.",
+      "goals": {
+        "primary": null,
+        "secondary": null
+      },
+      "certifications": null,
+      "subscription": {
+        "eligible": null,
+        "discount_pct": null
+      },
+      "sku": "magnesium-gummies"
+    }
+  ],
+  "excluded_from_v1": {
+    "coming_soon": [
+      "lions-mane-gummies",
+      "hair-skin-nails-gummies",
+      "iron-vitamin-c-gummies",
+      "kids-multivitamin-gummies",
+      "folic-acid-gummies",
+      "turmeric-ginger-gummies",
+      "halo-glow-collagen",
+      "sleep-support-gummies",
+      "night-magnesium-gummies"
+    ],
+    "pre_launch_bundles": [
+      "morning-energy-stack",
+      "evening-wind-down-stack",
+      "beauty-glow-stack",
+      "immunity-boost-stack"
+    ]
+  },
+  "open_decisions": {
+    "sku_scheme": "Placeholder = slug. Final scheme TBD (proposal: HEA-[FORMAT]-[INGREDIENT]-[SIZE]).",
+    "subscription": "Eligibility and discount % not yet set for any product."
+  },
+  "resolved_decisions": {
+    "ksm66_trademark": "Healios is an approved Ixoreal Biomed KSM-66® brand partner. Logo usage rights granted. Safe to use publicly."
+  }
+}
