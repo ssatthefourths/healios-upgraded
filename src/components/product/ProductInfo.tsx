@@ -13,6 +13,7 @@ import { Minus, Plus, AlertTriangle, Check, Clock, Bell } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import WishlistButton from "./WishlistButton";
 import NotifyMeButton from "./NotifyMeButton";
+import FreeFromIcons from "./FreeFromIcons";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -33,6 +34,10 @@ interface ProductInfoProps {
     low_stock_threshold?: number;
     track_inventory?: boolean;
     is_coming_soon?: boolean;
+    is_vegan?: boolean | number | null;
+    is_gluten_free?: boolean | number | null;
+    is_sugar_free?: boolean | number | null;
+    is_keto_friendly?: boolean | number | null;
   };
 }
 
@@ -187,6 +192,9 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           </div>
         </div>
       </div>
+
+      {/* Free-from dietary traits (renders only the subset that's true on this product) */}
+      <FreeFromIcons product={product} />
 
       {/* Purchase Type Toggle - hide for coming soon products */}
       {!isComingSoon && (
