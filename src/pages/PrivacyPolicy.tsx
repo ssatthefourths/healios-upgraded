@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import SEOHead from "../components/seo/SEOHead";
@@ -100,6 +101,13 @@ const PrivacyPolicy = () => {
                 <li>Data portability</li>
                 <li>Withdrawal of consent (where applicable)</li>
               </ul>
+              <p className="text-muted-foreground leading-relaxed mt-4">
+                To exercise any of these rights, use our{' '}
+                <Link to="/privacy/request" className="underline hover:no-underline text-foreground">
+                  data request form
+                </Link>
+                . We'll confirm your identity by email and respond within 30 days as required by UK GDPR.
+              </p>
             </SectionContainer>
 
             <SectionContainer title="Cookies and Tracking">

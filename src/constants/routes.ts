@@ -51,12 +51,14 @@ export const ROUTES = {
   // Info
   FAQ: '/faq',
   PRIVACY: '/privacy-policy',
+  DATA_REQUEST: '/privacy/request',
   TERMS: '/terms-of-service',
   SHIPPING: '/shipping-returns',
 
   // Admin
   ADMIN: {
     ROOT: '/admin',
+    DSR: '/admin/dsr',
     ORDERS: '/admin/orders',
     PRODUCTS: '/admin/products',
     NEWSLETTER: '/admin/newsletter',

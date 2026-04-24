@@ -26,6 +26,7 @@ import { handleSiteConfig } from './site-config';
 import { handleSearchPhrases } from './search-phrases';
 import { handleSearchAnalytics } from './search-analytics';
 import { handleCertifications } from './certifications';
+import { handleDsr } from './dsr';
 
 export interface Env {
   DB: D1Database;
@@ -125,6 +126,10 @@ async function handleRequest(
 
       if (path.startsWith('/public/product/') && path.endsWith('/certifications')) {
         return await handleCertifications(request, env);
+      }
+
+      if (path === '/dsr/request' || path.startsWith('/dsr/verify/') || path.startsWith('/admin/dsr')) {
+        return await handleDsr(request, env);
       }
 
       if (path.startsWith('/admin/search-phrases')) {

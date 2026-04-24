@@ -177,6 +177,9 @@ const Footer = () => {
             <Link to={ROUTES.PRIVACY} className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors">
               Privacy Policy
             </Link>
+            <Link to={ROUTES.DATA_REQUEST} className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors">
+              Data Request
+            </Link>
             <Link to={ROUTES.TERMS} className="text-sm font-light text-foreground hover:text-muted-foreground transition-colors">
               Terms of Service
             </Link>

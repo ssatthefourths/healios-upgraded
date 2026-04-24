@@ -22,7 +22,8 @@ import {
   Gift,
   Settings2,
   Search,
-  LineChart as LineChartIcon
+  LineChart as LineChartIcon,
+  ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -102,6 +103,7 @@ const AdminSidebar = ({ collapsed = false, onCollapse }: AdminSidebarProps) => {
     { title: "Campaigns", href: "/admin/campaigns", icon: Mail },
     { title: "Checkout Security", href: "/admin/security", icon: Shield },
     { title: "Referral Security", href: "/admin/referral-security", icon: UserX },
+    { title: "Data Requests", href: "/admin/dsr", icon: ShieldCheck },
   ];
 
   const isActive = (href: string) => {

@@ -36,6 +36,7 @@ const CustomerCare = lazy(() => import("./pages/about/CustomerCare"));
 const WholesalePartners = lazy(() => import("./pages/about/WholesalePartners"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const DataRequest = lazy(() => import("./pages/DataRequest"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const ShippingReturns = lazy(() => import("./pages/ShippingReturns"));
 const WellnessDrive = lazy(() => import("./pages/WellnessDrive"));
@@ -72,6 +73,7 @@ const UsersAdmin = lazy(() => import("./pages/admin/UsersAdmin"));
 const SiteConfigAdmin = lazy(() => import("./pages/admin/SiteConfigAdmin"));
 const SearchPhrasesAdmin = lazy(() => import("./pages/admin/SearchPhrasesAdmin"));
 const SearchAnalyticsAdmin = lazy(() => import("./pages/admin/SearchAnalyticsAdmin"));
+const DsrAdmin = lazy(() => import("./pages/admin/DsrAdmin"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -134,6 +136,8 @@ const App = () => (
                       {/* Legal/Info pages (lazy loaded) */}
                       <Route path="/reset-password" element={<ResetPassword />} />
                       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                      <Route path="/privacy/request" element={<DataRequest />} />
+                      <Route path="/privacy/request/verify" element={<DataRequest />} />
                       <Route path="/terms-of-service" element={<TermsOfService />} />
                       <Route path="/shipping-returns" element={<ShippingReturns />} />
                       <Route path="/wellness-drive" element={<WellnessDrive />} />
@@ -174,6 +178,7 @@ const App = () => (
                         <Route path="/admin/site-config" element={<SiteConfigAdmin />} />
                         <Route path="/admin/search-phrases" element={<SearchPhrasesAdmin />} />
                         <Route path="/admin/search-analytics" element={<SearchAnalyticsAdmin />} />
+                        <Route path="/admin/dsr" element={<DsrAdmin />} />
                       </Route>
                       
                       {/* 404 */}
