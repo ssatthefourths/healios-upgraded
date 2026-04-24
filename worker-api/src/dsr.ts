@@ -22,6 +22,7 @@
  */
 
 import type { Env } from './index';
+import { hashClientIp } from './utils/client-ip';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -137,12 +138,13 @@ export async function handleDsr(request: Request, env: Env): Promise<Response> {
     const id = crypto.randomUUID();
     const rawToken = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, '');
     const tokenHash = await sha256Hex(rawToken);
+    const ipHash = await hashClientIp(request, env);
 
     await env.DB.prepare(
       `INSERT INTO dsr_requests
-         (id, email, user_id, request_type, status, reason, verify_token, submitted_at)
-       VALUES (?, ?, ?, ?, 'pending_verification', ?, ?, unixepoch())`
-    ).bind(id, email, userId, requestType, reason, tokenHash).run();
+         (id, email, user_id, request_type, status, reason, verify_token, submitted_at, ip_hash)
+       VALUES (?, ?, ?, ?, 'pending_verification', ?, ?, unixepoch(), ?)`
+    ).bind(id, email, userId, requestType, reason, tokenHash, ipHash).run();
 
     const verifyUrl = `https://thehealios.com/privacy/request/verify?token=${rawToken}`;
     await sendVerifyEmail(env, email, verifyUrl, requestType);

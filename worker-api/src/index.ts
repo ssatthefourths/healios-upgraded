@@ -27,6 +27,7 @@ import { handleSearchPhrases } from './search-phrases';
 import { handleSearchAnalytics } from './search-analytics';
 import { handleCertifications } from './certifications';
 import { handleDsr } from './dsr';
+import { pruneExpiredIpHashes } from './utils/client-ip';
 
 export interface Env {
   DB: D1Database;
@@ -37,6 +38,7 @@ export interface Env {
   STRIPE_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
   RESEND_API_KEY: string;
+  IP_HASH_SECRET: string;
 }
 
 // Security headers applied to every worker response. CSP is deferred to H2 —
@@ -76,6 +78,21 @@ export default {
 
     const response = await handleRequest(request, env, ctx, path, corsHeaders);
     return withSecurityHeaders(response);
+  },
+
+  // Daily cron (03:00 UTC) — prune expired IP hashes per retention policy.
+  // See worker-api/src/utils/client-ip.ts and docs/SECURITY-IP.md.
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      (async () => {
+        try {
+          const { deleted } = await pruneExpiredIpHashes(env);
+          console.log(`[cron] pruned ${deleted} expired IP hashes`);
+        } catch (err) {
+          console.error('[cron] prune failed:', err);
+        }
+      })(),
+    );
   },
 };
 

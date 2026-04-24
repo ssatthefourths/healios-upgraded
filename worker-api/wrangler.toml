@@ -34,3 +34,9 @@ ENVIRONMENT = "production"
 #   wrangler secret put STRIPE_KEY              ← Stripe secret key (sk_live_... or sk_test_...)
 #   wrangler secret put STRIPE_WEBHOOK_SECRET   ← Signing secret from Stripe Webhooks dashboard
 #   wrangler secret put RESEND_API_KEY          ← Resend API key for order confirmation emails
+#   wrangler secret put IP_HASH_SECRET          ← Random 32+ char string; rotate yearly. See docs/SECURITY-IP.md
+
+# Daily cron — prune expired IP hashes per the 30-day retention policy.
+# See src/utils/client-ip.ts and docs/SECURITY-IP.md.
+[triggers]
+crons = ["0 3 * * *"]

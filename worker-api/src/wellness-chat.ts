@@ -1,4 +1,5 @@
 import { Env } from './index';
+import { hashClientIp } from './utils/client-ip';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,9 +48,11 @@ export async function handleWellnessChat(request: Request, env: Env): Promise<Re
     return new Response(JSON.stringify({ error: 'Invalid or expired session' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
-  const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('x-forwarded-for') || 'unknown';
+  // Rate-limit keyed on hashed IP (never store the raw address — see
+  // worker-api/src/utils/client-ip.ts + docs/SECURITY-IP.md).
+  const ipHash = await hashClientIp(request, env);
   const hourWindow = Math.floor(Date.now() / 1000 / 3600);
-  const fullKey = `ratelimit:chat:${ip}:${hourWindow}`;
+  const fullKey = `ratelimit:chat:${ipHash}:${hourWindow}`;
 
   const currentCount = parseInt((await env.SESSIONS.get(fullKey)) || '0', 10);
   if (currentCount >= MAX_REQUESTS_PER_HOUR) {
