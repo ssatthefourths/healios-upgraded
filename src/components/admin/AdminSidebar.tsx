@@ -23,7 +23,8 @@ import {
   Settings2,
   Search,
   LineChart as LineChartIcon,
-  ShieldCheck
+  ShieldCheck,
+  Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,6 +87,7 @@ const AdminSidebar = ({ collapsed = false, onCollapse }: AdminSidebarProps) => {
     { title: "Inventory", href: "/admin/inventory", icon: Package, badge: lowStock, badgeType: "warning" },
     { title: "Reviews", href: "/admin/reviews", icon: Star, badge: pendingReviews, badgeType: "info" },
     { title: "Newsletter", href: "/admin/newsletter", icon: Mail },
+    { title: "Email Templates", href: "/admin/emails", icon: Send },
     { title: "Discounts", href: "/admin/discounts", icon: Tag },
     { title: "Wellness", href: "/admin/wellness", icon: Heart },
     { title: "Blog", href: "/admin/blog", icon: FileText },

@@ -59,6 +59,7 @@ export const ROUTES = {
   ADMIN: {
     ROOT: '/admin',
     DSR: '/admin/dsr',
+    EMAILS: '/admin/emails',
     ORDERS: '/admin/orders',
     PRODUCTS: '/admin/products',
     NEWSLETTER: '/admin/newsletter',

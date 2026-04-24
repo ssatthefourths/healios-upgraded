@@ -5,6 +5,7 @@
  */
 
 import { Env } from './index';
+import { renderOrderConfirmation } from './emails/generated';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -434,32 +435,34 @@ async function sendOrderConfirmationEmail(
     orderUrl?: string;
   }
 ) {
-  const itemsList = opts.items
-    .map(i => `<tr>
-      <td style="padding:8px 0;border-bottom:1px solid #eee;">${i.name} × ${i.quantity}</td>
-      <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">£${(i.price * i.quantity).toFixed(2)}</td>
-    </tr>`)
-    .join('');
+  // Render Monique's React Email template with real order data. Pre-rendered
+  // via @react-email/render — no React runtime in the Worker, just a string.
+  // Template source: src/lib/emails/emails/transactional/01-order-confirmation.tsx
+  const shippingStr =
+    opts.shippingCost === 0 ? 'Free' : `£${opts.shippingCost.toFixed(2)}`;
 
-  const viewOrderButton = opts.orderUrl ? `
-    <div style="text-align:center;margin:32px 0;">
-      <a href="${opts.orderUrl}" style="display:inline-block;background:#000;color:#fff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:500;letter-spacing:0.02em;">View your order</a>
-    </div>` : '';
-
-  const html = `<!DOCTYPE html><html><body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#333;">
-    <h1 style="font-size:24px;font-weight:400;">Order confirmed</h1>
-    <p>Hi ${opts.firstName}, thank you for your order!</p>
-    <p style="color:#666;">Order reference: <strong>${opts.orderId}</strong></p>
-    <table width="100%" style="border-collapse:collapse;margin:20px 0;">${itemsList}</table>
-    <table width="100%" style="border-collapse:collapse;">
-      <tr><td>Subtotal</td><td style="text-align:right;">£${opts.subtotal.toFixed(2)}</td></tr>
-      <tr><td>Shipping (${opts.shippingMethod})</td><td style="text-align:right;">${opts.shippingCost === 0 ? 'Free' : '£' + opts.shippingCost.toFixed(2)}</td></tr>
-      <tr><td><strong>Total</strong></td><td style="text-align:right;"><strong>£${opts.total.toFixed(2)}</strong></td></tr>
-    </table>
-    ${viewOrderButton}
-    <hr style="border:none;border-top:1px solid #eee;margin:30px 0;"/>
-    <p style="color:#999;font-size:12px;text-align:center;">The Healios | hello@thehealios.com</p>
-  </body></html>`;
+  const html = await renderOrderConfirmation({
+    customerName: opts.firstName || 'there',
+    orderNumber: opts.orderId,
+    orderDate: new Date().toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }),
+    items: opts.items.map((i) => ({
+      name: i.name,
+      quantity: i.quantity,
+      price: `£${(Number(i.price) * Number(i.quantity)).toFixed(2)}`,
+    })),
+    subtotal: `£${opts.subtotal.toFixed(2)}`,
+    shipping: shippingStr,
+    total: `£${opts.total.toFixed(2)}`,
+    // shippingAddress, trackingUrl, unsubscribeUrl, preferencesUrl left on
+    // the template's defaults for now — surfacing them requires pulling the
+    // shipping address from the order record + generating per-recipient
+    // unsubscribe tokens (Phase 8b work).
+    trackingUrl: opts.orderUrl,
+  });
 
   await fetch('https://api.resend.com/emails', {
     method: 'POST',

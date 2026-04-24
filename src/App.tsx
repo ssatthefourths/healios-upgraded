@@ -74,6 +74,7 @@ const SiteConfigAdmin = lazy(() => import("./pages/admin/SiteConfigAdmin"));
 const SearchPhrasesAdmin = lazy(() => import("./pages/admin/SearchPhrasesAdmin"));
 const SearchAnalyticsAdmin = lazy(() => import("./pages/admin/SearchAnalyticsAdmin"));
 const DsrAdmin = lazy(() => import("./pages/admin/DsrAdmin"));
+const EmailsAdmin = lazy(() => import("./pages/admin/EmailsAdmin"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -179,6 +180,7 @@ const App = () => (
                         <Route path="/admin/search-phrases" element={<SearchPhrasesAdmin />} />
                         <Route path="/admin/search-analytics" element={<SearchAnalyticsAdmin />} />
                         <Route path="/admin/dsr" element={<DsrAdmin />} />
+                        <Route path="/admin/emails" element={<EmailsAdmin />} />
                       </Route>
                       
                       {/* 404 */}
