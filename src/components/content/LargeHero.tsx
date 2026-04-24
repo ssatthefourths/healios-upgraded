@@ -32,40 +32,51 @@ const LargeHero = () => {
           className="w-full h-full object-cover"
         />
 
-        {/* Multi-layer gradient for depth — mirrored for right-anchored content */}
+        {/* Multi-layer gradient for depth — top-to-bottom for legibility at bottom edge,
+            plus a light left-side darkening for the headline's contrast. */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent pointer-events-none" />
 
-        {/* Content positioned at bottom-right on md+; full-width with natural left-align on mobile */}
+        {/* Split layout per Monique's mockup (2026-04-24):
+            - Headline + tagline on the LEFT (bigger type per her "bigger text" note)
+            - CTAs (Shop Bestsellers + wellness quiz) on the RIGHT
+            On mobile, both blocks stack naturally in a single column. */}
         <div
           ref={contentReveal}
-          className="absolute bottom-[var(--space-lg)] left-[var(--space-lg)] right-[var(--space-lg)] md:left-auto md:max-w-xl md:text-right text-white"
+          className="absolute bottom-[var(--space-lg)] left-[var(--space-lg)] right-[var(--space-lg)] text-white flex flex-col md:flex-row md:items-end md:justify-between gap-6"
         >
-          {/* Thin rule accent — flips to the right on md+ to match text alignment */}
-          <div className="w-8 h-px bg-white/50 mb-4 md:ml-auto" />
+          {/* Left: headline + tagline */}
+          <div className="md:max-w-2xl">
+            {/* Thin rule accent */}
+            <div className="w-12 h-px bg-white/60 mb-5" />
 
-          <h1 className="cinematic-title mb-[var(--space-sm)]">
-            Wellness,<br />Elevated.
-          </h1>
+            <h1
+              className="cinematic-title mb-[var(--space-sm)]"
+              style={{ fontSize: 'clamp(3rem, 7vw, 6rem)' }}
+            >
+              Wellness,<br />Elevated.
+            </h1>
 
-          <p className="text-sm md:text-base font-light opacity-80 max-w-sm mb-[var(--space-md)] leading-relaxed md:ml-auto">
-            Science-backed gummy supplements that help you sleep deeper, think clearer, and feel your best, every single day.
-          </p>
+            <p className="text-base md:text-lg lg:text-xl font-light opacity-85 max-w-lg leading-relaxed">
+              Science-backed gummy supplements that help you sleep deeper, think clearer, and feel your best, every single day.
+            </p>
+          </div>
 
-          <div className="flex items-center gap-3 flex-wrap md:justify-end">
+          {/* Right: CTAs (stay anchored bottom-right on md+) */}
+          <div className="flex items-center gap-3 flex-wrap md:flex-shrink-0">
             <Link
               to="/category/best-sellers"
-              className="inline-flex items-center gap-2 bg-white text-foreground px-5 py-2.5 text-xs font-medium premium-btn rounded-[var(--radius)] tracking-wide uppercase"
+              className="inline-flex items-center gap-2 bg-white text-foreground px-6 py-3 text-sm font-medium premium-btn rounded-[var(--radius)] tracking-wide uppercase"
             >
               <span>Shop Bestsellers</span>
-              <ArrowRight size={12} />
+              <ArrowRight size={14} />
             </Link>
             <Link
               to="/wellness-quiz"
-              className="inline-flex items-center gap-2 text-white/80 hover:text-white text-xs font-light transition-colors duration-300 tracking-wide"
+              className="inline-flex items-center gap-2 text-white/80 hover:text-white text-sm font-light transition-colors duration-300 tracking-wide"
             >
               <span>Take the wellness quiz</span>
-              <ArrowRight size={11} />
+              <ArrowRight size={13} />
             </Link>
           </div>
         </div>
