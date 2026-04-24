@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import WishlistButton from "./WishlistButton";
 import NotifyMeButton from "./NotifyMeButton";
 import FreeFromIcons from "./FreeFromIcons";
+import CertificationBadges from "./CertificationBadges";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -195,6 +196,11 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
 
       {/* Free-from dietary traits (renders only the subset that's true on this product) */}
       <FreeFromIcons product={product} />
+
+      {/* Certification badges (KSM-66, Informed Sport, etc.). Renders nothing when the
+          product has no cert attached. Each badge falls back to a text chip while the
+          asset_url is null (placeholder state before the final SVG lands). */}
+      <CertificationBadges productId={product.id} />
 
       {/* Purchase Type Toggle - hide for coming soon products */}
       {!isComingSoon && (

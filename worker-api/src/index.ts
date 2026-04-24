@@ -25,6 +25,7 @@ import { handleSearch } from './search';
 import { handleSiteConfig } from './site-config';
 import { handleSearchPhrases } from './search-phrases';
 import { handleSearchAnalytics } from './search-analytics';
+import { handleCertifications } from './certifications';
 
 export interface Env {
   DB: D1Database;
@@ -120,6 +121,10 @@ async function handleRequest(
 
       if (path === '/public/site-config' || path === '/admin/site-config') {
         return await handleSiteConfig(request, env);
+      }
+
+      if (path.startsWith('/public/product/') && path.endsWith('/certifications')) {
+        return await handleCertifications(request, env);
       }
 
       if (path.startsWith('/admin/search-phrases')) {
