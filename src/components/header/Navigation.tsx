@@ -11,6 +11,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import ShoppingBag from "./ShoppingBag";
 import CurrencySelector from "./CurrencySelector";
 import CartPopover from "./CartPopover";
+import WishlistPanelItems from "./WishlistPanelItems";
 import { getProductPath } from "@/lib/productPath";
 import { getVisitorId } from "@/lib/visitorId";
 
@@ -807,7 +808,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
             </div>
             
             {/* Content */}
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto flex-1">
               {!user && (
                 <div className="mb-6 p-4 border border-border space-y-3">
                   <p className="text-sm font-medium text-foreground">Sign in to save your favourites permanently</p>
@@ -821,9 +822,7 @@ const Navigation = ({ onScrollChange }: NavigationProps) => {
                   </Link>
                 </div>
               )}
-              <p className="text-muted-foreground text-sm mb-6">
-                You haven't added any favorites yet. Browse our collection and click the heart icon to save items you love.
-              </p>
+              <WishlistPanelItems onItemClicked={() => setOffCanvasType(null)} />
             </div>
           </div>
         </div>

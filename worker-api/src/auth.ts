@@ -47,9 +47,17 @@ export async function handleAuth(request: Request, env: Env, ctx: ExecutionConte
 
       const sessionToken = await createSession(id, env);
 
-      return new Response(JSON.stringify({ user: { id, email, first_name: firstName, last_name: lastName }, session: sessionToken }), {
-        headers: corsHeaders,
-      });
+      // Fetch the row's created_at so the client AuthContext has it from the
+      // first request — otherwise /account "Member Since" would show N/A
+      // until the next /auth/me round-trip.
+      const created = await env.DB.prepare(
+        'SELECT created_at FROM users WHERE id = ?'
+      ).bind(id).first<{ created_at: string }>();
+
+      return new Response(JSON.stringify({
+        user: { id, email, first_name: firstName, last_name: lastName, created_at: created?.created_at ?? null },
+        session: sessionToken,
+      }), { headers: corsHeaders });
     } catch (err: any) {
       // Generic message so an attacker cannot enumerate which emails are already registered.
       return new Response(JSON.stringify({ error: 'Signup failed' }), { status: 400, headers: corsHeaders });
@@ -61,7 +69,7 @@ export async function handleAuth(request: Request, env: Env, ctx: ExecutionConte
     const { email, password } = await request.json() as any;
 
     const user = await env.DB.prepare(
-      'SELECT id, email, password_hash FROM users WHERE email = ?'
+      'SELECT id, email, password_hash, created_at FROM users WHERE email = ?'
     ).bind(email).first<any>();
 
     // Always do a verify so latency is uniform whether or not the email exists.
@@ -97,7 +105,7 @@ export async function handleAuth(request: Request, env: Env, ctx: ExecutionConte
     const sessionToken = await createSession(user.id, env);
 
     return new Response(JSON.stringify({
-      user: { id: user.id, email: user.email, ...profile, role: roleData?.role || 'user' },
+      user: { id: user.id, email: user.email, created_at: user.created_at, ...profile, role: roleData?.role || 'user' },
       session: sessionToken
     }), { headers: corsHeaders });
   }

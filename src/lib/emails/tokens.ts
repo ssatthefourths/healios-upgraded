@@ -177,11 +177,14 @@ export const assets = {
   ) =>
     `${assets.imageHost}/${w}x${h}/${bg}/${fg}?text=${encodeURIComponent(label)}&font=playfair`,
 
-  // Logo placeholders — swap for real brand marks when available
+  // Logos served from the Cloudflare Pages deploy at thehealios.com so emails
+  // render the real brand mark instead of the placehold.co preview image.
+  // The dark/light variants share the same source for now — Monique's brand
+  // pack only supplies one logo. Swap when she ships a reversed variant.
   logoDark:
-    "https://placehold.co/320x80/FBFAF9/242428?text=healios&font=playfair",
+    "https://www.thehealios.com/healios-logo.png",
   logoLight:
-    "https://placehold.co/320x80/242428/FBFAF9?text=healios&font=playfair",
+    "https://www.thehealios.com/healios-logo.png",
 
   // Social icons — swap for final SVG-exported PNGs
   iconInstagram:

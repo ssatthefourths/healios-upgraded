@@ -248,9 +248,15 @@ async function handleCheckoutComplete(session: any, env: Env) {
 
   console.log('Order created:', orderId);
 
-  // Create order items
+  // Create order items.
+  // item.price comes from Stripe metadata which was written by checkout.ts after
+  // the subscription discount was already applied (see worker-api/src/checkout.ts:165).
+  // Re-applying * 0.85 here would double-discount and surface a wrong price on
+  // the order-confirmation page (ticket #8 in HealiosIssuesFeedback_v3.csv).
+  // Stripe still charges the customer the correct already-discounted amount;
+  // this only affects the unit_price stored against the order record.
   for (const item of cartItems) {
-    const unitPrice = item.isSubscription ? item.price * 0.85 : item.price;
+    const unitPrice = item.price;
     await env.DB.prepare(`
       INSERT INTO order_items (
         id, order_id, product_id, product_name, product_image, product_category,
@@ -322,7 +328,9 @@ async function handleCheckoutComplete(session: any, env: Env) {
         item.id,
         'active',
         'monthly',
-        item.price * 0.85,
+        // item.price is already the discounted subscription rate from checkout.ts.
+        // Same bug class as line 253 — do not multiply by 0.85 again.
+        item.price,
         new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         subscriptionId,
         new Date().toISOString()
@@ -340,6 +348,17 @@ async function handleCheckoutComplete(session: any, env: Env) {
         : accessToken
           ? `${siteUrl}/order/${accessToken}`
           : `${siteUrl}/`;
+      // Build the shipping-address block from the metadata Stripe collected at
+      // checkout. Each line is included only if non-empty so we don't render
+      // blank rows in the email.
+      const customerName = `${meta.customer_first_name || ''} ${meta.customer_last_name || ''}`.trim();
+      const addressLines = [
+        meta.shipping_address,
+        meta.shipping_city,
+        meta.shipping_postal_code,
+        meta.shipping_country,
+      ].filter((s: any) => s && String(s).trim().length > 0) as string[];
+
       await sendOrderConfirmationEmail(resendKey, {
         orderId,
         email: meta.customer_email,
@@ -348,8 +367,12 @@ async function handleCheckoutComplete(session: any, env: Env) {
         items: cartItems,
         subtotal,
         shippingCost,
+        discount: discountAmount > 0 ? discountAmount : undefined,
         total,
         shippingMethod: meta.shipping_method || 'standard',
+        shippingAddress: addressLines.length > 0
+          ? { name: customerName || 'Customer', lines: addressLines }
+          : undefined,
         orderUrl,
       });
     } catch (e: any) {
@@ -430,8 +453,10 @@ async function sendOrderConfirmationEmail(
     items: any[];
     subtotal: number;
     shippingCost: number;
+    discount?: number;
     total: number;
     shippingMethod: string;
+    shippingAddress?: { name: string; lines: string[] };
     orderUrl?: string;
   }
 ) {
@@ -440,6 +465,13 @@ async function sendOrderConfirmationEmail(
   // Template source: src/lib/emails/emails/transactional/01-order-confirmation.tsx
   const shippingStr =
     opts.shippingCost === 0 ? 'Free' : `£${opts.shippingCost.toFixed(2)}`;
+
+  // Phase 8b will introduce per-recipient signed unsubscribe / preferences
+  // tokens. For V1 we ship simple email-keyed query-string URLs so the
+  // template doesn't render literal `{{unsubscribe_url}}` strings to customers.
+  const emailParam = encodeURIComponent(opts.email);
+  const unsubscribeUrl = `https://www.thehealios.com/unsubscribe?email=${emailParam}`;
+  const preferencesUrl = `https://www.thehealios.com/account?tab=preferences`;
 
   const html = await renderOrderConfirmation({
     customerName: opts.firstName || 'there',
@@ -456,12 +488,14 @@ async function sendOrderConfirmationEmail(
     })),
     subtotal: `£${opts.subtotal.toFixed(2)}`,
     shipping: shippingStr,
+    discount: opts.discount && opts.discount > 0
+      ? `−£${Number(opts.discount).toFixed(2)}`
+      : undefined,
     total: `£${opts.total.toFixed(2)}`,
-    // shippingAddress, trackingUrl, unsubscribeUrl, preferencesUrl left on
-    // the template's defaults for now — surfacing them requires pulling the
-    // shipping address from the order record + generating per-recipient
-    // unsubscribe tokens (Phase 8b work).
+    shippingAddress: opts.shippingAddress,
     trackingUrl: opts.orderUrl,
+    unsubscribeUrl,
+    preferencesUrl,
   });
 
   await fetch('https://api.resend.com/emails', {
