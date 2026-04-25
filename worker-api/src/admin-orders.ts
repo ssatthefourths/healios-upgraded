@@ -1,4 +1,5 @@
 import { Env } from './index';
+import { sendShippingEmail, sendDeliveryEmail } from './order-emails';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -27,10 +28,35 @@ export async function handleAdminOrders(request: Request, env: Env): Promise<Res
   const pathParts = url.pathname.split('/').filter(Boolean); // ['admin', 'orders', '<id>?']
   const orderId = pathParts[2] ?? null;
 
-  // PUT /admin/orders/:id — update order status
+  // PUT /admin/orders/:id — update order status (+ optional tracking).
+  //
+  // Rich body shape (closes v3 #2 / #3 / #4 / #5):
+  //   { status: 'shipped',
+  //     tracking_carrier?: 'Royal Mail',
+  //     tracking_number?: 'AB123456789GB',
+  //     tracking_url?: 'https://...' }
+  //
+  // The legacy minimal body { status: 'shipped' } still works — tracking
+  // fields are optional so the existing dropdown actions in OrdersAdmin
+  // keep working.
+  //
+  // Side-effects per transition:
+  //   * → 'processing': stamps processing_at. (No email yet — Monique
+  //                     hasn't designed a processing template.)
+  //   * → 'shipped'   : stamps shipped_at, persists tracking columns,
+  //                     fires the shipping-confirmation email
+  //                     (renderShippingConfirmation).
+  //   * → 'delivered' : stamps delivered_at + delivered_by='admin',
+  //                     fires the delivery-confirmation email.
+  //   * → 'cancelled' : restores stock for previously-active orders.
   if (request.method === 'PUT' && orderId) {
     try {
-      const body = await request.json() as { status: string };
+      const body = await request.json() as {
+        status: string;
+        tracking_carrier?: string | null;
+        tracking_number?: string | null;
+        tracking_url?: string | null;
+      };
       const newStatus = body.status;
 
       const validStatuses = ['pending', 'payment_confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'];
@@ -38,7 +64,6 @@ export async function handleAdminOrders(request: Request, env: Env): Promise<Res
         return new Response(JSON.stringify({ error: 'Invalid status' }), { status: 400, headers: cors });
       }
 
-      // Fetch current order to check previous status
       const currentOrder = await env.DB.prepare(
         'SELECT status FROM orders WHERE id = ?'
       ).bind(orderId).first<{ status: string }>();
@@ -47,9 +72,46 @@ export async function handleAdminOrders(request: Request, env: Env): Promise<Res
         return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: cors });
       }
 
+      const now = new Date().toISOString();
+      const setClauses: string[] = ['status = ?', 'updated_at = ?'];
+      const bindings: any[] = [newStatus, now];
+
+      if (newStatus === 'processing' && currentOrder.status !== 'processing') {
+        setClauses.push('processing_at = ?');
+        bindings.push(now);
+      }
+
+      if (newStatus === 'shipped' && currentOrder.status !== 'shipped') {
+        setClauses.push('shipped_at = ?');
+        bindings.push(now);
+        // Persist tracking when supplied. Empty strings → NULL so the
+        // email helper treats them as "not provided" rather than rendering
+        // an empty pill.
+        if (body.tracking_carrier !== undefined) {
+          setClauses.push('tracking_carrier = ?');
+          bindings.push(body.tracking_carrier?.trim() || null);
+        }
+        if (body.tracking_number !== undefined) {
+          setClauses.push('tracking_number = ?');
+          bindings.push(body.tracking_number?.trim() || null);
+        }
+        if (body.tracking_url !== undefined) {
+          setClauses.push('tracking_url = ?');
+          bindings.push(body.tracking_url?.trim() || null);
+        }
+      }
+
+      if (newStatus === 'delivered' && currentOrder.status !== 'delivered') {
+        setClauses.push('delivered_at = ?');
+        bindings.push(now);
+        setClauses.push('delivered_by = ?');
+        bindings.push('admin');
+      }
+
+      bindings.push(orderId);
       await env.DB.prepare(
-        'UPDATE orders SET status = ?, updated_at = ? WHERE id = ?'
-      ).bind(newStatus, new Date().toISOString(), orderId).run();
+        `UPDATE orders SET ${setClauses.join(', ')} WHERE id = ?`
+      ).bind(...bindings).run();
 
       // Restore stock when cancelling a previously active order
       if (newStatus === 'cancelled' && !['cancelled', 'refunded'].includes(currentOrder.status)) {
@@ -62,6 +124,20 @@ export async function handleAdminOrders(request: Request, env: Env): Promise<Res
             'UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ? AND track_inventory = 1'
           ).bind(item.quantity, item.product_id).run();
         }
+      }
+
+      // Fire emails for the transitions that have a template wired.
+      // Errors here are logged but do not roll back the status change —
+      // the customer-facing data is correct even if the email fails.
+      try {
+        if (newStatus === 'shipped' && currentOrder.status !== 'shipped') {
+          await sendShippingEmail(env, orderId);
+        }
+        if (newStatus === 'delivered' && currentOrder.status !== 'delivered') {
+          await sendDeliveryEmail(env, orderId);
+        }
+      } catch (emailErr: any) {
+        console.error('[admin-orders] email trigger failed:', emailErr?.message);
       }
 
       return new Response(JSON.stringify({ success: true }), { headers: cors });

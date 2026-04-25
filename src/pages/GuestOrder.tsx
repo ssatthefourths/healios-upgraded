@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Package, Check } from "lucide-react";
+import { Package, Check, Truck, Loader2 } from "lucide-react";
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import SEOHead from "@/components/seo/SEOHead";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { logger } from "@/lib/logger";
+import { toast } from "sonner";
 
 const API_URL = import.meta.env.VITE_CF_WORKER_URL || "https://healios-api.ss-f01.workers.dev";
 
@@ -18,6 +19,7 @@ interface OrderSummary {
   first_name: string | null;
   last_name: string | null;
   shipping_address: string | null;
+  shipping_address_2: string | null;
   shipping_city: string | null;
   shipping_postal_code: string | null;
   shipping_country: string | null;
@@ -26,7 +28,14 @@ interface OrderSummary {
   subtotal: number;
   discount_amount: number;
   total: number;
+  currency?: string | null;
   status: string;
+  tracking_carrier: string | null;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  delivered_by: 'admin' | 'customer' | null;
   created_at: string;
 }
 
@@ -52,6 +61,45 @@ const GuestOrder = () => {
   const { accessToken } = useParams<{ accessToken: string }>();
   const { formatPrice } = useCurrency();
   const [state, setState] = useState<FetchState>({ kind: "loading" });
+  const [confirming, setConfirming] = useState(false);
+
+  /**
+   * Customer-confirm delivery handler — closes ticket #2 in
+   * HealiosIssuesFeedback_v3.csv (the customer half of the
+   * shipped→delivered transition).
+   *
+   * Optimistically flips the local order state on success so the UI
+   * reflects the new status immediately; the worker has already
+   * persisted + fired the delivery email before we get here.
+   */
+  const handleConfirmDelivered = async () => {
+    if (!accessToken || state.kind !== "ready") return;
+    setConfirming(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/orders/by-token/${encodeURIComponent(accessToken)}/confirm-delivered`,
+        { method: "POST", headers: { "Content-Type": "application/json" } },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || "Couldn't confirm delivery");
+      }
+      const now = new Date().toISOString();
+      setState((prev) =>
+        prev.kind === "ready"
+          ? {
+              ...prev,
+              order: { ...prev.order, status: "delivered", delivered_at: now, delivered_by: "customer" },
+            }
+          : prev,
+      );
+      toast.success("Marked as delivered. Thanks for confirming!");
+    } catch (err: any) {
+      toast.error(err?.message || "Couldn't confirm delivery");
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   useEffect(() => {
     if (!accessToken) {
@@ -207,11 +255,68 @@ const GuestOrder = () => {
                     {state.order.first_name} {state.order.last_name}
                     <br />
                     {state.order.shipping_address}
+                    {state.order.shipping_address_2 && (<><br />{state.order.shipping_address_2}</>)}
                     <br />
                     {[state.order.shipping_city, state.order.shipping_postal_code].filter(Boolean).join(", ")}
                     <br />
                     {state.order.shipping_country}
                   </p>
+                </div>
+              )}
+
+              {/* Tracking + customer-confirm delivery (v3 #2/#3/#4). */}
+              {(state.order.status === "shipped" || state.order.status === "delivered") && (
+                <div className="bg-muted/10 p-6 mb-6">
+                  <h2 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                    <Truck className="h-4 w-4" />
+                    {state.order.status === "delivered" ? "Delivered" : "On its way"}
+                  </h2>
+                  {state.order.status === "shipped" && (
+                    <>
+                      {(state.order.tracking_carrier || state.order.tracking_number) && (
+                        <p className="text-sm text-muted-foreground font-light mb-3">
+                          {state.order.tracking_carrier}
+                          {state.order.tracking_number && (
+                            <>
+                              {" · "}
+                              <span className="font-mono">{state.order.tracking_number}</span>
+                            </>
+                          )}
+                        </p>
+                      )}
+                      {state.order.tracking_url && (
+                        <a
+                          href={state.order.tracking_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm underline hover:no-underline text-primary block mb-4"
+                        >
+                          Track package →
+                        </a>
+                      )}
+                      <Button
+                        onClick={handleConfirmDelivered}
+                        disabled={confirming}
+                        className="w-full sm:w-auto rounded-none"
+                        variant="outline"
+                      >
+                        {confirming ? (
+                          <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirming…</>
+                        ) : (
+                          <><Check className="h-4 w-4 mr-2" /> I have received my order</>
+                        )}
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Got your package? Tap above so we can mark this order as delivered.
+                      </p>
+                    </>
+                  )}
+                  {state.order.status === "delivered" && (
+                    <p className="text-sm text-muted-foreground font-light">
+                      Delivered{state.order.delivered_at ? ` on ${new Date(state.order.delivered_at).toLocaleDateString()}` : ""}.
+                      Thanks for confirming!
+                    </p>
+                  )}
                 </div>
               )}
 

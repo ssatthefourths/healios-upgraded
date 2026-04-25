@@ -3,6 +3,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -87,6 +88,7 @@ interface Order {
   last_name: string;
   phone: string | null;
   shipping_address: string;
+  shipping_address_2?: string | null;
   shipping_city: string;
   shipping_postal_code: string;
   shipping_country: string;
@@ -98,6 +100,13 @@ interface Order {
   currency?: string;
   shipping_method: string;
   discount_code: string | null;
+  // State-machine fields (v3 #2/#3/#4/#5).
+  tracking_carrier?: string | null;
+  tracking_number?: string | null;
+  tracking_url?: string | null;
+  shipped_at?: string | null;
+  delivered_at?: string | null;
+  delivered_by?: 'admin' | 'customer' | null;
   created_at: string;
   updated_at: string;
   order_items?: OrderItem[];
@@ -121,6 +130,60 @@ const OrdersAdmin = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [bulkUpdating, setBulkUpdating] = useState(false);
+
+  // "Ready for Shipment" dialog (v3 #4) — captures courier + tracking number,
+  // then transitions order → shipped which fires the shipping-confirmation
+  // email (v3 #3).
+  const [shipDialogOrder, setShipDialogOrder] = useState<Order | null>(null);
+  const [shipCarrier, setShipCarrier] = useState("");
+  const [shipNumber, setShipNumber] = useState("");
+  const [shipUrl, setShipUrl] = useState("");
+  const [shipSubmitting, setShipSubmitting] = useState(false);
+
+  const openShipDialog = (order: Order) => {
+    setShipDialogOrder(order);
+    setShipCarrier(order.tracking_carrier || "");
+    setShipNumber(order.tracking_number || "");
+    setShipUrl(order.tracking_url || "");
+  };
+
+  const submitShipDialog = async () => {
+    if (!shipDialogOrder) return;
+    setShipSubmitting(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/orders/${shipDialogOrder.id}`, {
+        method: 'PUT',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'shipped',
+          tracking_carrier: shipCarrier.trim() || null,
+          tracking_number: shipNumber.trim() || null,
+          tracking_url: shipUrl.trim() || null,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to mark shipped');
+      toast.success('Order marked shipped — shipping confirmation sent');
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === shipDialogOrder.id
+            ? {
+                ...o,
+                status: 'shipped',
+                tracking_carrier: shipCarrier.trim() || null,
+                tracking_number: shipNumber.trim() || null,
+                tracking_url: shipUrl.trim() || null,
+                shipped_at: new Date().toISOString(),
+              }
+            : o,
+        ),
+      );
+      setShipDialogOrder(null);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to mark shipped');
+    } finally {
+      setShipSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     fetchOrders();
@@ -559,8 +622,8 @@ const OrdersAdmin = () => {
                                 <DropdownMenuItem onClick={() => updateOrderStatus(order, "processing")}>
                                   Mark as Processing
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateOrderStatus(order, "shipped")}>
-                                  Mark as Shipped
+                                <DropdownMenuItem onClick={() => openShipDialog(order)}>
+                                  Ready for Shipment…
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => updateOrderStatus(order, "delivered")}>
                                   Mark as Delivered
@@ -601,9 +664,30 @@ const OrdersAdmin = () => {
                                   <h4 className="font-medium mb-2">Shipping Address</h4>
                                   <p className="text-sm text-muted-foreground">
                                     {order.shipping_address}<br />
+                                    {order.shipping_address_2 ? <>{order.shipping_address_2}<br /></> : null}
                                     {order.shipping_city}, {order.shipping_postal_code}<br />
                                     {order.shipping_country}
                                   </p>
+                                  {order.tracking_carrier || order.tracking_number ? (
+                                    <div className="mt-3 text-sm">
+                                      <p className="font-medium">Tracking</p>
+                                      <p className="text-muted-foreground text-xs">
+                                        {order.tracking_carrier}{order.tracking_number ? ` · ${order.tracking_number}` : ''}
+                                      </p>
+                                      {order.tracking_url && (
+                                        <a href={order.tracking_url} target="_blank" rel="noopener noreferrer"
+                                           className="text-xs underline hover:no-underline text-primary">
+                                          Track package →
+                                        </a>
+                                      )}
+                                    </div>
+                                  ) : null}
+                                  {order.delivered_at && (
+                                    <p className="text-xs text-green-700 mt-2">
+                                      Delivered {new Date(order.delivered_at).toLocaleDateString()}
+                                      {order.delivered_by ? ` · marked by ${order.delivered_by}` : ''}
+                                    </p>
+                                  )}
                                   {order.discount_code && (
                                     <div className="mt-4">
                                       <h4 className="font-medium mb-1">Discount</h4>
@@ -627,6 +711,63 @@ const OrdersAdmin = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Ready for Shipment dialog (v3 #4) */}
+      <AlertDialog open={!!shipDialogOrder} onOpenChange={(open) => { if (!open) setShipDialogOrder(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ready for Shipment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Capture courier and tracking number, then mark <span className="font-mono">{shipDialogOrder?.id?.slice(0, 12)}…</span> as shipped.
+              The customer will get the shipping confirmation email with the tracking link.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label htmlFor="ship-carrier" className="text-xs">Courier</Label>
+              <Input
+                id="ship-carrier"
+                value={shipCarrier}
+                onChange={(e) => setShipCarrier(e.target.value)}
+                placeholder="Royal Mail Tracked 48"
+                className="mt-1"
+                disabled={shipSubmitting}
+              />
+            </div>
+            <div>
+              <Label htmlFor="ship-number" className="text-xs">Tracking number</Label>
+              <Input
+                id="ship-number"
+                value={shipNumber}
+                onChange={(e) => setShipNumber(e.target.value)}
+                placeholder="AB123456789GB"
+                className="mt-1"
+                disabled={shipSubmitting}
+              />
+            </div>
+            <div>
+              <Label htmlFor="ship-url" className="text-xs">Tracking URL <span className="text-muted-foreground font-light">(optional)</span></Label>
+              <Input
+                id="ship-url"
+                value={shipUrl}
+                onChange={(e) => setShipUrl(e.target.value)}
+                placeholder="https://track.royalmail.com/AB123456789GB"
+                className="mt-1"
+                disabled={shipSubmitting}
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                If left blank the email shows the tracking number alone with no clickable link.
+              </p>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={shipSubmitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={submitShipDialog} disabled={shipSubmitting}>
+              {shipSubmitting ? 'Sending…' : 'Mark Shipped + Send Email'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };
