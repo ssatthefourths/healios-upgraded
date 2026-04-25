@@ -415,9 +415,13 @@ const AdminDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Architecture note */}
-      <p className="text-xs text-muted-foreground/60 mt-4 text-center">
-        Revenue figures shown in GBP (base currency). ZAR/USD/EUR conversions apply at checkout time via live exchange rates.
+      {/* Architecture note. Aggregates roll up to GBP because mixing currencies
+          in a sum without FX conversion is meaningless. Per-order amounts are
+          shown in each customer's actual paid currency on the Orders list —
+          that's the source of truth for "what did this customer pay". Pending
+          Monique sign-off (M15 in docs/LAUNCH-READINESS.md). */}
+      <p className="text-xs text-muted-foreground/60 mt-4 text-center max-w-2xl mx-auto">
+        Revenue aggregates here roll up in GBP (base currency). For the actual currency each customer paid in, see the per-order rows on the <span className="text-foreground">Orders</span> page — those carry the order's true currency. Pending sign-off on whether to FX-convert these aggregate cards.
       </p>
     </AdminLayout>
   );

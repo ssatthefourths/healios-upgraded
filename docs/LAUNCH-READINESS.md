@@ -131,6 +131,12 @@ Consolidated list of every open client decision. **Hold public launch until Moni
 |---|---|---|---|
 | M14 | Want to integrate a courier webhook later for auto-mark-delivered? | Schema supports it (`tracking_carrier/number/url` columns); current flow is manual + customer self-confirm. | If yes, post-launch sprint to add courier-webhook routes |
 
+### Admin currency display
+
+| # | Question | Context | Action when answered |
+|---|---|---|---|
+| **M15** | Admin dashboard KPI cards (Today / Week / Month / All-Time / AOV) currently show **GBP-aggregated** revenue. Per-order rows on `/admin/orders` show each order's actual paid currency (v3 #6 fix). Three options. | D1 stores GBP as base; live FX is fetched per-customer at checkout. Mixing currencies into a single aggregate sum without FX conversion is meaningless — that's why we kept the aggregates GBP-shaped. | (a) Keep GBP-aggregated (current — footer note explains); (b) FX-convert mixed orders to ZAR using the rate at order time; (c) show side-by-side GBP + ZAR. |
+
 ## Engineering-side nice-to-haves (not launch blockers)
 
 - Lighthouse audit on home + PDP + checkout — target Perf 90+, A11y 100, SEO 100 per CLAUDE.md.
