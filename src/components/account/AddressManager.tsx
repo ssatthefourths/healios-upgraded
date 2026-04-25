@@ -15,6 +15,7 @@ interface SavedAddress {
   id: string;
   label: string;
   street_address: string;
+  street_address_2: string | null;
   city: string;
   state: string | null;
   postal_code: string;
@@ -176,6 +177,7 @@ const AddressManager = ({ addresses, loading, onRefresh }: AddressManagerProps) 
   const [label, setLabel] = useState('Home');
   const [country, setCountry] = useState('United Kingdom');
   const [streetAddress, setStreetAddress] = useState('');
+  const [streetAddress2, setStreetAddress2] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [postalCode, setPostalCode] = useState('');
@@ -187,6 +189,7 @@ const AddressManager = ({ addresses, loading, onRefresh }: AddressManagerProps) 
     setLabel('Home');
     setCountry('United Kingdom');
     setStreetAddress('');
+    setStreetAddress2('');
     setCity('');
     setState('');
     setPostalCode('');
@@ -205,6 +208,7 @@ const AddressManager = ({ addresses, loading, onRefresh }: AddressManagerProps) 
     setLabel(addr.label);
     setCountry(addr.country);
     setStreetAddress(addr.street_address);
+    setStreetAddress2(addr.street_address_2 || '');
     setCity(addr.city);
     setState(addr.state || '');
     setPostalCode(addr.postal_code);
@@ -234,6 +238,7 @@ const AddressManager = ({ addresses, loading, onRefresh }: AddressManagerProps) 
         user_id: user.id,
         label,
         street_address: streetAddress.trim(),
+        street_address_2: streetAddress2.trim() || null,
         city: city.trim(),
         state: state.trim() || null,
         postal_code: postalCode.trim(),
@@ -435,6 +440,17 @@ const AddressManager = ({ addresses, loading, onRefresh }: AddressManagerProps) 
               <Input
                 value={streetAddress}
                 onChange={(e) => setStreetAddress(e.target.value)}
+                placeholder="Street name and number"
+                className="rounded-none"
+              />
+            </div>
+
+            {/* Address Line 2 — optional. Closes ticket #10 in v3 CSV. */}
+            <div className="space-y-2">
+              <Label>Address Line 2 <span className="text-xs text-muted-foreground font-light">(optional)</span></Label>
+              <Input
+                value={streetAddress2}
+                onChange={(e) => setStreetAddress2(e.target.value)}
                 placeholder={config.addressLine2Placeholder}
                 className="rounded-none"
               />

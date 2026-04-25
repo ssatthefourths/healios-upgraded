@@ -213,11 +213,11 @@ async function handleCheckoutComplete(session: any, env: Env) {
   await env.DB.prepare(`
     INSERT INTO orders (
       id, user_id, email, first_name, last_name, phone,
-      shipping_address, shipping_city, shipping_postal_code, shipping_country,
+      shipping_address, shipping_address_2, shipping_city, shipping_postal_code, shipping_country,
       billing_address, billing_city, billing_postal_code, billing_country,
       subtotal, shipping_cost, discount_amount, discount_code, total,
       shipping_method, status, stripe_session_id, access_token, token_expires_at, created_at
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `).bind(
     orderId,
     meta.user_id || null,
@@ -226,6 +226,7 @@ async function handleCheckoutComplete(session: any, env: Env) {
     meta.customer_last_name,
     meta.customer_phone || null,
     meta.shipping_address,
+    meta.shipping_address_2 || null,
     meta.shipping_city,
     meta.shipping_postal_code,
     meta.shipping_country,
@@ -354,6 +355,7 @@ async function handleCheckoutComplete(session: any, env: Env) {
       const customerName = `${meta.customer_first_name || ''} ${meta.customer_last_name || ''}`.trim();
       const addressLines = [
         meta.shipping_address,
+        meta.shipping_address_2,
         meta.shipping_city,
         meta.shipping_postal_code,
         meta.shipping_country,

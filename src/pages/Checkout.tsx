@@ -11,6 +11,7 @@ import PageContainer from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import PhoneInput from "@/components/ui/phone-input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,7 +32,7 @@ import {
   getPostalCodeError,
   sanitizeInput,
   isValidEmail,
-  isValidUKPhone
+  isValidInternationalPhone
 } from "@/lib/validation";
 
 const ALL_COUNTRIES = [
@@ -68,11 +69,14 @@ interface SavedAddress {
   id: string;
   label: string;
   street_address: string;
+  street_address_2?: string | null;
   city: string;
   postal_code: string;
   country: string;
   is_default: boolean;
 }
+
+const ADDRESS_LABELS = ['Home', 'Work', 'Other'] as const;
 
 const Checkout = () => {
   const { cartItems, updateQuantity, subtotal, clearCart, addToCart } = useCart();
@@ -90,6 +94,8 @@ const Checkout = () => {
   });
   const [shippingAddress, setShippingAddress] = useState({
     address: "",
+    address2: "",
+    label: "Home",
     city: "",
     postalCode: "",
     country: ""
@@ -101,6 +107,7 @@ const Checkout = () => {
     email: "",
     phone: "",
     address: "",
+    address2: "",
     city: "",
     postalCode: "",
     country: ""
@@ -220,6 +227,8 @@ const Checkout = () => {
         const address = data.shipping_address as any;
         setShippingAddress({
           address: address.address || '',
+          address2: address.address2 || address.street_address_2 || '',
+          label: address.label || 'Home',
           city: address.city || '',
           postalCode: address.postal_code || '',
           country: address.country || '',
@@ -285,6 +294,8 @@ const Checkout = () => {
           setSelectedAddressId(defaultAddress.id);
           setShippingAddress({
             address: defaultAddress.street_address,
+            address2: (defaultAddress as any).street_address_2 || '',
+            label: defaultAddress.label || 'Home',
             city: defaultAddress.city,
             postalCode: defaultAddress.postal_code,
             country: defaultAddress.country
@@ -309,21 +320,25 @@ const Checkout = () => {
 
   const handleSelectSavedAddress = (addressId: string) => {
     setSelectedAddressId(addressId);
-    
+
     if (addressId === "new") {
       setShippingAddress({
         address: "",
+        address2: "",
+        label: "Home",
         city: "",
         postalCode: "",
         country: ""
       });
       return;
     }
-    
+
     const address = savedAddresses.find(a => a.id === addressId);
     if (address) {
       setShippingAddress({
         address: address.street_address,
+        address2: (address as any).street_address_2 || "",
+        label: address.label || "Home",
         city: address.city,
         postalCode: address.postal_code,
         country: address.country
@@ -333,23 +348,25 @@ const Checkout = () => {
 
   const handleSelectBillingAddress = (addressId: string) => {
     setSelectedBillingAddressId(addressId);
-    
+
     if (addressId === "new") {
       setBillingDetails(prev => ({
         ...prev,
         address: "",
+        address2: "",
         city: "",
         postalCode: "",
         country: ""
       }));
       return;
     }
-    
+
     const address = savedAddresses.find(a => a.id === addressId);
     if (address) {
       setBillingDetails(prev => ({
         ...prev,
         address: address.street_address,
+        address2: (address as any).street_address_2 || "",
         city: address.city,
         postalCode: address.postal_code,
         country: address.country
@@ -439,8 +456,8 @@ const Checkout = () => {
       setPhoneError(null);
       return true;
     }
-    if (!isValidUKPhone(phone)) {
-      setPhoneError('Please enter a valid UK phone number');
+    if (!isValidInternationalPhone(phone)) {
+      setPhoneError('Please enter a valid phone number');
       return false;
     }
     setPhoneError(null);
@@ -517,7 +534,7 @@ const Checkout = () => {
     else if (!isValidEmail(customerDetails.email)) invalid.add('customer.email');
     if (!customerDetails.firstName) invalid.add('customer.firstName');
     if (!customerDetails.lastName) invalid.add('customer.lastName');
-    if (customerDetails.phone && !isValidUKPhone(customerDetails.phone)) invalid.add('customer.phone');
+    if (customerDetails.phone && !isValidInternationalPhone(customerDetails.phone)) invalid.add('customer.phone');
 
     if (!shippingAddress.address) invalid.add('shipping.address');
     if (!shippingAddress.city) invalid.add('shipping.city');
@@ -593,8 +610,9 @@ const Checkout = () => {
             .from('addresses')
             .insert({
               user_id: user.id,
-              label: 'Home',
+              label: shippingAddress.label || 'Home',
               street_address: shippingAddress.address,
+              street_address_2: shippingAddress.address2 || null,
               city: shippingAddress.city,
               postal_code: shippingAddress.postalCode,
               country: shippingAddress.country,
@@ -627,12 +645,14 @@ const Checkout = () => {
           },
           shippingAddress: {
             address: shippingAddress.address,
+            address2: shippingAddress.address2 || undefined,
             city: shippingAddress.city,
             postalCode: shippingAddress.postalCode,
             country: shippingAddress.country,
           },
           billingAddress: hasSeparateBilling ? {
             address: billingDetails.address,
+            address2: billingDetails.address2 || undefined,
             city: billingDetails.city,
             postalCode: billingDetails.postalCode,
             country: billingDetails.country,
@@ -992,25 +1012,17 @@ const Checkout = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="phone" className="text-sm font-light text-foreground">
-                      Phone Number
-                    </Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
+                    {/* Phone field uses the shared PhoneInput so checkout matches the
+                        Profile's split country-code + number format (ticket #9 v3). */}
+                    <PhoneInput
+                      label="Phone Number"
                       value={customerDetails.phone}
-                      onChange={(e) => handleCustomerDetailsChange("phone", e.target.value)}
+                      onChange={(fullNumber) => handleCustomerDetailsChange("phone", fullNumber)}
                       onBlur={() => validatePhone(customerDetails.phone)}
-                      aria-invalid={isInvalid('customer.phone') || !!phoneError}
-                      className={`mt-2 rounded-none ${phoneError || isInvalid('customer.phone') ? 'border-destructive' : ''}`}
-                      placeholder="Enter your phone number"
+                      error={
+                        phoneError || (isInvalid('customer.phone') ? 'Please enter a valid phone number' : null)
+                      }
                     />
-                    {(phoneError || isInvalid('customer.phone')) && (
-                      <p className="text-destructive text-sm mt-1 flex items-center gap-1">
-                        <span>⚠</span> {phoneError || 'Please enter a valid phone number'}
-                      </p>
-                    )}
                   </div>
 
                   {/* Shipping Address */}
@@ -1042,7 +1054,7 @@ const Checkout = () => {
                     <div className="space-y-4">
                       <div>
                         <Label htmlFor="shippingAddress" className="text-sm font-light text-foreground">
-                          Address *
+                          Address Line 1 *
                         </Label>
                         <Input
                           id="shippingAddress"
@@ -1052,13 +1064,51 @@ const Checkout = () => {
                           onChange={(e) => handleShippingAddressChange("address", e.target.value)}
                           aria-invalid={isInvalid('shipping.address')}
                           className={`mt-2 rounded-none ${errorClass('shipping.address')}`}
-                          placeholder="Street address"
+                          placeholder="Street name and number"
+                          autoComplete="address-line1"
                         />
                         {isInvalid('shipping.address') && (
                           <p className="text-destructive text-sm mt-1 flex items-center gap-1">
                             <span>⚠</span> Street address is required
                           </p>
                         )}
+                      </div>
+
+                      {/* Address Line 2 — optional. Closes ticket #10 in v3 CSV. */}
+                      <div>
+                        <Label htmlFor="shippingAddress2" className="text-sm font-light text-foreground">
+                          Address Line 2 <span className="text-xs text-muted-foreground font-light">(optional)</span>
+                        </Label>
+                        <Input
+                          id="shippingAddress2"
+                          name="shippingAddress2"
+                          type="text"
+                          value={shippingAddress.address2}
+                          onChange={(e) => handleShippingAddressChange("address2", e.target.value)}
+                          className="mt-2 rounded-none"
+                          placeholder="Apartment, suite, building (optional)"
+                          autoComplete="address-line2"
+                        />
+                      </div>
+
+                      {/* Address Label — matches the dropdown shape Profile uses. */}
+                      <div>
+                        <Label htmlFor="shippingLabel" className="text-sm font-light text-foreground">
+                          Address Label
+                        </Label>
+                        <Select
+                          value={shippingAddress.label}
+                          onValueChange={(val) => handleShippingAddressChange("label", val)}
+                        >
+                          <SelectTrigger id="shippingLabel" className="mt-2 rounded-none">
+                            <SelectValue placeholder="Choose a label" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ADDRESS_LABELS.map((l) => (
+                              <SelectItem key={l} value={l}>{l}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1075,6 +1125,7 @@ const Checkout = () => {
                             aria-invalid={isInvalid('shipping.city')}
                             className={`mt-2 rounded-none ${errorClass('shipping.city')}`}
                             placeholder="City"
+                            autoComplete="address-level2"
                           />
                           {isInvalid('shipping.city') && (
                             <p className="text-destructive text-sm mt-1 flex items-center gap-1">
@@ -1096,6 +1147,7 @@ const Checkout = () => {
                             aria-invalid={isInvalid('shipping.postalCode') || !!postcodeError}
                             className={`mt-2 rounded-none ${postcodeError || isInvalid('shipping.postalCode') ? 'border-destructive' : ''}`}
                             placeholder={getPostalCodeConfig(shippingAddress.country).placeholder}
+                            autoComplete="postal-code"
                           />
                           {(postcodeError || isInvalid('shipping.postalCode')) && (
                             <p className="text-destructive text-sm mt-1 flex items-center gap-1">
@@ -1182,6 +1234,7 @@ const Checkout = () => {
                             setBillingDetails(prev => ({
                               ...prev,
                               address: shippingAddress.address,
+                              address2: shippingAddress.address2,
                               city: shippingAddress.city,
                               postalCode: shippingAddress.postalCode,
                               country: shippingAddress.country
@@ -1241,17 +1294,11 @@ const Checkout = () => {
                       </div>
 
                       <div>
-                        <Label htmlFor="billingPhone" className="text-sm font-light text-foreground">
-                          Phone Number
-                        </Label>
-                        <Input
-                          id="billingPhone"
-                          name="billingPhone"
-                          type="tel"
+                        {/* Match the customer-side phone format (ticket #9 v3). */}
+                        <PhoneInput
+                          label="Phone Number"
                           value={billingDetails.phone}
-                          onChange={(e) => handleBillingDetailsChange("phone", e.target.value)}
-                          className="mt-2 rounded-none"
-                          placeholder="Enter billing phone number"
+                          onChange={(fullNumber) => handleBillingDetailsChange("phone", fullNumber)}
                         />
                       </div>
 

@@ -224,13 +224,32 @@ export const isValidEmail = (email: string): boolean => {
  */
 export const isValidUKPhone = (phone: string): boolean => {
   if (!phone) return true; // Phone is optional
-  
+
   // Remove spaces and dashes
   const cleaned = phone.replace(/[\s-]/g, '');
-  
+
   // UK mobile or landline
   const ukPhoneRegex = /^(\+44|0)[1-9]\d{8,10}$/;
   return ukPhoneRegex.test(cleaned);
+};
+
+/**
+ * International phone validator. Accepts the format produced by PhoneInput
+ * ("+<dial> <local>") for any country, plus tolerates legacy UK-only inputs
+ * that haven't been migrated to PhoneInput yet.
+ *
+ * Returns true on empty input (phone is optional in our forms).
+ *
+ * Used by checkout (ticket #9, v3 CSV) so a SA / EU / US visitor can submit a
+ * non-UK number without being blocked by the old isValidUKPhone gate.
+ */
+export const isValidInternationalPhone = (phone: string): boolean => {
+  if (!phone) return true;
+  const cleaned = phone.replace(/[\s\-().]/g, '');
+  // Accept either "+<dialCode><local>" (E.164-ish, 7-15 digits after the +)
+  // OR a legacy bare UK number for backwards compatibility.
+  if (/^\+\d{7,15}$/.test(cleaned)) return true;
+  return isValidUKPhone(phone);
 };
 
 /**

@@ -36,7 +36,7 @@ interface CheckoutRequest {
   cartItems: CartItem[];
   customerEmail: string;
   customerDetails: { firstName: string; lastName: string; phone?: string };
-  shippingAddress: { address: string; city: string; postalCode: string; country: string };
+  shippingAddress: { address: string; address2?: string; city: string; postalCode: string; country: string };
   billingAddress?: { address: string; city: string; postalCode: string; country: string };
   discountCode?: string;
   discountAmount?: number;
@@ -196,6 +196,7 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
     'metadata[customer_last_name]': customerDetails.lastName,
     'metadata[customer_phone]': customerDetails.phone || '',
     'metadata[shipping_address]': shippingAddress?.address || '',
+    'metadata[shipping_address_2]': shippingAddress?.address2 || '',
     'metadata[shipping_city]': shippingAddress?.city || '',
     'metadata[shipping_postal_code]': shippingAddress?.postalCode || '',
     'metadata[shipping_country]': shippingAddress?.country || '',
