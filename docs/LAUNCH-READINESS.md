@@ -1,6 +1,6 @@
 # Healios — launch-readiness checklist
 
-**Last reviewed:** 2026-04-24 (Phase 9 of the v2 CSV triage).
+**Last reviewed:** 2026-04-25 (production audit pass after v3 quick-wins shipped).
 **Owner:** Servaas (eng), Monique (content + client handoff).
 
 This is the ops-side checklist that needs to be green before the site can be considered launch-ready for paying UK/SA customers. Everything here is **manual** — keys to dashboards, credentials, and client decisions that I (Claude) cannot action directly.
@@ -94,6 +94,48 @@ These are the open questions accumulated across this session. Hold launch until 
 9. Return to home. Open DevTools → Network. Confirm GA4 and Meta Pixel scripts load (both env vars set).
 
 If every step passes, the site is launch-ready on the engineering side. Remaining blockers are the M1-M9 client items above.
+
+---
+
+## 2026-04-25 production audit — verified-from-the-outside
+
+A live probe of `https://thehealios.com/` and `https://healios-api.ss-f01.workers.dev/` to confirm what's actually deployed and rule out drift. None of these tests need dashboard access.
+
+### ✅ Verified working in production
+
+- Homepage `/` returns HTTP 200, 3.5KB SPA shell. SEO meta tags present (Open Graph, Twitter card, theme-color, manifest).
+- Sitemap.xml served, valid, contains 18 product URLs.
+- Robots.txt served with Cloudflare Managed Content + admin-path blocking.
+- Worker `/products` returns full live product catalogue.
+- Worker `/products/magnesium-gummies` returns the synced Phase 2 data: `is_vegan=0` ✅, capsule-correct description ✅, ingredients with active line first ✅, `product_cautions` populated ✅, `contains_allergens` populated ✅. Same shape verified for the four other live products.
+- Worker `/public/product/ashwagandha-gummies/certifications` returns the seeded KSM-66 row. Other products return `[]`.
+- Worker `/public/product/<id>/certifications` cache header `s-maxage=3600` confirmed.
+- Worker `/dsr/request` responds with proper validation errors (`invalid_email`, `invalid_request_type`).
+- Worker `/stripe-webhook` responds 400 + `Missing stripe-signature` on signatureless POST (signature verification is alive).
+- All 14 new product images from Monique are served at correct paths with correct file sizes (`/products/<slug>.png`).
+- Email logo URL `/healios-logo.png` returns 200 (used by Phase 8a email templates).
+- Worker security headers applied per-response (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Strict-Transport-Security on Worker only).
+- D1 schema audit confirms: `orders.currency` column ✅, `addresses.street_address_2` ✅, `orders.shipping_address_2` ✅, `certifications` + `product_certifications` tables ✅, `dsr_requests` table ✅. All migrations 015–018 applied.
+- Live D1 product-state distribution: 5–6 live products (see new finding below), 10 coming-soon, 5 unpublished, 4 bundles flagged but unpublished — matches expected state.
+- All 4 historical orders have `currency` populated (defaulted to GBP via migration 018).
+
+### ❌ Verified blockers / drift
+
+- **`VITE_META_PIXEL_ID` still missing** on Cloudflare Pages — live HTML contains zero `fbq` / `connect.facebook` references. Meta Pixel not firing.
+- **`VITE_CLARITY_ID` still missing** on Cloudflare Pages — zero `clarity.ms` references in live HTML.
+- **`collagen-powder` is live but not in Monique's `products.json` spec.** The product row exists in D1 with `is_published=1, is_coming_soon=0`, image points at `/products/halo-glow-collagen.png` (re-using the Halo Glow image — a different SKU). Either a stale row from a prior catalogue, or a real launch product Monique forgot to spec. Customer-confusing as-is. **Flag for Monique:** confirm whether to (a) add it to products.json properly, (b) flip to coming-soon, or (c) unpublish entirely. Until decided this is a launch blocker because clicking it shows a Halo Glow image with Collagen Powder copy.
+- **Sitemap.xml exposes 18 product URLs**, but only 5–6 are actually live. Coming-soon and unpublished products appear in the sitemap. Search engines may index them and customers landing from search results may hit a dead-end "Coming Soon" page. Worth checking if `is_coming_soon=1` rows are getting `is_published=1` treatment by the sitemap generator.
+- **HTML response (Cloudflare Pages) doesn't carry our security headers.** The `withSecurityHeaders` middleware in `worker-api/src/index.ts` only protects Worker API responses. Static HTML served by Pages has minimal headers. To add HSTS/X-Frame-Options on Pages HTML, configure Cloudflare Pages → Settings → Headers (or use `_headers` file in `public/`). Not a launch-blocker (HTTPS still enforced) but worth doing.
+- **Cookie consent banner can't be verified via curl** because the SPA renders it client-side. Spot-check needed in a real private-browsing tab.
+
+### ⚠️ Couldn't verify from this environment
+
+- **Lighthouse** — no headless Chrome available locally. Run via Cloudflare Pages dashboard "Web Analytics" or `npx lighthouse https://thehealios.com/` from a Mac/Linux box. CLAUDE.md targets Performance 90+, Accessibility 100, SEO 100.
+- **Cookie banner UX flow** — needs a real browser session to test the accept/reject paths.
+- **Stripe end-to-end test order** — needs a real card-form interaction. Recommended: place a £1 test order with `4242 4242 4242 4242` and verify the order confirmation page + email + admin all show the correct prices in correct currencies.
+- **Live Meta / Clarity firing** — even if env vars are set later, only a real browser visit confirms scripts execute and consent gates them correctly.
+
+---
 
 ## Rollback plan
 
