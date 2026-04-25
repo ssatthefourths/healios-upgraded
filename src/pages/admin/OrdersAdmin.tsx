@@ -94,6 +94,8 @@ interface Order {
   shipping_cost: number;
   discount_amount: number;
   total: number;
+  /** ISO 4217 code; e.g. 'GBP', 'ZAR'. Defaults to 'GBP' for legacy orders. */
+  currency?: string;
   shipping_method: string;
   discount_code: string | null;
   created_at: string;
@@ -215,7 +217,22 @@ const OrdersAdmin = () => {
     }
   };
 
-  const formatCurrency = (amount: number) => `£${Number(amount).toFixed(2)}`;
+  // Per-order currency formatter — uses the order's `currency` column so a
+  // ZAR / USD customer's amounts are shown in their actual paid currency
+  // instead of being misleadingly formatted as GBP (ticket #6 in
+  // HealiosIssuesFeedback_v3.csv). Aggregate metrics (today / week / AOV)
+  // stay GBP-shaped for now — fixing those needs FX conversion across
+  // mixed-currency orders, out of scope here.
+  const CURRENCY_SYMBOLS: Record<string, string> = {
+    GBP: '£', ZAR: 'R', USD: '$', EUR: '€', CAD: 'C$', AUD: 'A$',
+  };
+  const formatMoney = (amount: number, currency: string = 'GBP') => {
+    const code = (currency || 'GBP').toUpperCase();
+    const sym = CURRENCY_SYMBOLS[code] ?? `${code} `;
+    return `${sym}${Number(amount).toFixed(2)}`;
+  };
+  // Legacy alias used by the aggregate KPI cards — keeps GBP behaviour.
+  const formatCurrency = (amount: number) => formatMoney(amount, 'GBP');
 
   const exportToCSV = () => {
     if (filteredOrders.length === 0) { toast.error("No orders to export"); return; }
@@ -506,7 +523,14 @@ const OrdersAdmin = () => {
                             </Badge>
                           </TableCell>
                           <TableCell onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}>
-                            {formatCurrency(order.total)}
+                            <div className="flex items-center gap-2">
+                              <span>{formatMoney(order.total, order.currency)}</span>
+                              {order.currency && order.currency.toUpperCase() !== 'GBP' && (
+                                <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+                                  {order.currency.toUpperCase()}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}>
                             <TooltipProvider>
@@ -565,10 +589,10 @@ const OrdersAdmin = () => {
                                         <div className="flex-1">
                                           <div className="font-medium text-sm">{item.product_name}</div>
                                           <div className="text-xs text-muted-foreground">
-                                            {item.quantity} × {formatCurrency(item.unit_price)}
+                                            {item.quantity} × {formatMoney(item.unit_price, order.currency)}
                                           </div>
                                         </div>
-                                        <div className="text-sm font-medium">{formatCurrency(item.line_total)}</div>
+                                        <div className="text-sm font-medium">{formatMoney(item.line_total, order.currency)}</div>
                                       </div>
                                     ))}
                                   </div>
@@ -585,7 +609,7 @@ const OrdersAdmin = () => {
                                       <h4 className="font-medium mb-1">Discount</h4>
                                       <Badge variant="secondary">{order.discount_code}</Badge>
                                       <span className="ml-2 text-sm text-muted-foreground">
-                                        -{formatCurrency(order.discount_amount)}
+                                        -{formatMoney(order.discount_amount, order.currency)}
                                       </span>
                                     </div>
                                   )}

@@ -208,16 +208,20 @@ async function handleCheckoutComplete(session: any, env: Env) {
     tokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
   }
 
-  // Create order
+  // Create order. Currency is captured from Stripe metadata so admin pages
+  // can display amounts in the customer's actual paid currency (ticket #6
+  // in HealiosIssuesFeedback_v3.csv). Falls back to GBP for historical
+  // orders / safety, but new orders should always carry it.
   const orderId = generateOrderNumber();
+  const orderCurrency = (meta.currency || 'GBP').toString().toUpperCase();
   await env.DB.prepare(`
     INSERT INTO orders (
       id, user_id, email, first_name, last_name, phone,
       shipping_address, shipping_address_2, shipping_city, shipping_postal_code, shipping_country,
       billing_address, billing_city, billing_postal_code, billing_country,
-      subtotal, shipping_cost, discount_amount, discount_code, total,
+      subtotal, shipping_cost, discount_amount, discount_code, total, currency,
       shipping_method, status, stripe_session_id, access_token, token_expires_at, created_at
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `).bind(
     orderId,
     meta.user_id || null,
@@ -239,6 +243,7 @@ async function handleCheckoutComplete(session: any, env: Env) {
     discountAmount,
     meta.discount_code || null,
     total,
+    orderCurrency,
     meta.shipping_method || null,
     'pending',
     session.id,
@@ -371,6 +376,7 @@ async function handleCheckoutComplete(session: any, env: Env) {
         shippingCost,
         discount: discountAmount > 0 ? discountAmount : undefined,
         total,
+        currency: orderCurrency,
         shippingMethod: meta.shipping_method || 'standard',
         shippingAddress: addressLines.length > 0
           ? { name: customerName || 'Customer', lines: addressLines }
@@ -457,6 +463,7 @@ async function sendOrderConfirmationEmail(
     shippingCost: number;
     discount?: number;
     total: number;
+    currency?: string;
     shippingMethod: string;
     shippingAddress?: { name: string; lines: string[] };
     orderUrl?: string;
@@ -465,8 +472,18 @@ async function sendOrderConfirmationEmail(
   // Render Monique's React Email template with real order data. Pre-rendered
   // via @react-email/render — no React runtime in the Worker, just a string.
   // Template source: src/lib/emails/emails/transactional/01-order-confirmation.tsx
+
+  // Pick the right symbol so a ZAR / USD customer doesn't see £ in their
+  // confirmation email (ticket #6 in HealiosIssuesFeedback_v3.csv).
+  const currencyCode = (opts.currency || 'GBP').toUpperCase();
+  const symbolMap: Record<string, string> = {
+    GBP: '£', ZAR: 'R', USD: '$', EUR: '€', CAD: 'C$', AUD: 'A$',
+  };
+  const sym = symbolMap[currencyCode] ?? `${currencyCode} `;
+  const fmt = (n: number) => `${sym}${n.toFixed(2)}`;
+
   const shippingStr =
-    opts.shippingCost === 0 ? 'Free' : `£${opts.shippingCost.toFixed(2)}`;
+    opts.shippingCost === 0 ? 'Free' : fmt(opts.shippingCost);
 
   // Phase 8b will introduce per-recipient signed unsubscribe / preferences
   // tokens. For V1 we ship simple email-keyed query-string URLs so the
@@ -486,14 +503,14 @@ async function sendOrderConfirmationEmail(
     items: opts.items.map((i) => ({
       name: i.name,
       quantity: i.quantity,
-      price: `£${(Number(i.price) * Number(i.quantity)).toFixed(2)}`,
+      price: fmt(Number(i.price) * Number(i.quantity)),
     })),
-    subtotal: `£${opts.subtotal.toFixed(2)}`,
+    subtotal: fmt(opts.subtotal),
     shipping: shippingStr,
     discount: opts.discount && opts.discount > 0
-      ? `−£${Number(opts.discount).toFixed(2)}`
+      ? `−${fmt(Number(opts.discount))}`
       : undefined,
-    total: `£${opts.total.toFixed(2)}`,
+    total: fmt(opts.total),
     shippingAddress: opts.shippingAddress,
     trackingUrl: opts.orderUrl,
     unsubscribeUrl,
