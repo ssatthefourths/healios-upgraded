@@ -386,7 +386,10 @@ const Checkout = () => {
   };
   
   const shipping = getShippingCost();
-  const total = subtotal + shipping - discountAmount - loyaltyDiscount - giftCardDiscount;
+  // Clamp to zero so rounding drift from currency conversion / discount math
+  // can never produce a negative total or a sub-cent residual on a 100%-off
+  // basket. Round to 2dp first so display + Stripe both see the same value.
+  const total = Math.max(0, Math.round((subtotal + shipping - discountAmount - loyaltyDiscount - giftCardDiscount) * 100) / 100);
 
   const handleDiscountSubmit = async () => {
     if (!discountCode.trim()) {

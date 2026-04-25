@@ -74,7 +74,12 @@ export async function handleDiscount(request: Request, env: Env): Promise<Respon
     } else {
       discountAmount = Math.min(Number(row.discount_value), subtotal);
     }
-    discountAmount = Math.round(discountAmount * 100) / 100;
+    // Round to 2dp, then clamp to subtotal so a 100%-off code never leaves
+    // a sub-penny residual (rounding can otherwise produce e.g. £24.235 →
+    // £24.24, breaking total = subtotal - discount). Cap at subtotal so a
+    // percentage > 100 or a flat code larger than the basket can't go
+    // negative either.
+    discountAmount = Math.min(Math.round(discountAmount * 100) / 100, subtotal);
 
     return json({
       valid: true,

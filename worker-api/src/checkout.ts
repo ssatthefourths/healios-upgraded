@@ -235,13 +235,33 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
 
   // Apply discount coupon if provided.
   // discountAmount arrives in GBP (base currency) from /validate-discount.
-  // Stripe line items are sent in the display currency, so the coupon must
-  // match: convert GBP → display currency via currencyRate, then → minor
-  // units (cents/pence) via *100.
+  // Stripe line items are sent in display currency cents, so the coupon
+  // must match. Naive `Math.round(discountAmount * currencyRate * 100)`
+  // can drift by a few cents from the sum of per-line rounded cents
+  // (round-of-sum ≠ sum-of-rounds). For 100%-off codes that drift makes
+  // the customer pay R0.01–R0.05 on what should be a free order.
+  //
+  // Compute the actual line-items total in display cents, then if the
+  // GBP discount equals (within rounding) the GBP item subtotal, snap
+  // the coupon to that exact line-items total. Otherwise fall back to
+  // the converted GBP amount.
   if (discountAmount && discountAmount > 0) {
     try {
+      const itemsTotalCents = validatedItems.reduce(
+        (sum, item) => sum + Math.round(item.price * 100) * item.quantity,
+        0
+      );
+      const itemsSubtotalGBP = validatedItems.reduce(
+        (sum, item) => sum + (item.price / currencyRate) * item.quantity,
+        0
+      );
+      const fullyCovers = discountAmount >= itemsSubtotalGBP - 0.005;
+      const amountOff = fullyCovers
+        ? itemsTotalCents
+        : Math.round(discountAmount * currencyRate * 100);
+
       const coupon = await stripePost('/coupons', {
-        amount_off: Math.round(discountAmount * currencyRate * 100),
+        amount_off: amountOff,
         currency: stripeCurrency,
         duration: 'once',
         name: body.discountCode || 'Discount',
