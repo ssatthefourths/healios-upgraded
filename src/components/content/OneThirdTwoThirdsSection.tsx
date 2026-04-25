@@ -1,13 +1,41 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import OptimizedImage from "@/components/ui/optimized-image";
 import { useGsapReveal } from "@/hooks/useGsapReveal";
+import { supabase } from "@/integrations/supabase/client";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const probioticsImage = "/products/probiotics-vitamins-gummies.png";
 const ashwagandhaProduct = "/products/ashwagandha-gummies.png";
 
+/**
+ * Derives the lowest live (published + not coming-soon) price for a category.
+ * Returns null when the category has no live products yet — caller should
+ * fall back to a "Coming soon" label instead of a stale hard-coded number.
+ */
+const useCategoryFromPrice = (category: string) => {
+  return useQuery({
+    queryKey: ['category-from-price', category],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('price, is_coming_soon')
+        .eq('category', category)
+        .eq('is_published', true);
+      if (error) throw error;
+      const live = (data || []).filter((p: { is_coming_soon?: number | boolean | null }) => !p.is_coming_soon);
+      if (live.length === 0) return null;
+      return Math.min(...live.map((p: { price: number }) => Number(p.price)));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 const OneThirdTwoThirdsSection = () => {
   const staggerReveal = useGsapReveal({ direction: "up", distance: 40, stagger: 0.1, duration: 1, ease: "power3.out" });
+  const { formatPrice } = useCurrency();
+  const { data: sleepFromPrice } = useCategoryFromPrice('Sleep & Relaxation');
 
   return (
     <section className="w-full px-page">
@@ -69,11 +97,15 @@ const OneThirdTwoThirdsSection = () => {
                   </div>
                 </div>
 
-                {/* Pill count badge */}
-                <div className="hidden md:flex flex-col items-end gap-1 mb-1">
-                  <span className="text-white/40 text-[0.6rem] uppercase tracking-[0.2em]">From</span>
-                  <span className="text-white text-lg font-light">R16.99</span>
-                </div>
+                {/* "From <min price>" — derived live from D1; hidden when the
+                    category has no published, in-stock product yet (e.g. all
+                    items still flagged is_coming_soon). */}
+                {sleepFromPrice != null && (
+                  <div className="hidden md:flex flex-col items-end gap-1 mb-1">
+                    <span className="text-white/40 text-[0.6rem] uppercase tracking-[0.2em]">From</span>
+                    <span className="text-white text-lg font-light">{formatPrice(sleepFromPrice)}</span>
+                  </div>
+                )}
               </div>
             </div>
           </Link>
