@@ -1,11 +1,18 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import { Eye, Mail, Sparkles, Megaphone, Loader2 } from "lucide-react";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Eye, Mail, Sparkles, Megaphone, Loader2, Pencil, Info, RotateCcw } from "lucide-react";
+import { EDITOR_FIELDS, type EditorField } from "./email-editor-fields";
 
 /**
  * Monique's 17 React Email templates live in src/lib/emails/emails/<group>/.
@@ -81,30 +88,49 @@ const TEMPLATE_IMPORTS: Record<string, () => Promise<{ default: React.ComponentT
   '17-bundle':                () => import('@/lib/emails/emails/campaign/17-bundle'),
 };
 
-const PreviewFrame = ({ id }: { id: string }) => {
+/**
+ * Renders a template to HTML inside a sandboxed iframe.
+ * Re-renders when `propsKey` changes — used to debounce rapid edits.
+ */
+const PreviewFrame = ({ id, propsValues }: { id: string; propsValues: Record<string, string> }) => {
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Debounce: collapse rapid edits into one render. 250ms feels live without
+  // hammering @react-email/render on every keystroke.
+  const propsKey = useMemo(() => JSON.stringify(propsValues), [propsValues]);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        setHtml(null);
-        setError(null);
-        const [render, mod, React] = await Promise.all([
-          loadRender(),
-          TEMPLATE_IMPORTS[id](),
-          import('react'),
-        ]);
-        const Component = mod.default;
-        const rendered = await render(React.createElement(Component, {}));
-        if (!cancelled) setHtml(rendered);
-      } catch (err: any) {
-        if (!cancelled) setError(err?.message ?? 'Failed to render');
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [id]);
+    const timer = setTimeout(() => {
+      (async () => {
+        try {
+          setError(null);
+          const [render, mod, React] = await Promise.all([
+            loadRender(),
+            TEMPLATE_IMPORTS[id](),
+            import('react'),
+          ]);
+          if (cancelled) return;
+          const Component = mod.default;
+          // Filter out empty strings so the template falls back to its own
+          // defaults instead of rendering "" (e.g. an empty hero headline).
+          const cleanedProps: Record<string, any> = {};
+          for (const [k, v] of Object.entries(propsValues)) {
+            if (v !== undefined && v !== '') cleanedProps[k] = v;
+          }
+          const rendered = await render(React.createElement(Component, cleanedProps));
+          if (!cancelled) setHtml(rendered);
+        } catch (err: any) {
+          if (!cancelled) setError(err?.message ?? 'Failed to render');
+        }
+      })();
+    }, html === null ? 0 : 250);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [id, propsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) {
     return (
@@ -130,8 +156,119 @@ const PreviewFrame = ({ id }: { id: string }) => {
   );
 };
 
+/**
+ * Side panel with the editable fields for the active template.
+ * Surfaces the props from EDITOR_FIELDS — no persistence yet (Phase 8b.3).
+ */
+const EditorPanel = ({
+  fields,
+  values,
+  onChange,
+  onReset,
+}: {
+  fields: EditorField[];
+  values: Record<string, string>;
+  onChange: (key: string, value: string) => void;
+  onReset: () => void;
+}) => {
+  if (fields.length === 0) {
+    return (
+      <div className="p-4 text-sm text-muted-foreground">
+        No editable fields exposed for this template yet. Add them to{' '}
+        <code className="text-xs">src/pages/admin/email-editor-fields.ts</code>.
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="p-4 border-b border-border flex items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium">Edit fields</p>
+          <p className="text-[11px] text-muted-foreground">
+            Preview-only — saving is coming in 8b.3.
+          </p>
+        </div>
+        <Button size="sm" variant="ghost" onClick={onReset} title="Reset all to defaults">
+          <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+          Reset
+        </Button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <TooltipProvider delayDuration={300}>
+          {fields.map((f) => (
+            <div key={f.key} className="space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <Label htmlFor={`edit-${f.key}`} className="text-xs">
+                  {f.label}
+                </Label>
+                {f.hint && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs">
+                      <p className="text-xs">{f.hint}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              {f.type === 'textarea' ? (
+                <Textarea
+                  id={`edit-${f.key}`}
+                  value={values[f.key] ?? ''}
+                  onChange={(e) => onChange(f.key, e.target.value)}
+                  className="text-xs min-h-[80px]"
+                  placeholder={f.defaultValue}
+                />
+              ) : (
+                <Input
+                  id={`edit-${f.key}`}
+                  type={f.type === 'url' ? 'url' : 'text'}
+                  value={values[f.key] ?? ''}
+                  onChange={(e) => onChange(f.key, e.target.value)}
+                  className="text-xs"
+                  placeholder={f.defaultValue}
+                />
+              )}
+            </div>
+          ))}
+        </TooltipProvider>
+      </div>
+    </div>
+  );
+};
+
 const EmailsAdmin = () => {
   const [open, setOpen] = useState<string | null>(null);
+  // Phase 8b.1: per-template prop edits, in-memory only. Resets when the
+  // dialog closes so each session starts fresh from template defaults.
+  const [editMode, setEditMode] = useState(false);
+  const [editValues, setEditValues] = useState<Record<string, string>>({});
+
+  const activeFields = useMemo(() => (open ? EDITOR_FIELDS[open] ?? [] : []), [open]);
+
+  // When a template opens, seed the editor with its declared defaults so
+  // Monique sees the values she'd be tweaking (rather than empty inputs).
+  useEffect(() => {
+    if (!open) {
+      setEditValues({});
+      setEditMode(false);
+      return;
+    }
+    const seed: Record<string, string> = {};
+    for (const f of activeFields) {
+      if (f.defaultValue !== undefined) seed[f.key] = f.defaultValue;
+    }
+    setEditValues(seed);
+  }, [open, activeFields]);
+
+  const resetEdits = () => {
+    const seed: Record<string, string> = {};
+    for (const f of activeFields) {
+      if (f.defaultValue !== undefined) seed[f.key] = f.defaultValue;
+    }
+    setEditValues(seed);
+  };
 
   const groups: TemplateMeta['group'][] = ['transactional', 'lifecycle', 'campaign'];
 
@@ -187,16 +324,43 @@ const EmailsAdmin = () => {
 
       <Dialog open={!!open} onOpenChange={(o) => { if (!o) setOpen(null); }}>
         <DialogContent className="max-w-[95vw] w-[95vw] h-[92vh] p-0 overflow-hidden flex flex-col">
-          <DialogHeader className="p-4 border-b border-border">
-            <DialogTitle className="text-sm font-mono">{open}</DialogTitle>
-            <DialogDescription className="text-xs">
-              Live render — identical to what the Worker sends.
-            </DialogDescription>
+          <DialogHeader className="p-4 border-b border-border flex-row items-center justify-between gap-2 space-y-0">
+            <div>
+              <DialogTitle className="text-sm font-mono">{open}</DialogTitle>
+              <DialogDescription className="text-xs">
+                Live render — identical to what the Worker sends.
+                {editMode && activeFields.length > 0 && (
+                  <span className="ml-2 text-amber-600">Edit mode: changes are preview-only.</span>
+                )}
+              </DialogDescription>
+            </div>
+            <Button
+              size="sm"
+              variant={editMode ? 'default' : 'outline'}
+              onClick={() => setEditMode(!editMode)}
+              disabled={activeFields.length === 0}
+              title={activeFields.length === 0 ? 'No editable fields configured' : 'Toggle edit mode'}
+            >
+              <Pencil className="h-3.5 w-3.5 mr-1.5" />
+              {editMode ? 'Exit edit mode' : 'Edit'}
+            </Button>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden">
-            <Suspense fallback={<div className="p-8"><Loader2 className="h-5 w-5 animate-spin" /></div>}>
-              {open && <PreviewFrame id={open} />}
-            </Suspense>
+          <div className="flex-1 overflow-hidden flex">
+            <div className={editMode ? 'flex-1' : 'w-full'}>
+              <Suspense fallback={<div className="p-8"><Loader2 className="h-5 w-5 animate-spin" /></div>}>
+                {open && <PreviewFrame id={open} propsValues={editValues} />}
+              </Suspense>
+            </div>
+            {editMode && activeFields.length > 0 && (
+              <div className="w-80 border-l border-border bg-background flex-shrink-0">
+                <EditorPanel
+                  fields={activeFields}
+                  values={editValues}
+                  onChange={(key, value) => setEditValues((prev) => ({ ...prev, [key]: value }))}
+                  onReset={resetEdits}
+                />
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
