@@ -23,6 +23,7 @@ interface Product {
   is_published: boolean;
   stock_quantity?: number;
   is_coming_soon?: boolean;
+  compare_at_price?: number | null;
 }
 
 interface ProductGridProps {
@@ -178,19 +179,26 @@ const ProductGrid = ({ products, isLoading, filterLabel, onClearFilters }: Produ
                   </div>
                 </div>
                 <div className="space-y-xs">
-                  <p className="text-xs font-light text-muted-foreground uppercase tracking-wider">
-                    {formatCategory(product.category)}
-                  </p>
-                  <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors duration-300">
+                  <h3 className="text-base md:text-lg font-medium text-foreground leading-tight group-hover:text-primary transition-colors duration-300">
                     {product.name}
                   </h3>
+                  <p className="text-[11px] font-light text-muted-foreground">
+                    {formatCategory(product.category)}
+                  </p>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-foreground">
-                      {formatPriceLocal(product.price)}
-                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-base font-medium text-foreground">
+                        {formatPriceLocal(product.price)}
+                      </p>
+                      {product.compare_at_price != null && product.compare_at_price > product.price && (
+                        <p className="text-sm font-light text-muted-foreground line-through">
+                          {formatPriceLocal(product.compare_at_price)}
+                        </p>
+                      )}
+                    </div>
                     {ratings[product.id] && (
-                      <StarRating 
-                        rating={ratings[product.id].averageRating} 
+                      <StarRating
+                        rating={ratings[product.id].averageRating}
                         reviewCount={ratings[product.id].reviewCount}
                       />
                     )}

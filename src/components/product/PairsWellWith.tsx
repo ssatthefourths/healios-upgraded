@@ -67,12 +67,20 @@ const PairsWellWith = ({ productIds, currentProductId }: PairsWellWithProps) => 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <h3 className="text-sm font-light text-foreground group-hover:underline">
+              <h3 className="text-base font-medium text-foreground leading-tight group-hover:underline">
                 {product.name}
               </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {formatPrice(product.price)}
-              </p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <p className="text-sm font-medium text-foreground">
+                  {formatPrice(product.price)}
+                </p>
+                {(product as { compare_at_price?: number | null }).compare_at_price != null &&
+                  (product as { compare_at_price?: number | null }).compare_at_price! > product.price && (
+                    <p className="text-xs font-light text-muted-foreground line-through">
+                      {formatPrice((product as { compare_at_price?: number | null }).compare_at_price!)}
+                    </p>
+                  )}
+              </div>
             </Link>
           ))}
         </div>

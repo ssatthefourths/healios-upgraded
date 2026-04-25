@@ -65,12 +65,12 @@ const BundleGrid = ({ bundles, isLoading }: BundleGridProps) => {
                 </Badge>
               )}
             </div>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Bundle</p>
-            <h3 className="text-sm font-medium text-foreground mb-2 line-clamp-2">{bundle.name}</h3>
+            <h3 className="text-base md:text-lg font-medium text-foreground leading-tight mb-1 line-clamp-2">{bundle.name}</h3>
+            <p className="text-[11px] font-light text-muted-foreground mb-2">Bundle</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-sm font-medium text-foreground">{formatPrice(Number(bundle.price))}</span>
+              <span className="text-base font-medium text-foreground">{formatPrice(Number(bundle.price))}</span>
               {hasSaving && (
-                <span className="text-xs text-muted-foreground line-through">
+                <span className="text-sm font-light text-muted-foreground line-through">
                   {formatPrice(Number(bundle.compare_at_price))}
                 </span>
               )}

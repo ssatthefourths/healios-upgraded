@@ -126,15 +126,23 @@ const PersonalizedRecommendations = ({
 
                 {/* Product Info */}
                 <div className="space-y-[var(--space-xs)]">
-                  <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
-                    {formatCategory(product.category)}
-                  </p>
-                  <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-300">
+                  <h3 className="text-base font-medium text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors duration-300">
                     {product.name}
                   </h3>
-                  <p className="text-sm font-medium text-foreground">
-                    {formatPrice(product.price)}
+                  <p className="text-[11px] font-light text-muted-foreground">
+                    {formatCategory(product.category)}
                   </p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-sm font-medium text-foreground">
+                      {formatPrice(product.price)}
+                    </p>
+                    {(product as { compare_at_price?: number | null }).compare_at_price != null &&
+                      (product as { compare_at_price?: number | null }).compare_at_price! > product.price && (
+                        <p className="text-xs font-light text-muted-foreground line-through">
+                          {formatPrice((product as { compare_at_price?: number | null }).compare_at_price!)}
+                        </p>
+                      )}
+                  </div>
 
                   {/* Rating */}
                   {rating && rating.count > 0 && (

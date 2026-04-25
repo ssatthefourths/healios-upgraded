@@ -25,6 +25,7 @@ interface FeaturedProductCardProps {
     slug: string | null;
     stock_quantity?: number;
     is_coming_soon?: boolean;
+    compare_at_price?: number | null;
   };
   pairedProducts: PairedProduct[];
   reversed?: boolean;
@@ -84,13 +85,20 @@ const FeaturedProductCard = ({ product, pairedProducts, reversed = false }: Feat
       {/* Product Info */}
       <div className={`space-y-md ${reversed ? 'md:order-1 md:text-right' : ''}`}>
         <div className="space-y-xs">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest">{product.category}</p>
           <Link to={getProductPath(product)}>
-            <h3 className="text-2xl md:text-3xl font-light tracking-tight hover:text-primary transition-colors duration-300">
+            <h3 className="text-2xl md:text-3xl font-medium tracking-tight hover:text-primary transition-colors duration-300">
               {product.name}
             </h3>
           </Link>
-          <p className="text-xl font-medium">{formatPrice(product.price)}</p>
+          <p className="text-xs text-muted-foreground">{product.category}</p>
+          <div className={`flex items-baseline gap-3 ${reversed ? 'md:justify-end' : ''}`}>
+            <p className="text-xl font-medium">{formatPrice(product.price)}</p>
+            {product.compare_at_price != null && product.compare_at_price > product.price && (
+              <p className="text-base font-light text-muted-foreground line-through">
+                {formatPrice(product.compare_at_price)}
+              </p>
+            )}
+          </div>
         </div>
 
         {truncatedDescription && (
