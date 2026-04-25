@@ -27,6 +27,7 @@ import { handleSearchPhrases } from './search-phrases';
 import { handleSearchAnalytics } from './search-analytics';
 import { handleCertifications } from './certifications';
 import { handleDsr } from './dsr';
+import { handleSitemap } from './sitemap';
 import { pruneExpiredIpHashes } from './utils/client-ip';
 
 export interface Env {
@@ -143,6 +144,13 @@ async function handleRequest(
 
       if (path.startsWith('/public/product/') && path.endsWith('/certifications')) {
         return await handleCertifications(request, env);
+      }
+
+      // Dynamic sitemap. Pages routes /sitemap.xml here via _redirects.
+      // Filters out coming-soon + unpublished products (was a bug in the
+      // static public/sitemap.xml — see docs/LAUNCH-READINESS.md audit).
+      if (path === '/sitemap.xml') {
+        return await handleSitemap(request, env);
       }
 
       if (path === '/dsr/request' || path.startsWith('/dsr/verify/') || path.startsWith('/admin/dsr')) {

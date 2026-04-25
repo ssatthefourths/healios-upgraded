@@ -1,1 +1,9 @@
+# Dynamic sitemap — proxied to the API worker so coming-soon products
+# don't leak into search-engine indexes. Status 200 = rewrite (not 301),
+# so the URL the crawler sees stays on thehealios.com. The static
+# public/sitemap.xml has been deleted; this rule must be ABOVE the
+# SPA catch-all to fire.
+/sitemap.xml https://healios-api.ss-f01.workers.dev/sitemap.xml 200
+
+# SPA catch-all
 /* /index.html 200
