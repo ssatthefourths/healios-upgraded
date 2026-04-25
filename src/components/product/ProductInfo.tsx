@@ -172,25 +172,35 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         </Breadcrumb>
       </div>
 
-      {/* Product title and price */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-sm font-light text-muted-foreground mb-1">{categoryLabel}</p>
-            <h1 className="text-2xl md:text-3xl font-light text-foreground">{product.name}</h1>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="text-right">
-              <p className="text-xl font-light text-foreground">{formatPrice(displayPrice)}</p>
-              {purchaseType === 'subscription' && (
-                <p className="text-xs text-muted-foreground line-through">{formatPrice(basePrice)}</p>
-              )}
-            </div>
-            <WishlistButton
-              isInWishlist={isInWishlist(product.id)}
-              onClick={(e) => toggleWishlist(product.id, e)}
-            />
-          </div>
+      {/* Product title, category caption, and price.
+          Title leads (largest), category demoted underneath (smaller, no
+          uppercase / no tracking), then price row: current price first,
+          struck-through compare-at or subscription basePrice to the right.
+          Subscription line-through wins when active so we never double-strike. */}
+      <div className="relative space-y-2">
+        <WishlistButton
+          isInWishlist={isInWishlist(product.id)}
+          onClick={(e) => toggleWishlist(product.id, e)}
+          className="absolute top-0 right-0"
+        />
+        <div className="pr-12 space-y-1">
+          <h1 className="text-3xl md:text-4xl font-medium text-foreground leading-tight">
+            {product.name}
+          </h1>
+          <p className="text-xs font-light text-muted-foreground">{categoryLabel}</p>
+        </div>
+        <div className="flex items-baseline gap-3 pt-1">
+          <p className="text-2xl font-medium text-foreground">{formatPrice(displayPrice)}</p>
+          {purchaseType === 'subscription' ? (
+            <p className="text-base font-light text-muted-foreground line-through">
+              {formatPrice(basePrice)}
+            </p>
+          ) : (product as { compare_at_price?: number | null }).compare_at_price != null &&
+              (product as { compare_at_price?: number | null }).compare_at_price! > displayPrice ? (
+            <p className="text-base font-light text-muted-foreground line-through">
+              {formatPrice((product as { compare_at_price?: number | null }).compare_at_price!)}
+            </p>
+          ) : null}
         </div>
       </div>
 

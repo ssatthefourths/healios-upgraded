@@ -62,6 +62,7 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
     name: product?.name || "",
     slug: product?.slug || "",
     price: product?.price || 0,
+    compare_at_price: (product as any)?.compare_at_price ?? null,
     category: product?.category || "Vitamins & Minerals",
     image: product?.image || "",
     description: product?.description || "",
@@ -142,6 +143,7 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
         name: formData.name,
         slug: formData.slug || null,
         price: formData.price,
+        compare_at_price: formData.compare_at_price,
         category: formData.category,
         image: formData.image,
         description: formData.description || null,
@@ -284,6 +286,26 @@ const ProductEditor = ({ product, onSave, onCancel }: ProductEditorProps) => {
                     value={formData.price}
                     onChange={(e) => handleChange("price", parseFloat(e.target.value) || 0)}
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="compare_at_price">Compare-at price (£) <span className="text-xs font-light text-muted-foreground">(optional)</span></Label>
+                  <Input
+                    id="compare_at_price"
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g. 24.99"
+                    value={formData.compare_at_price ?? ""}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      handleChange("compare_at_price", raw === "" ? null : parseFloat(raw) || null);
+                    }}
+                  />
+                  <p className="text-xs font-light text-muted-foreground">
+                    Original price shown struck-through next to the current price on PDP and cards. Leave blank for no strikethrough.
+                  </p>
                 </div>
               </div>
 
