@@ -1,4 +1,5 @@
 import { Env } from './index';
+import { notifyBackInStock } from './stock-emails';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -250,6 +251,18 @@ export async function handleProducts(request: Request, env: Env): Promise<Respon
     try {
       const data = await request.json() as Record<string, any>;
 
+      // Snapshot pre-update stock so we can detect 0→positive transitions
+      // and fire back-in-stock emails to subscribers (NotifyMeButton flow).
+      // Only fetch when stock_quantity is actually being updated; otherwise
+      // skip the extra read.
+      let prevStock: number | null = null;
+      if ('stock_quantity' in data) {
+        const row = await env.DB.prepare(
+          'SELECT stock_quantity FROM products WHERE id = ?'
+        ).bind(productId).first<{ stock_quantity: number | null }>();
+        prevStock = row?.stock_quantity ?? null;
+      }
+
       const setClauses: string[] = [];
       const bindings: any[] = [];
 
@@ -267,6 +280,23 @@ export async function handleProducts(request: Request, env: Env): Promise<Respon
       bindings.push(productId);
       const sql = `UPDATE products SET ${setClauses.join(', ')} WHERE id = ?`;
       await env.DB.prepare(sql).bind(...bindings).run();
+
+      // Back-in-stock trigger: if stock crossed 0→positive, notify
+      // subscribers. Best-effort — failures here log but never throw
+      // because a stock update should not fail because of an email
+      // helper. Awaited inline (vs ctx.waitUntil) since handleProducts
+      // doesn't receive ctx today; pending-subscriber counts are tiny
+      // per product so the added latency is bounded.
+      if ('stock_quantity' in data) {
+        const newStock = Number(data.stock_quantity ?? 0);
+        if ((prevStock ?? 0) <= 0 && newStock > 0) {
+          try {
+            await notifyBackInStock(productId, env);
+          } catch (err: any) {
+            console.error('[products] notifyBackInStock failed:', err?.message);
+          }
+        }
+      }
 
       return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
     } catch (err: any) {

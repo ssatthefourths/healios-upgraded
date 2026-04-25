@@ -14,7 +14,8 @@ function tryParseJson(val: any): any {
 
 const USER_TABLES = new Set([
   'profiles', 'addresses', 'orders', 'order_items',
-  'wishlist', 'loyalty_points', 'loyalty_transactions', 'subscriptions'
+  'wishlist', 'loyalty_points', 'loyalty_transactions', 'subscriptions',
+  'stock_notifications',
 ]);
 const ADMIN_TABLES = new Set(['discount_codes', 'users']);
 

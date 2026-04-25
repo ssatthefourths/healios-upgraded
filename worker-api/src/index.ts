@@ -227,6 +227,7 @@ async function handleRequest(
         '/loyalty_transactions', '/subscriptions', '/order_items',
         '/newsletter_subscriptions', '/discount_codes', '/users',
         '/product_versions', '/scheduled_newsletters', '/admin_audit_log',
+        '/stock_notifications',
       ];
       if (TABLE_PATHS.some(t => path.startsWith(t))) {
         return await handleTable(request, env);
