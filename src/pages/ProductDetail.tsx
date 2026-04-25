@@ -179,14 +179,16 @@ const ProductDetail = () => {
             </Breadcrumb>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Top hero — gallery left, slim sticky buy-box right.
+              Description blocks moved out of the sticky column to render
+              full-width below (per 2026-04-25 PDP rework). */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 lg:gap-12">
             <ProductImageGallery productImage={product.image} productName={product.name} />
-            
-            <div className="lg:pl-8 lg:sticky lg:top-6 lg:h-fit">
+
+            <div className="lg:sticky lg:top-6 lg:self-start">
               <ProductInfo product={product} />
-              <ProductDescription product={product} />
-              
-              {/* Bundle Contents - shown for bundle products */}
+
+              {/* Bundle Contents — only on bundle products */}
               {!!product.is_bundle && product.bundle_products && (
                 <BundleContents
                   bundleProducts={product.bundle_products}
@@ -195,6 +197,11 @@ const ProductDetail = () => {
               )}
             </div>
           </div>
+
+          {/* Below-hero content blocks: Description, Benefits, How to Take,
+              Who Is It For, Ingredients, Reviews (open by default), then
+              collapsed Safety + FAQs. Full-width inside PageContainer. */}
+          <ProductDescription product={product} />
         </PageContainer>
         
         {/* Pairs Well With Section */}

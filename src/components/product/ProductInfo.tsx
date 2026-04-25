@@ -15,6 +15,8 @@ import WishlistButton from "./WishlistButton";
 import NotifyMeButton from "./NotifyMeButton";
 import FreeFromIcons from "./FreeFromIcons";
 import CertificationBadges from "./CertificationBadges";
+import StarRating from "./StarRating";
+import { useProductRatings } from "@/hooks/useProductRatings";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -56,6 +58,8 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
   const { addToCart } = useCart();
   const { formatPrice } = useCurrency();
   const { trackAddToCart } = useProductAnalytics();
+  const { ratings } = useProductRatings([product.id]);
+  const productRating = ratings[product.id];
 
   const isComingSoon = !!product.is_coming_soon;
   const stockQuantity = product.stock_quantity ?? 100;
@@ -189,6 +193,15 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           </h1>
           <p className="text-xs font-light text-muted-foreground">{categoryLabel}</p>
         </div>
+        {productRating && productRating.reviewCount > 0 && (
+          <a
+            href="#reviews"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={`See ${productRating.reviewCount} reviews`}
+          >
+            <StarRating rating={productRating.averageRating} reviewCount={productRating.reviewCount} />
+          </a>
+        )}
         <div className="flex items-baseline gap-3 pt-1">
           <p className="text-2xl font-medium text-foreground">{formatPrice(displayPrice)}</p>
           {purchaseType === 'subscription' ? (
