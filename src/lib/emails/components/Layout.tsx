@@ -39,11 +39,18 @@ export const Layout: React.FC<LayoutProps> = ({
       <meta name="x-apple-disable-message-reformatting" />
       <meta name="color-scheme" content="light" />
       <meta name="supported-color-schemes" content="light" />
+      {/*
+        Email font URLs use the Google Fonts CSS endpoint (which Google
+        rotates internally) rather than direct woff2 hashes that go stale.
+        Most email clients strip <link>/<style> anyway and fall back to
+        the system stack — which is what `fallbackFontFamily` ensures —
+        so this is purely for the admin email preview iframe.
+      */}
       <Font
         fontFamily="DM Sans"
         fallbackFontFamily={["Helvetica", "Arial", "sans-serif"]}
         webFont={{
-          url: "https://fonts.gstatic.com/s/dmsans/v15/rP2Yp2ywxg089UriI5-g7vF_fAU.woff2",
+          url: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400&display=swap",
           format: "woff2",
         }}
         fontWeight={400}
@@ -53,7 +60,7 @@ export const Layout: React.FC<LayoutProps> = ({
         fontFamily="DM Sans"
         fallbackFontFamily={["Helvetica", "Arial", "sans-serif"]}
         webFont={{
-          url: "https://fonts.gstatic.com/s/dmsans/v15/rP2Cp2ywxg089UriAWCrCBamC2QX.woff2",
+          url: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@500&display=swap",
           format: "woff2",
         }}
         fontWeight={500}
@@ -63,7 +70,7 @@ export const Layout: React.FC<LayoutProps> = ({
         fontFamily="Playfair Display"
         fallbackFontFamily={["Georgia", "Times New Roman", "serif"]}
         webFont={{
-          url: "https://fonts.gstatic.com/s/playfairdisplay/v37/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvUDQ.woff2",
+          url: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&display=swap",
           format: "woff2",
         }}
         fontWeight={400}

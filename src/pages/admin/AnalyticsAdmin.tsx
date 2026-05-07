@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { apiGet } from "@/lib/api";
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,17 +52,19 @@ const AnalyticsAdmin = () => {
   const runPerformanceAlerts = async () => {
     setRunningAlerts(true);
     try {
-      const { data, error } = await supabase.functions.invoke("product-performance-alerts");
-      if (error) throw error;
-      
-      if (data?.alerts_count > 0) {
-        toast.success(`Found ${data.alerts_count} performance alerts. Email sent to admins.`);
+      const { lowStock, outOfStock } = await apiGet<{
+        lowStock: Array<{ id: string; slug: string; name: string; stock_quantity: number }>;
+        outOfStock: Array<{ id: string; slug: string; name: string }>;
+      }>('/admin/product-performance-alerts');
+      const total = lowStock.length + outOfStock.length;
+      if (total > 0) {
+        toast.success(`${outOfStock.length} out of stock, ${lowStock.length} low stock.`);
       } else {
-        toast.info("No performance alerts at this time.");
+        toast.info('No performance alerts at this time.');
       }
     } catch (error) {
-      console.error("Error running performance alerts:", error);
-      toast.error("Failed to run performance check");
+      console.error('Error running performance alerts:', error);
+      toast.error('Failed to run performance check');
     } finally {
       setRunningAlerts(false);
     }
@@ -79,90 +81,70 @@ const AnalyticsAdmin = () => {
     const endDate = endOfDay(new Date());
 
     try {
-      // Fetch all analytics events in date range
-      const { data: events, error } = await supabase
-        .from("product_analytics")
-        .select("*")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+      const from = format(startDate, 'yyyy-MM-dd');
+      const to = format(endDate, 'yyyy-MM-dd');
+      const { data: rows } = await apiGet<{
+        data: Array<{ product_id: string; day: string; views: number; add_to_cart: number; purchases: number }>;
+      }>(`/admin/product-analytics?from=${from}&to=${to}`);
 
-      if (error) throw error;
-
-      // Fetch products for names
-      const { data: products } = await supabase
-        .from("products")
-        .select("id, name");
-
-      const productMap = new Map(products?.map((p) => [p.id, p.name]) || []);
-
-      // Calculate summary
-      const views = events?.filter((e) => e.event_type === "view").length || 0;
-      const addToCarts = events?.filter((e) => e.event_type === "add_to_cart").length || 0;
-      const purchases = events?.filter((e) => e.event_type === "purchase").length || 0;
-      const wishlistAdds = events?.filter((e) => e.event_type === "wishlist_add").length || 0;
+      const events = rows ?? [];
+      const views = events.reduce((s, r) => s + (r.views || 0), 0);
+      const addToCarts = events.reduce((s, r) => s + (r.add_to_cart || 0), 0);
+      const purchases = events.reduce((s, r) => s + (r.purchases || 0), 0);
 
       setSummary({
         views,
         addToCarts,
         purchases,
-        wishlistAdds,
+        wishlistAdds: 0, // Not yet tracked in product_analytics aggregate.
         conversionRate: views > 0 ? (purchases / views) * 100 : 0,
       });
 
-      // Calculate per-product stats
-      const productStatsMap = new Map<string, { views: number; add_to_carts: number; purchases: number }>();
-      
-      events?.forEach((event) => {
-        const stats = productStatsMap.get(event.product_id) || { views: 0, add_to_carts: 0, purchases: 0 };
-        if (event.event_type === "view") stats.views++;
-        if (event.event_type === "add_to_cart") stats.add_to_carts++;
-        if (event.event_type === "purchase") stats.purchases++;
-        productStatsMap.set(event.product_id, stats);
-      });
-
-      const productStatsArray: ProductStats[] = Array.from(productStatsMap.entries())
-        .map(([productId, stats]) => ({
+      // Per-product roll-up.
+      const byProduct = new Map<string, { views: number; add_to_carts: number; purchases: number }>();
+      for (const r of events) {
+        const cur = byProduct.get(r.product_id) || { views: 0, add_to_carts: 0, purchases: 0 };
+        cur.views += r.views || 0;
+        cur.add_to_carts += r.add_to_cart || 0;
+        cur.purchases += r.purchases || 0;
+        byProduct.set(r.product_id, cur);
+      }
+      const productStatsArray: ProductStats[] = Array.from(byProduct.entries())
+        .map(([productId, s]) => ({
           product_id: productId,
-          product_name: productMap.get(productId) || productId,
-          views: stats.views,
-          add_to_carts: stats.add_to_carts,
-          purchases: stats.purchases,
-          conversion_rate: stats.views > 0 ? (stats.purchases / stats.views) * 100 : 0,
+          product_name: productId,
+          views: s.views,
+          add_to_carts: s.add_to_carts,
+          purchases: s.purchases,
+          conversion_rate: s.views > 0 ? (s.purchases / s.views) * 100 : 0,
         }))
         .sort((a, b) => b.views - a.views)
         .slice(0, 10);
-
       setProductStats(productStatsArray);
 
-      // Calculate daily stats
-      const dailyStatsMap = new Map<string, { views: number; add_to_carts: number; purchases: number }>();
-      
+      // Per-day roll-up.
+      const byDay = new Map<string, { views: number; add_to_carts: number; purchases: number }>();
       for (let i = days; i >= 0; i--) {
-        const date = format(subDays(new Date(), i), "yyyy-MM-dd");
-        dailyStatsMap.set(date, { views: 0, add_to_carts: 0, purchases: 0 });
+        const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
+        byDay.set(date, { views: 0, add_to_carts: 0, purchases: 0 });
       }
-
-      events?.forEach((event) => {
-        const date = format(new Date(event.created_at), "yyyy-MM-dd");
-        const stats = dailyStatsMap.get(date);
-        if (stats) {
-          if (event.event_type === "view") stats.views++;
-          if (event.event_type === "add_to_cart") stats.add_to_carts++;
-          if (event.event_type === "purchase") stats.purchases++;
+      for (const r of events) {
+        const cur = byDay.get(r.day);
+        if (cur) {
+          cur.views += r.views || 0;
+          cur.add_to_carts += r.add_to_cart || 0;
+          cur.purchases += r.purchases || 0;
         }
-      });
-
-      const dailyStatsArray: DailyStats[] = Array.from(dailyStatsMap.entries()).map(([date, stats]) => ({
-        date: format(new Date(date), "MMM d"),
-        views: stats.views,
-        add_to_carts: stats.add_to_carts,
-        purchases: stats.purchases,
-      }));
-
-      setDailyStats(dailyStatsArray);
+      }
+      setDailyStats(Array.from(byDay.entries()).map(([date, s]) => ({
+        date: format(new Date(date), 'MMM d'),
+        views: s.views,
+        add_to_carts: s.add_to_carts,
+        purchases: s.purchases,
+      })));
     } catch (error) {
-      console.error("Error fetching analytics:", error);
-      toast.error("Failed to load analytics");
+      console.error('Error fetching analytics:', error);
+      toast.error('Failed to load analytics');
     } finally {
       setLoading(false);
     }

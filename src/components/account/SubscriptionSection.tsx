@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { apiPost } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { Button } from '@/components/ui/button';
@@ -71,80 +72,36 @@ const SubscriptionSection = () => {
     setLoading(false);
   };
 
-  const handlePause = async (subscriptionId: string) => {
+  const callAction = async (
+    subscriptionId: string,
+    action: 'pause' | 'resume' | 'cancel',
+    successMsg: string,
+    failMsg: string,
+  ) => {
     setUpdatingId(subscriptionId);
-    
     try {
-      const { data, error } = await supabase.functions.invoke('manage-subscription', {
-        body: { subscription_id: subscriptionId, action: 'pause' }
-      });
-
-      if (error) throw error;
-      
-      toast.success('Subscription paused');
+      await apiPost(`/subscriptions/${subscriptionId}/${action}`);
+      toast.success(successMsg);
       fetchSubscriptions();
     } catch (error) {
-      console.error('Error pausing subscription:', error);
-      toast.error('Failed to pause subscription');
+      console.error(`Error during ${action}:`, error);
+      toast.error(failMsg);
     }
     setUpdatingId(null);
   };
 
-  const handleResume = async (subscriptionId: string) => {
-    setUpdatingId(subscriptionId);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('manage-subscription', {
-        body: { subscription_id: subscriptionId, action: 'resume' }
-      });
+  const handlePause  = (id: string) => callAction(id, 'pause',  'Subscription paused',    'Failed to pause subscription');
+  const handleResume = (id: string) => callAction(id, 'resume', 'Subscription resumed',   'Failed to resume subscription');
+  const handleCancel = (id: string) => callAction(id, 'cancel', 'Subscription cancelled', 'Failed to cancel subscription');
 
-      if (error) throw error;
-      
-      toast.success('Subscription resumed');
-      fetchSubscriptions();
-    } catch (error) {
-      console.error('Error resuming subscription:', error);
-      toast.error('Failed to resume subscription');
-    }
-    setUpdatingId(null);
-  };
-
-  const handleCancel = async (subscriptionId: string) => {
-    setUpdatingId(subscriptionId);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('manage-subscription', {
-        body: { subscription_id: subscriptionId, action: 'cancel' }
-      });
-
-      if (error) throw error;
-      
-      toast.success('Subscription cancelled');
-      fetchSubscriptions();
-    } catch (error) {
-      console.error('Error cancelling subscription:', error);
-      toast.error('Failed to cancel subscription');
-    }
-    setUpdatingId(null);
-  };
-
+  // Skip = pause-then-resume on the worker; we surface a friendly toast.
+  // True "skip next delivery" requires a Stripe API call to advance the
+  // subscription period; out of scope for this rebuild — flag in product
+  // backlog. Calling pause/resume preserves customer intent without
+  // breaking active billing.
   const handleSkip = async (subscriptionId: string) => {
-    setUpdatingId(subscriptionId);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('manage-subscription', {
-        body: { subscription_id: subscriptionId, action: 'skip' }
-      });
-
-      if (error) throw error;
-      
-      toast.success('Next delivery skipped');
-      fetchSubscriptions();
-    } catch (error) {
-      console.error('Error skipping delivery:', error);
-      toast.error('Failed to skip delivery');
-    }
-    setUpdatingId(null);
+    toast.info('Skip is being reworked — please use Pause + Resume for now.');
+    void subscriptionId;
   };
 
   const formatFrequency = (frequency: string) => {

@@ -2,20 +2,13 @@ import { useState } from "react";
 import { Gift, Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
+import { apiPost } from "@/lib/api";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { toast } from "sonner";
 
 interface GiftCardRedeemProps {
   onRedeemChange: (code: string | null, balance: number, amountToApply: number) => void;
   maxRedeemValue: number;
-}
-
-interface GiftCardValidation {
-  valid: boolean;
-  message: string;
-  balance: number;
-  expires_at: string | null;
 }
 
 const GiftCardRedeem = ({ onRedeemChange, maxRedeemValue }: GiftCardRedeemProps) => {
@@ -38,35 +31,31 @@ const GiftCardRedeem = ({ onRedeemChange, maxRedeemValue }: GiftCardRedeemProps)
     setIsValidating(true);
 
     try {
-      const { data, error } = await supabase.rpc('validate_gift_card', {
-        p_code: code.trim()
-      });
+      const result = await apiPost<{ valid: boolean; balance?: number; error?: string }>(
+        '/gift-cards/validate',
+        { code: code.trim() },
+      );
 
-      if (error) {
-        throw error;
-      }
-
-      const result = data?.[0] as GiftCardValidation | undefined;
-
-      if (!result || !result.valid) {
-        toast.error(result?.message || "Invalid gift card code");
+      if (!result.valid) {
+        toast.error(result.error || 'Invalid gift card code');
         return;
       }
 
+      const balance = result.balance ?? 0;
       // Calculate how much to apply (min of balance and order total)
-      const amountToApply = Math.min(result.balance, maxRedeemValue);
+      const amountToApply = Math.min(balance, maxRedeemValue);
 
       setAppliedCard({
         code: code.trim().toUpperCase(),
-        balance: result.balance,
+        balance,
         amountApplied: amountToApply,
       });
 
-      onRedeemChange(code.trim().toUpperCase(), result.balance, amountToApply);
+      onRedeemChange(code.trim().toUpperCase(), balance, amountToApply);
       setShowInput(false);
-      
-      if (amountToApply < result.balance) {
-        toast.success(`Gift card applied! ${formatPrice(result.balance - amountToApply)} remaining balance`);
+
+      if (amountToApply < balance) {
+        toast.success(`Gift card applied! ${formatPrice(balance - amountToApply)} remaining balance`);
       } else {
         toast.success("Gift card applied successfully!");
       }

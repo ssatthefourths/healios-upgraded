@@ -69,5 +69,32 @@ export async function handleGiftCards(request: Request, env: Env): Promise<Respo
     return new Response(JSON.stringify({ success: true, code, id }), { headers: cors });
   }
 
+  // POST /gift-cards/validate  — replaces RPC validate_gift_card.
+  // { code } → { valid, balance, currency, error? }
+  // Read-only; deliberately does not return the gift_card row to avoid
+  // leaking purchaser/recipient PII.
+  if (path === '/gift-cards/validate' && request.method === 'POST') {
+    let body: any;
+    try { body = await request.json(); }
+    catch { return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400, headers: cors }); }
+
+    const code = (body?.code ?? '').toString().trim().toUpperCase();
+    if (!code) return new Response(JSON.stringify({ valid: false, error: 'Code required' }), { status: 400, headers: cors });
+
+    const card = await env.DB.prepare(
+      'SELECT remaining_balance, is_active, expires_at FROM gift_cards WHERE code = ?'
+    ).bind(code).first<{ remaining_balance: number; is_active: number; expires_at: string }>();
+
+    if (!card) return new Response(JSON.stringify({ valid: false, error: 'Not found' }), { headers: cors });
+    if (!card.is_active) return new Response(JSON.stringify({ valid: false, error: 'Inactive' }), { headers: cors });
+    if (card.expires_at && new Date(card.expires_at) < new Date()) {
+      return new Response(JSON.stringify({ valid: false, error: 'Expired' }), { headers: cors });
+    }
+    if ((card.remaining_balance ?? 0) <= 0) {
+      return new Response(JSON.stringify({ valid: false, error: 'No balance remaining' }), { headers: cors });
+    }
+    return new Response(JSON.stringify({ valid: true, balance: card.remaining_balance }), { headers: cors });
+  }
+
   return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers: cors });
 }

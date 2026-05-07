@@ -637,10 +637,16 @@ const OrdersAdmin = () => {
                         </TableRow>
                         {isExpanded && (
                           <TableRow>
-                            <TableCell colSpan={7} className="bg-muted/30 p-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                  <h4 className="font-medium mb-2">Order Items</h4>
+                            <TableCell colSpan={7} className="bg-muted/30 p-0">
+                              {/*
+                                Three-pane expanded row: Items | Address | Discount.
+                                Each pane is its own column with explicit borders so
+                                the sections read as distinct cards instead of one
+                                undifferentiated blob (UAT 2026-05-07 feedback).
+                              */}
+                              <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
+                                <section className="p-4">
+                                  <h4 className="font-semibold text-sm tracking-wide uppercase text-muted-foreground mb-3">Order Items</h4>
                                   <div className="space-y-2">
                                     {order.order_items?.map((item) => (
                                       <div key={item.id} className="flex items-center gap-3">
@@ -649,29 +655,30 @@ const OrdersAdmin = () => {
                                           alt={item.product_name}
                                           className="w-10 h-10 object-cover rounded"
                                         />
-                                        <div className="flex-1">
-                                          <div className="font-medium text-sm">{item.product_name}</div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="font-medium text-sm truncate">{item.product_name}</div>
                                           <div className="text-xs text-muted-foreground">
                                             {item.quantity} × {formatMoney(item.unit_price, order.currency)}
                                           </div>
                                         </div>
-                                        <div className="text-sm font-medium">{formatMoney(item.line_total, order.currency)}</div>
+                                        <div className="text-sm font-medium whitespace-nowrap">{formatMoney(item.line_total, order.currency)}</div>
                                       </div>
                                     ))}
                                   </div>
-                                </div>
-                                <div>
-                                  <h4 className="font-medium mb-2">Shipping Address</h4>
-                                  <p className="text-sm text-muted-foreground">
+                                </section>
+
+                                <section className="p-4">
+                                  <h4 className="font-semibold text-sm tracking-wide uppercase text-muted-foreground mb-3">Shipping</h4>
+                                  <p className="text-sm leading-relaxed">
                                     {order.shipping_address}<br />
                                     {order.shipping_address_2 ? <>{order.shipping_address_2}<br /></> : null}
                                     {order.shipping_city}, {order.shipping_postal_code}<br />
                                     {order.shipping_country}
                                   </p>
-                                  {order.tracking_carrier || order.tracking_number ? (
-                                    <div className="mt-3 text-sm">
-                                      <p className="font-medium">Tracking</p>
-                                      <p className="text-muted-foreground text-xs">
+                                  {(order.tracking_carrier || order.tracking_number) ? (
+                                    <div className="mt-4 pt-3 border-t border-border/60">
+                                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Tracking</p>
+                                      <p className="text-sm">
                                         {order.tracking_carrier}{order.tracking_number ? ` · ${order.tracking_number}` : ''}
                                       </p>
                                       {order.tracking_url && (
@@ -683,21 +690,34 @@ const OrdersAdmin = () => {
                                     </div>
                                   ) : null}
                                   {order.delivered_at && (
-                                    <p className="text-xs text-green-700 mt-2">
+                                    <p className="text-xs text-green-700 mt-3">
                                       Delivered {new Date(order.delivered_at).toLocaleDateString()}
                                       {order.delivered_by ? ` · marked by ${order.delivered_by}` : ''}
                                     </p>
                                   )}
-                                  {order.discount_code && (
-                                    <div className="mt-4">
-                                      <h4 className="font-medium mb-1">Discount</h4>
-                                      <Badge variant="secondary">{order.discount_code}</Badge>
-                                      <span className="ml-2 text-sm text-muted-foreground">
-                                        -{formatMoney(order.discount_amount, order.currency)}
-                                      </span>
+                                </section>
+
+                                <section className="p-4">
+                                  <h4 className="font-semibold text-sm tracking-wide uppercase text-muted-foreground mb-3">Discount &amp; Totals</h4>
+                                  {order.discount_code ? (
+                                    <div className="space-y-2 text-sm">
+                                      <div>
+                                        <Badge variant="secondary" className="font-mono">{order.discount_code}</Badge>
+                                      </div>
+                                      <div className="text-muted-foreground">
+                                        Discount applied: <span className="font-medium text-foreground">-{formatMoney(order.discount_amount, order.currency)}</span>
+                                      </div>
                                     </div>
+                                  ) : (
+                                    <p className="text-sm text-muted-foreground italic">No discount applied</p>
                                   )}
-                                </div>
+                                  <div className="mt-4 pt-3 border-t border-border/60 text-sm">
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Order total</span>
+                                      <span className="font-semibold">{formatMoney(order.total, order.currency)}</span>
+                                    </div>
+                                  </div>
+                                </section>
                               </div>
                             </TableCell>
                           </TableRow>

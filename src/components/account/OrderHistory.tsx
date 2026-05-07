@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { apiBaseUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { Button } from '@/components/ui/button';
@@ -110,23 +111,19 @@ const OrderHistory = () => {
 
   const handleDownloadInvoice = async (orderId: string) => {
     setDownloadingInvoice(orderId);
-    
     try {
-      const { data, error } = await supabase.functions.invoke('generate-invoice', {
-        body: { orderId },
-      });
-      
-      if (error) {
-        throw new Error('Failed to generate invoice');
-      }
-      
-      if (data?.downloadUrl) {
-        // Open the download URL in a new tab
-        window.open(data.downloadUrl, '_blank');
-        toast.success('Invoice generated successfully');
-      } else {
-        throw new Error('No download URL returned');
-      }
+      // Worker /orders/:id/invoice returns server-rendered HTML. Open in a
+      // new tab — customer can save-as-PDF via browser print dialog.
+      const url = `${apiBaseUrl()}/orders/${encodeURIComponent(orderId)}/invoice`;
+      const token = (typeof localStorage !== 'undefined' && localStorage.getItem('cf_session')) || '';
+      // Auth header can't be passed via window.open; embed token as query
+      // string is unsafe (URL leakage). Instead fetch + open Blob URL.
+      const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      if (!res.ok) throw new Error('Failed to generate invoice');
+      const html = await res.text();
+      const blob = new Blob([html], { type: 'text/html' });
+      window.open(URL.createObjectURL(blob), '_blank');
+      toast.success('Invoice opened in a new tab');
     } catch {
       toast.error('Failed to generate invoice. Please try again.');
     } finally {

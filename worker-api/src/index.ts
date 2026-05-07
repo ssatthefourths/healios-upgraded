@@ -28,6 +28,13 @@ import { handleSearchAnalytics } from './search-analytics';
 import { handleCertifications } from './certifications';
 import { handleDsr } from './dsr';
 import { handleSitemap } from './sitemap';
+import { handleReferrals } from './referrals';
+import { handleAdminAnalytics } from './admin-analytics';
+import { handleAdminCampaigns } from './admin-campaigns';
+import { handleSubscriptionsManage } from './subscriptions-manage';
+import { handleInvoice } from './invoices';
+import { handleAccountDelete } from './account-delete';
+import { handleNotifyProductChange } from './notify-product-change';
 import { pruneExpiredIpHashes } from './utils/client-ip';
 
 export interface Env {
@@ -220,6 +227,40 @@ async function handleRequest(
 
       if (path.startsWith('/gift-cards')) {
         return await handleGiftCards(request, env);
+      }
+
+      // ── Migrated Supabase debt (PR #5) ────────────────────────────────
+      if (path === '/referrals' || path === '/referrals/code' || path === '/referrals/apply') {
+        return await handleReferrals(request, env);
+      }
+
+      if (
+        path === '/admin/product-analytics' ||
+        path === '/admin/product-performance-alerts' ||
+        path === '/admin/checkout-security-stats' ||
+        path === '/admin/referral-security-stats'
+      ) {
+        return await handleAdminAnalytics(request, env);
+      }
+
+      if (path.startsWith('/admin/email-campaigns')) {
+        return await handleAdminCampaigns(request, env);
+      }
+
+      if (path === '/admin/products/notify-change') {
+        return await handleNotifyProductChange(request, env);
+      }
+
+      if (/^\/subscriptions\/[^/]+\/(pause|resume|cancel|frequency)$/.test(path)) {
+        return await handleSubscriptionsManage(request, env);
+      }
+
+      if (/^\/orders\/[^/]+\/invoice$/.test(path)) {
+        return await handleInvoice(request, env);
+      }
+
+      if (path === '/account/delete') {
+        return await handleAccountDelete(request, env);
       }
 
       const TABLE_PATHS = [

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiGet, apiPost } from '@/lib/api';
 import logger from '@/lib/logger';
 
 // Helper function to mask email addresses for privacy
@@ -8,21 +8,22 @@ const maskEmail = (email: string | null): string | null => {
   if (!email) return null;
   const [localPart, domain] = email.split('@');
   if (!domain) return email;
-  const maskedLocal = localPart.length <= 2 
-    ? localPart.charAt(0) + '***' 
+  const maskedLocal = localPart.length <= 2
+    ? localPart.charAt(0) + '***'
     : localPart.substring(0, 2) + '***';
   return `${maskedLocal}@${domain}`;
 };
 
 interface Referral {
   id: string;
-  referral_code: string;
+  referrer_id: string;
   referred_email: string | null;
+  referred_user_id: string | null;
   status: string;
-  converted_at: string | null;
+  reward_points: number;
+  order_id: string | null;
   created_at: string;
-  referrer_reward_points: number;
-  referred_reward_points: number;
+  converted_at: string | null;
 }
 
 interface ReferralStats {
@@ -44,58 +45,31 @@ export const useReferral = () => {
 
   const fetchReferralCode = useCallback(async () => {
     if (!user) return;
-
     try {
-      const { data, error } = await supabase.rpc('get_or_create_referral_code', {
-        p_user_id: user.id
-      });
-
-      if (error) {
-        logger.error('Error fetching referral code', error);
-        return;
-      }
-
-      setReferralCode(data);
+      const { code } = await apiPost<{ code: string }>('/referrals/code');
+      setReferralCode(code);
     } catch (err) {
-      logger.error('Error in fetchReferralCode', err);
+      logger.error('Error fetching referral code', err);
     }
   }, [user]);
 
   const fetchReferrals = useCallback(async () => {
     if (!user) return;
-
     try {
-      const { data, error } = await supabase
-        .from('referrals')
-        .select('*')
-        .eq('referrer_id', user.id)
-        .neq('referred_email', null)
-        .order('created_at', { ascending: false });
+      const { data } = await apiGet<{ data: Referral[] }>('/referrals');
+      const visible = (data || []).filter(r => r.referred_email !== null);
+      const masked = visible.map(r => ({ ...r, referred_email: maskEmail(r.referred_email) }));
+      setReferrals(masked);
 
-      if (error) {
-        logger.error('Error fetching referrals', error);
-        return;
-      }
-
-      // Mask email addresses before storing in state
-      const maskedReferrals = (data || []).map(referral => ({
-        ...referral,
-        referred_email: maskEmail(referral.referred_email),
-      }));
-
-      setReferrals(maskedReferrals);
-
-      // Calculate stats
-      const converted = data?.filter(r => r.status === 'rewarded' || r.status === 'converted') || [];
-      const pointsEarned = converted.reduce((sum, r) => sum + (r.referrer_reward_points || 0), 0);
-
+      const converted = visible.filter(r => r.status === 'rewarded' || r.status === 'converted');
+      const pointsEarned = converted.reduce((sum, r) => sum + (r.reward_points || 0), 0);
       setStats({
-        totalReferrals: data?.length || 0,
+        totalReferrals: visible.length,
         convertedReferrals: converted.length,
         totalPointsEarned: pointsEarned,
       });
     } catch (err) {
-      logger.error('Error in fetchReferrals', err);
+      logger.error('Error fetching referrals', err);
     }
   }, [user]);
 
