@@ -164,6 +164,14 @@ const Footer = () => {
         </div>
       </div>
 
+      {/* Social + trust icon row — empty bundles render nothing */}
+      {showIconRow && (
+        <div className="max-w-7xl mx-auto mb-[var(--space-md)] flex flex-wrap items-center gap-x-8 gap-y-4">
+          <IconBundle items={socialItems} label="Social media" />
+          <IconBundle items={trustItems} label="Trust signals" />
+        </div>
+      )}
+
       {/* Bottom section */}
       <div className="max-w-7xl mx-auto border-t border-border pt-[var(--space-sm)]">
         <div className="flex flex-col md:flex-row justify-between items-center gap-2">
