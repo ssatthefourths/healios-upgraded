@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { cloudflare as supabase } from "@/integrations/cloudflare/client";
+import { apiPost } from "@/lib/api";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -254,12 +255,9 @@ const ProductList = ({ onEdit }: ProductListProps) => {
       console.error(error);
     } else {
       // Send notification to admins (fire and forget)
-      supabase.functions.invoke("notify-product-change", {
-        body: {
-          product_id: deleteProduct.id,
-          product_name: deleteProduct.name,
-          action: "delete",
-        },
+      apiPost('/admin/products/notify-change', {
+        productId: deleteProduct.id,
+        changeType: 'deleted',
       }).catch(console.error);
 
       toast.success("Product deleted successfully");

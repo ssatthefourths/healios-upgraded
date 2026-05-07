@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { apiGet } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface SecurityStats {
@@ -43,27 +43,24 @@ const CheckoutSecurityAdmin = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch security stats
-      const { data: statsData, error: statsError } = await supabase.rpc(
-        "get_checkout_security_stats",
-        { p_hours: parseInt(timeRange) }
-      );
+      // Worker route /admin/checkout-security-stats returns 30-day aggregates
+      // from the orders table. There is no dedicated checkout_security_log
+      // table yet — the raw event log was a Supabase artefact and is treated
+      // as out-of-scope for this rebuild. Recent-events list shows empty
+      // until that pipeline is wired (see plan/handoffs).
+      const { totals } = await apiGet<{
+        totals: { total: number; confirmed: number; cancelled: number; pending: number; with_discount: number };
+      }>('/admin/checkout-security-stats');
 
-      if (statsError) throw statsError;
-
-      if (statsData && statsData.length > 0) {
-        setStats(statsData[0] as SecurityStats);
-      }
-
-      // Fetch recent logs
-      const { data: logsData, error: logsError } = await supabase
-        .from("checkout_security_log")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (logsError) throw logsError;
-      setRecentLogs(logsData || []);
+      setStats({
+        total_attempts: totals.total,
+        total_failures: totals.cancelled,
+        total_suspicious: 0,
+        total_rate_limited: 0,
+        unique_ips: 0,
+        top_suspicious_ips: [],
+      });
+      setRecentLogs([]);
     } catch (error) {
       console.error("Error fetching security data:", error);
       toast({

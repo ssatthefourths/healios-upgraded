@@ -623,44 +623,27 @@ const NewsletterAdmin = () => {
 
     setSending(true);
     try {
-      // Create campaign record first
-      const { data: campaignData, error: campaignError } = await supabase
-        .from("email_campaigns")
-        .insert({
+      // Create campaign draft via REST.
+      const { id: campaignId } = await apiPost<{ id: string }>(
+        '/admin/email-campaigns',
+        {
           subject: emailSubject,
-          content: emailContent,
-          recipients_count: recipients.length,
-          target_segments: targetingMode === "segments" ? selectedSegments : [],
-          targeting_mode: targetingMode,
-          created_by: user?.id || null,
-        } as any)
-        .select()
-        .single();
+          body_html: emailContent,
+          segment: targetingMode === 'segments' ? selectedSegments.join(',') : 'all',
+        },
+      );
 
-      if (campaignError) {
-        console.error("Error creating campaign record:", campaignError);
-      }
+      // Mark sent — recipient fan-out is queued by the worker; the dispatch
+      // pipeline (Resend) is wired separately from this admin action.
+      const result = await apiPost<{ id: string; status: string; recipients: number }>(
+        `/admin/email-campaigns/${campaignId}/send`,
+      );
 
-      const { data, error } = await supabase.functions.invoke('send-newsletter', {
-        body: {
-          subject: emailSubject,
-          content: emailContent,
-          recipients,
-          campaignId: campaignData?.id,
-          segments: targetingMode === "segments" ? selectedSegments : null
-        }
-      });
+      const targetLabel = targetingMode === 'segments'
+        ? `${selectedSegments.join(', ')} segment${selectedSegments.length > 1 ? 's' : ''}`
+        : 'all subscribers';
+      toast.success(`Campaign queued — ${result.recipients} recipients (${targetLabel})`);
 
-      if (error) throw error;
-
-      const targetLabel = targetingMode === "segments" 
-        ? `${selectedSegments.join(", ")} segment${selectedSegments.length > 1 ? "s" : ""}`
-        : "all subscribers";
-      toast.success(`Newsletter sent to ${data.sent} recipients (${targetLabel})`);
-      if (data.failed > 0) {
-        toast.warning(`${data.failed} emails failed to send`);
-      }
-      
       setComposeOpen(false);
       resetComposeForm();
     } catch (error: any) {

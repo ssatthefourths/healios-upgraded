@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { RefreshCw, UserX, AlertTriangle, Users, Clock, CheckCircle, Ban, Plus, Trash2, Globe, MapPin, Search, Download } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { apiGet } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,63 +115,32 @@ const ReferralSecurityAdmin = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const hours = parseInt(timeRange);
+      // Worker /admin/referral-security-stats returns 30-day aggregates from
+      // the referrals table. Rate-limit and blocklist tables are intentionally
+      // not migrated (they were Supabase-only artefacts); this view shows
+      // the metrics we DO track and zeros for the rest until a real
+      // observability pipeline is wired.
+      const { totals, selfReferralAttempts } = await apiGet<{
+        totals: { total: number; pending: number; converted: number; rewarded: number };
+        selfReferralAttempts: number;
+      }>('/admin/referral-security-stats');
 
-      // Fetch stats from RPC function
-      const { data: statsData, error: statsError } = await supabase
-        .rpc('get_referral_security_stats', { p_hours: hours });
+      setStats({
+        total_entries: totals.total,
+        high_attempt_entries: selfReferralAttempts,
+        unique_identifiers: 0,
+        pending_referrals: totals.pending,
+        converted_referrals: totals.converted,
+        blocked_identifiers: 0,
+        top_rate_limited: [],
+      });
 
-      if (statsError) throw statsError;
-
-      if (statsData && statsData.length > 0) {
-        const rawStats = statsData[0] as Record<string, unknown>;
-        const topRateLimited = rawStats.top_rate_limited;
-        setStats({
-          total_entries: (rawStats.total_entries as number) || 0,
-          high_attempt_entries: (rawStats.high_attempt_entries as number) || 0,
-          unique_identifiers: (rawStats.unique_identifiers as number) || 0,
-          pending_referrals: (rawStats.pending_referrals as number) || 0,
-          converted_referrals: (rawStats.converted_referrals as number) || 0,
-          blocked_identifiers: (rawStats.blocked_identifiers as number) || 0,
-          top_rate_limited: Array.isArray(topRateLimited) 
-            ? (topRateLimited as SecurityStats['top_rate_limited'])
-            : []
-        });
-      }
-
-      // Fetch recent rate limit entries
-      const cutoffTime = new Date();
-      cutoffTime.setHours(cutoffTime.getHours() - hours);
-
-      const { data: rateLimitData, error: rateLimitError } = await supabase
-        .from('referral_rate_limits')
-        .select('*')
-        .gte('window_start', cutoffTime.toISOString())
-        .order('attempt_count', { ascending: false })
-        .limit(50);
-
-      if (rateLimitError) throw rateLimitError;
-      setRateLimits(rateLimitData || []);
-
-      // Fetch recent referrals
-      const { data: referralData, error: referralError } = await supabase
-        .from('referrals')
-        .select('id, referral_code, referred_email, status, created_at, converted_at')
-        .gte('created_at', cutoffTime.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (referralError) throw referralError;
-      setReferrals(referralData || []);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: blocklistData, error: blocklistError } = await (supabase as any)
-        .from('referral_blocklist')
-        .select('id, identifier, reason, blocked_at, country, region, city, country_code')
-        .order('blocked_at', { ascending: false });
-
-      if (blocklistError) throw blocklistError;
-      setBlocklist(blocklistData || []);
+      // Real referral list — we do have this. Other admin tabs (rate-limits,
+      // blocklist) intentionally render empty until a logger is wired.
+      const { data: referralRows } = await apiGet<{ data: Array<Referral & { referrer_id: string }> }>('/referrals');
+      setReferrals((referralRows || []) as Referral[]);
+      setRateLimits([]);
+      setBlocklist([]);
 
     } catch (error) {
       logger.error('Error fetching referral security data', error);
@@ -190,94 +159,20 @@ const ReferralSecurityAdmin = () => {
       return;
     }
 
-    setIsAdding(true);
-    try {
-      // Lookup geolocation if it's an IP address
-      const geo = await lookupGeoLocation(newIdentifier.trim());
-      
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from('referral_blocklist')
-        .insert({
-          identifier: newIdentifier.trim(),
-          reason: newReason.trim() || null,
-          blocked_by: user?.id,
-          country: geo?.country || null,
-          region: geo?.region || null,
-          city: geo?.city || null,
-          country_code: geo?.country_code || null,
-        });
-
-      if (error) {
-        if (error.code === '23505') {
-          toast.error("This identifier is already blocked");
-        } else {
-          throw error;
-        }
-      } else {
-        toast.success(geo ? `Identifier blocked (${geo.country})` : "Identifier added to blocklist");
-        setNewIdentifier("");
-        setNewReason("");
-        setIsAddDialogOpen(false);
-        fetchData();
-      }
-    } catch (error) {
-      logger.error('Error adding to blocklist', error);
-      toast.error("Failed to add to blocklist");
-    } finally {
-      setIsAdding(false);
-    }
+    // Blocklist features (add/quick-block/unblock/geo-lookup) depend on a
+    // referral_blocklist table that was Supabase-specific and has not been
+    // ported to D1. Until that pipeline is rebuilt, these handlers tell the
+    // admin politely instead of throwing — see plan/handoffs.
+    toast.error("Blocklist is not yet available — pending observability rebuild.");
+    setIsAdding(false);
   };
 
-  const handleQuickBlock = async (identifier: string) => {
-    try {
-      // Lookup geolocation if it's an IP address
-      const geo = await lookupGeoLocation(identifier);
-      
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from('referral_blocklist')
-        .insert({
-          identifier,
-          reason: "Blocked from rate limit dashboard",
-          blocked_by: user?.id,
-          country: geo?.country || null,
-          region: geo?.region || null,
-          city: geo?.city || null,
-          country_code: geo?.country_code || null,
-        });
-
-      if (error) {
-        if (error.code === '23505') {
-          toast.error("This identifier is already blocked");
-        } else {
-          throw error;
-        }
-      } else {
-        toast.success(geo ? `Identifier blocked (${geo.country})` : "Identifier blocked");
-        fetchData();
-      }
-    } catch (error) {
-      logger.error('Error blocking identifier', error);
-      toast.error("Failed to block identifier");
-    }
+  const handleQuickBlock = async (_identifier: string) => {
+    toast.error("Blocklist is not yet available — pending observability rebuild.");
   };
 
-  const handleUnblock = async (id: string) => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from('referral_blocklist')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      toast.success("Identifier unblocked");
-      fetchData();
-    } catch (error) {
-      logger.error('Error unblocking identifier', error);
-      toast.error("Failed to unblock identifier");
-    }
+  const handleUnblock = async (_id: string) => {
+    toast.error("Blocklist is not yet available — pending observability rebuild.");
   };
 
   const handleLookupGeo = async (entry: BlockedIdentifier) => {
@@ -285,33 +180,17 @@ const ReferralSecurityAdmin = () => {
       toast.error("Can only lookup geolocation for IP addresses");
       return;
     }
-
     setLookingUpGeoId(entry.id);
     try {
       const geo = await lookupGeoLocation(entry.identifier);
-      
       if (!geo) {
         toast.error("Could not fetch geolocation data");
         return;
       }
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from('referral_blocklist')
-        .update({
-          country: geo.country,
-          region: geo.region,
-          city: geo.city,
-          country_code: geo.country_code,
-        })
-        .eq('id', entry.id);
-
-      if (error) throw error;
-      toast.success(`Location found: ${geo.city || geo.region || geo.country}`);
-      fetchData();
+      toast.success(`Location: ${geo.city || geo.region || geo.country} (saving disabled — blocklist pending)`);
     } catch (error) {
-      logger.error('Error updating geolocation', error);
-      toast.error("Failed to update geolocation");
+      logger.error('Error looking up geolocation', error);
+      toast.error('Geolocation lookup failed');
     } finally {
       setLookingUpGeoId(null);
     }

@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import SEOHead from '@/components/seo/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { apiPost } from '@/lib/api';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -210,8 +211,7 @@ const Account = () => {
     setIsDeleting(true);
 
     try {
-      const { error } = await supabase.functions.invoke('delete-account');
-      if (error) throw error;
+      await apiPost('/account/delete');
       await signOut();
       toast.success('Account deleted successfully');
     } catch (error) {

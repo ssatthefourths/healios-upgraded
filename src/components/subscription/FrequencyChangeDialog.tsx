@@ -12,7 +12,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { RefreshCw } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiPost } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface FrequencyChangeDialogProps {
@@ -40,16 +40,9 @@ const FrequencyChangeDialog = ({ subscriptionId, currentFrequency, onSuccess }: 
 
     setIsUpdating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-subscription', {
-        body: { 
-          subscription_id: subscriptionId, 
-          action: 'change_frequency',
-          new_frequency: selectedFrequency 
-        }
+      await apiPost(`/subscriptions/${subscriptionId}/frequency`, {
+        frequency: selectedFrequency,
       });
-
-      if (error) throw error;
-
       toast.success('Delivery frequency updated successfully');
       setOpen(false);
       onSuccess();

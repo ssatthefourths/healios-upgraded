@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
+import { apiPost } from '@/lib/api';
 import { toast } from 'sonner';
 import { Users, X, Check, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,33 +55,32 @@ const ReferralCodeInput = ({
     setIsValidating(true);
 
     try {
-      const { data, error } = await supabase.rpc('apply_referral_code', {
-        p_code: codeToApply.trim().toUpperCase(),
-        p_referred_email: customerEmail,
-        p_referred_user_id: user?.id || null,
-      });
-
-      if (error) {
-        console.error('Referral validation error:', error);
-        toast.error('Failed to validate referral code');
+      // Auth-gated endpoint: requires the customer to be signed in. The
+      // checkout flow already prompts sign-in before reaching the referral
+      // section, so unauthenticated requests fall through with a 401 the
+      // catch handler converts to a user-friendly toast.
+      if (!user) {
+        toast.error('Please sign in to apply a referral code');
         return;
       }
 
-      const result = data?.[0];
-      
-      if (result?.valid) {
-        setReferrerName(result.referrer_name);
-        onReferralApplied(codeToApply.trim().toUpperCase(), result.referrer_name || 'A friend');
-        toast.success(result.message || 'Referral code applied!');
-        setIsExpanded(false);
-        // Clear stored code after successful application
-        clearStoredReferralCode();
-      } else {
-        toast.error(result?.message || 'Invalid referral code');
-      }
-    } catch (err) {
+      const result = await apiPost<{ id: string; referrerId: string; status: string }>(
+        '/referrals/apply',
+        {
+          code: codeToApply.trim().toUpperCase(),
+          referredEmail: customerEmail,
+        },
+      );
+
+      const friendlyName = 'A friend'; // Worker does not yet expose referrer name; preserve UX copy.
+      setReferrerName(friendlyName);
+      onReferralApplied(codeToApply.trim().toUpperCase(), friendlyName);
+      toast.success('Referral code applied!');
+      setIsExpanded(false);
+      clearStoredReferralCode();
+    } catch (err: any) {
       console.error('Error applying referral:', err);
-      toast.error('Failed to apply referral code');
+      toast.error(err?.message || 'Invalid referral code');
     } finally {
       setIsValidating(false);
     }
