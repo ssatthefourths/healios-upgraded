@@ -49,6 +49,13 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
 
+      # Pin npm to match the version that produced package-lock.json.
+      # Node 20 ships with npm 10; the lockfile in repo is npm 11+ format.
+      # Mismatch causes npm ci to report transitive optionalDependencies
+      # (e.g. @esbuild/* platform binaries) as "Missing from lock file".
+      - name: Pin npm 11 (matches lockfile version)
+        run: npm install -g npm@11
+
       - name: Install dependencies
         run: npm ci
 
