@@ -46,11 +46,17 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: '.nvmrc'
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Run tests
+        run: npm run test:ci
 
       - name: Build
         run: npm run build
@@ -80,7 +86,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: '.nvmrc'
 
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
