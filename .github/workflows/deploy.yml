@@ -25,11 +25,15 @@ jobs:
               - 'package.json'
               - 'package-lock.json'
               - 'vite.config.*'
+              - 'vitest.config.*'
               - 'tsconfig*'
               - 'tailwind.config*'
               - 'postcss.config*'
+              - '.nvmrc'
+              - '.github/workflows/deploy.yml'
             worker:
               - 'worker-api/**'
+              - '.github/workflows/deploy.yml'
 
   # ── Frontend → Cloudflare Pages ──────────────────────────────────
   deploy-pages:
